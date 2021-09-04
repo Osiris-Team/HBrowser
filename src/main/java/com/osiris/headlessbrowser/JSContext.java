@@ -1,7 +1,6 @@
 package com.osiris.headlessbrowser;
 
 import com.osiris.headlessbrowser.javascript.JS_API_Console;
-import com.osiris.headlessbrowser.javascript.JavaScriptAPI;
 import com.osiris.headlessbrowser.javascript.exceptions.DuplicateRegisteredId;
 import de.undercouch.citeproc.VariableWrapper;
 import de.undercouch.citeproc.VariableWrapperParams;
@@ -30,26 +29,28 @@ import java.util.*;
 public class JSContext extends AbstractScriptRunner {
     private final HWindow window;
     private final Context rawContext = Context.newBuilder("js").allowAllAccess(true).build();
-    private final Map<JavaScriptAPI, Boolean> loadedJSWebAPIs = new HashMap<>();
+
+    // Web-APIs:
+    private final JS_API_Console console = new JS_API_Console(System.out);
 
     public JSContext(HWindow window) {
         this.window = window;
 
+        // Register all JavaScript Web-APIs:
         // APIs in this list get loaded into this JSContext in the order they were added to this list.
         // If you want to add an api that depends on another one make sure to add it after that one.
-        //loadedJSWebAPIs.add(new JS_API_Console(System.out));
-        loadedJSWebAPIs.put(new JS_API_Console(System.out), true); // If true overrides any existing variable with the same name
+        // Note that override should be false by default.
+        try {
+            registerAndLoad("console", console, true); // If true overrides any existing variable with the same name
+        } catch (Exception exception) {
+            System.err.println("Failed to load one/multiple JavaScript Web-API(s) into the current JavaScript-Context! Details:");
+            throw new RuntimeException(exception);
+        }
 
-        // Register all JavaScript Web-APIs:
-        loadedJSWebAPIs.forEach((api, override) -> {
-            try {
-                registerAndLoad(api.getJSVarName(), api.getObject(), override);
-            } catch (Exception exception) {
-                System.err.println("Failed to load one/multiple JavaScript Web-API(s) into the current JavaScript-Context! Details:");
-                throw new RuntimeException(exception);
-            }
-        });
+    }
 
+    public JS_API_Console getConsole() {
+        return console;
     }
 
     /**

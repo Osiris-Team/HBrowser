@@ -1,6 +1,7 @@
 package com.osiris.headlessbrowser;
 
 import de.undercouch.citeproc.script.ScriptRunnerException;
+import javafx.scene.layout.HBox;
 import org.graalvm.polyglot.Context;
 import org.junit.jupiter.api.Test;
 
@@ -8,6 +9,14 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 class JSContextTest {
+
+    @Test
+    void testConsoleApi() throws IOException {
+        HBrowser hBrowser = new HBrowser();
+        JSContext jsContext = hBrowser.openNewWindow().getJsContext();
+        jsContext.getConsole().onLog(msg -> System.out.println("JavaScript message received: "+msg));
+        jsContext.eval("console.log('john stamos');");
+    }
 
     @Test
     void testCallMethods() throws ScriptRunnerException, IOException {
