@@ -19,8 +19,8 @@ Browsers you have to purchase, or browsers with very limited and deprecated Java
 Thats why this project exists. Free, open-source, fast and stable.
 
 ## Features
-[x] Use of Jsoup for handling HTML
-[x] Use of GraalJS for handling JavaScript
+ - [x] Use of Jsoup for handling HTML
+ - [x] Use of GraalJS for handling JavaScript
 
 ## Examples
 Insert_usage_examples_here
