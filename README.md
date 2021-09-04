@@ -9,8 +9,7 @@ If you are working on a implementation open an issue to keep track of who is wor
 ## Motivation
 There are only two types of headless Java browsers currently available:
 Browsers you have to purchase, or browsers with very limited and deprecated JavaSript-Engines.
-
-Thats why this project exists. Free, open-source, fast and stable.
+Thats why this project exists.
 
 ## Features
  - [x] Rich Java-API | Provides various methods for modifying everything about the browser. Also uses Jsoup for editing HTML directly in Java.
