@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @author Osiris-Team
  */
-public class JS_API_Console {
+public class JS_API_Console implements HasOptionalJSCode{
     // This class gets loaded into the JSContext and assigned to a variable with the given name.
     // That means that all public methods/functions and variables/fields in this class are available inside of actual JavaScript code.
     // The method log(String msg) below for example, can be accessed in JavaScript via console.log('Hello!');
@@ -20,6 +20,7 @@ public class JS_API_Console {
     private final List<Sendable> onInfo = new ArrayList<>();
     private final List<Sendable> onDebug = new ArrayList<>();
     private final List<Sendable> onError = new ArrayList<>();
+    private final List<Sendable> onWarn = new ArrayList<>();
 
     public JS_API_Console(OutputStream out) {
         this(new PrintStream(out));
@@ -34,29 +35,36 @@ public class JS_API_Console {
     }
 
     public void debug(String msg) {
-        out.println(msg);
+        if(out!=null) out.println(msg);
         for (Sendable sendable : onDebug) {
             sendable.send(msg);
         }
     }
 
     public void error(String msg) {
-        out.println(msg);
+        if(out!=null) out.println(msg);
         for (Sendable sendable : onError) {
             sendable.send(msg);
         }
     }
 
     public void info(String msg) {
-        out.println(msg);
+        if(out!=null) out.println(msg);
         for (Sendable sendable : onInfo) {
             sendable.send(msg);
         }
     }
 
     public void log(String msg) {
-        out.println(msg);
+        if(out!=null) out.println(msg);
         for (Sendable sendable : onLog) {
+            sendable.send(msg);
+        }
+    }
+
+    public void warn(String msg) {
+        if(out!=null) out.println(msg);
+        for (Sendable sendable : onWarn) {
             sendable.send(msg);
         }
     }
@@ -78,6 +86,10 @@ public class JS_API_Console {
     public void onError(Sendable runnable) {
         onError.add(runnable);
     }
+
+    public void onWarn(Sendable runnable) {
+        onWarn.add(runnable);
+    }
         /*
         TODO IMPLEMENT THESE
         TODO GENERATE TEST FOR EACH METHOD.
@@ -87,24 +99,47 @@ namespace console { // but see namespace object requirements below
   undefined assert(optional boolean condition = false, any... data);
   undefined table(optional any tabularData, optional sequence<DOMString> properties);
   undefined trace(any... data);
-  undefined warn(any... data);
   undefined dir(optional any item, optional object? options);
   undefined dirxml(any... data);
 
-  // Counting
-  undefined count(optional DOMString label = "default");
-  undefined countReset(optional DOMString label = "default");
-
-  // Grouping
-  undefined group(any... data);
-  undefined groupCollapsed(any... data);
-  undefined groupEnd();
-
-  // Timing
-  undefined time(optional DOMString label = "default");
-  undefined timeLog(optional DOMString label = "default", any... data);
-  undefined timeEnd(optional DOMString label = "default");
 };
          */
+
+    @Override
+    public String getJSCode() { //TODO need this since we cannot have a method named assert in Java
+        return "console.assert = function a";
+    }
+
+    public void count(String... args){
+        // Do nothing
+    }
+
+    public void countReset(String... args){
+        // Do nothing
+    }
+
+    public void group(String... args){
+        // Do nothing
+    }
+
+    public void groupCollapsed(String... args){
+        // Do nothing
+    }
+
+    public void groupEnd(String... args){
+        // Do nothing
+    }
+
+    public void time(String... args){
+        // Do nothing
+    }
+
+    public void timeLog(String... args){
+        // Do nothing
+    }
+
+    public void timeEnd(String... args){
+        // Do nothing
+    }
 
 }
