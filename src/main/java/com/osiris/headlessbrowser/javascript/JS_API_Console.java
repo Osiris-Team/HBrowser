@@ -10,6 +10,9 @@ import java.io.PrintStream;
  * @author Osiris-Team
  */
 public class JS_API_Console implements JavaScriptAPI {
+    // This class gets loaded into the JSContext and assigned to a variable with the name from getJSVarName().
+    // That means that all public methods/functions and variables/fields in this class are available inside of actual JavaScript code.
+    // The method log(String msg) below for example, can be accessed in JavaScript via console.log('Hello!');
     private final PrintStream out;
 
     public JS_API_Console(OutputStream out) {
