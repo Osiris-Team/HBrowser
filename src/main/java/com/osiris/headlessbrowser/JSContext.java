@@ -1,7 +1,7 @@
 package com.osiris.headlessbrowser;
 
 import com.osiris.headlessbrowser.javascript.JS_API_Console;
-import com.osiris.headlessbrowser.javascript.defaults.JavaScriptAPI;
+import com.osiris.headlessbrowser.javascript.JavaScriptAPI;
 import com.osiris.headlessbrowser.javascript.exceptions.DuplicateRegisteredId;
 import de.undercouch.citeproc.VariableWrapper;
 import de.undercouch.citeproc.VariableWrapperParams;
@@ -20,7 +20,7 @@ import java.util.*;
 public class JSContext extends AbstractScriptRunner {
     private HeadlessWindow window;
     private Context rawContext = Context.newBuilder("js").allowAllAccess(true).build();
-    private List<JavaScriptAPI> loadedJSWebAPIs = new ArrayList<>();
+    private Map<JavaScriptAPI, Boolean> loadedJSWebAPIs = new HashMap<>();
 
     public JSContext(HeadlessWindow window) {
         this.window = window;
@@ -28,25 +28,26 @@ public class JSContext extends AbstractScriptRunner {
         // APIs in this list get loaded into this JSContext in the order they were added to this list.
         // If you want to add an api that depends on another one make sure to add it after that one.
         //loadedJSWebAPIs.add(new JS_API_Console(System.out));
-        rawContext.getBindings("js").getMemberKeys().forEach(key -> System.out.println(key));
+        loadedJSWebAPIs.put(new JS_API_Console(System.out), true); // If true overrides any existing variable with the same name
 
         // Register all JavaScript Web-APIs:
-        try{
-            for (JavaScriptAPI api :
-                    loadedJSWebAPIs) {
-                registerAndLoad(api.getJSVarName(), api.getObject());
+        loadedJSWebAPIs.forEach((api, override) -> {
+            try{
+                registerAndLoad(api.getJSVarName(), api.getObject(), override);
+            } catch (Exception exception) {
+                System.err.println("Failed to load one/multiple JavaScript Web-API(s) into the current JavaScript-Context! Details:");
+                throw new RuntimeException(exception);
             }
-        } catch (Exception exception) {
-            System.err.println("Failed to load one/multiple JavaScript Web-API(s) into the current JavaScript-Context! Details:");
-            throw new RuntimeException(exception);
-        }
+        });
+
     }
 
     /**
      * Registers and loads this API into the provided {@link JSContext}. <br>
+     * @param id
      */
-    public void registerAndLoad(String id, Object object) throws DuplicateRegisteredId, IOException {
-        if(rawContext.getBindings("js").getMember(id) != null)
+    public void registerAndLoad(String id, Object object, boolean override) throws DuplicateRegisteredId, IOException {
+        if(!override && rawContext.getBindings("js").getMember(id) != null)
             throw new DuplicateRegisteredId("Failed to register because of already existing/registered id '"+id+"'.");
         rawContext.getBindings("js").putMember(id, object);
     }
@@ -60,11 +61,11 @@ public class JSContext extends AbstractScriptRunner {
      * @throws IOException
      */
     public void eval(String jsCode) throws IOException {
-        eval(new BufferedReader(new StringReader(jsCode)));
+        rawContext.eval("js", jsCode);
     }
 
     public void eval(InputStream jsCodesInputStream) throws IOException {
-        eval(new BufferedReader(new InputStreamReader(jsCodesInputStream)));
+        eval(new InputStreamReader(jsCodesInputStream));
     }
 
     public HeadlessWindow getWindow() {
@@ -95,6 +96,14 @@ public class JSContext extends AbstractScriptRunner {
 
     @Override
     public void eval(Reader reader) throws IOException {
+        String jsCode = null;
+        try (BufferedReader bufferedReader = new BufferedReader(reader)) {
+            while ((jsCode = bufferedReader.readLine()) != null) {
+                jsCode = jsCode+jsCode;
+            }
+        } catch (IOException e) {
+            throw e;
+        }
         rawContext.eval(Source.newBuilder("js", reader, null).cached(false).build());
     }
 

@@ -22,10 +22,10 @@ class JSContextTest {
     }
 
     @Test
-    void testContextWebApis() {
+    void testContextWebApis() throws IOException {
         HeadlessBrowser browser = new HeadlessBrowser();
         JSContext jsContext = browser.openNewWindow().getJsContext();
-        jsContext.getRawContext().getBindings("js").getMemberKeys().forEach(System.out::println);
+        jsContext.eval("console.log('hi!');");
     }
 
     public static class MyClass {

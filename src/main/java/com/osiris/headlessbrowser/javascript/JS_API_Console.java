@@ -1,8 +1,5 @@
 package com.osiris.headlessbrowser.javascript;
 
-import com.osiris.headlessbrowser.javascript.defaults.Default_JS_API;
-import com.osiris.headlessbrowser.javascript.defaults.JavaScriptAPI;
-
 import java.io.OutputStream;
 import java.io.PrintStream;
 
@@ -11,12 +8,13 @@ import java.io.PrintStream;
  * WORK IN PROGRESS <br>
  * @author Osiris-Team
  */
-public class JS_API_Console extends Default_JS_API implements JavaScriptAPI {
+public class JS_API_Console implements JavaScriptAPI {
     private PrintStream out;
 
     public JS_API_Console(OutputStream out) {
         this(new PrintStream(out));
     }
+
     public JS_API_Console(PrintStream out) {
         this.out = out;
     }
@@ -31,10 +29,12 @@ public class JS_API_Console extends Default_JS_API implements JavaScriptAPI {
 
     @Override
     public Object getObject() {
-        return new Console();
+        return this;
     }
 
-    class Console{
+    public void log(String msg){
+        out.println(msg);
+    }
         /*
         TODO IMPLEMENT THESE
         TODO GENERATE TEST FOR EACH METHOD.
@@ -68,11 +68,5 @@ namespace console { // but see namespace object requirements below
   undefined timeEnd(optional DOMString label = "default");
 };
          */
-
-        public void log(String msg){
-            out.println(msg);
-        }
-    }
-
 
 }

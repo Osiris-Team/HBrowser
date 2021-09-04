@@ -4,7 +4,8 @@ A headless browser for Java.
 ## IN-DEV | CONTRIBUTIONS NEEDED!
 To simulate a browser nowadays we need to provide all of these web apis: https://developer.mozilla.org/en-US/docs/Web/API
 See package `com.osiris.headlessbrowser.javascript` for already implemented apis.
-If you are working on a implementation open an issue to keep track of who is working on what and avoid duplicate work.
+If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
+[Read this to get started.](how-to-implement-a-js-web-api.md)
 
 ## Motivation
 There are only two types of headless Java browsers currently available:
