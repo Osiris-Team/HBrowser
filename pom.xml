@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.author.project</groupId>
-    <artifactId>project</artifactId>
-    <version>0.1</version>
+    <groupId>com.osiris.headlessbrowser</groupId>
+    <artifactId>Headless-Browser</artifactId>
+    <version>ALPHA-0.0.1</version>
     <packaging>jar</packaging>
 
-    <name>My Project Name</name>
-    <description>A creative but also precise description.</description>
+    <name>Headless-Browser</name>
+    <description>A headless browser entirely in Java.</description>
 
     <properties>
         <java.version>8</java.version>

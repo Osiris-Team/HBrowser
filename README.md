@@ -1,5 +1,14 @@
 # Headless-Browser
 A headless browser for Java.
+```java
+HBrowser hBrowser = new HBrowser();
+HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
+```
+
+## Installation
+ - Java 8 or higher required.
+ - [Click here for maven/gradle/sbt/leinigen instructions.](https://jitpack.io/#Osiris-Team/Headless-Browser)
+ - Make sure to watch this repository to get notified of future updates.
 
 ## IN-DEV | CONTRIBUTIONS NEEDED!
 To simulate a browser nowadays we need to provide all of these web apis: https://developer.mozilla.org/en-US/docs/Web/API
@@ -32,9 +41,6 @@ If you don't know how to import a GitHub project, check out this guide: [Intelli
 
 ## Links
 Insert_important_links_here
-
-## Installation
-Insert_installation_steps_here
 
 ## Examples
 Insert_usage_examples_here

@@ -1,6 +1,5 @@
 package com.osiris.headlessbrowser;
 
-import de.undercouch.citeproc.script.ScriptRunner;
 import de.undercouch.citeproc.script.ScriptRunnerException;
 import org.graalvm.polyglot.Context;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,7 @@ class JSContextTest {
 
     @Test
     void testCallMethods() throws ScriptRunnerException, IOException {
-        HeadlessBrowser browser = new HeadlessBrowser();
+        HBrowser browser = new HBrowser();
         JSContext jsContext = browser.openNewWindow().getJsContext();
         jsContext.eval("" +
                 "function myMethod(params) {\n" +
@@ -23,7 +22,7 @@ class JSContextTest {
 
     @Test
     void testContextWebApis() throws IOException {
-        HeadlessBrowser browser = new HeadlessBrowser();
+        HBrowser browser = new HBrowser();
         JSContext jsContext = browser.openNewWindow().getJsContext();
         jsContext.eval("console.log('hi!');");
     }

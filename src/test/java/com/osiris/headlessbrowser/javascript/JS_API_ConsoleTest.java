@@ -1,17 +1,15 @@
 package com.osiris.headlessbrowser.javascript;
 
-import com.osiris.headlessbrowser.HeadlessBrowser;
+import com.osiris.headlessbrowser.HBrowser;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class JS_API_ConsoleTest {
 
     @Test
     void test() throws IOException {
-        new HeadlessBrowser().openNewWindow().getJsContext()
+        new HBrowser().openNewWindow().getJsContext()
                 .eval("console.log('hello');");
     }
 }

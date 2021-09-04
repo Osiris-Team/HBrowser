@@ -22,12 +22,17 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.*;
 
+/**
+ * JavaScript-Context.
+ *
+ * @author Osiris-Team
+ */
 public class JSContext extends AbstractScriptRunner {
-    private final HeadlessWindow window;
+    private final HWindow window;
     private final Context rawContext = Context.newBuilder("js").allowAllAccess(true).build();
     private final Map<JavaScriptAPI, Boolean> loadedJSWebAPIs = new HashMap<>();
 
-    public JSContext(HeadlessWindow window) {
+    public JSContext(HWindow window) {
         this.window = window;
 
         // APIs in this list get loaded into this JSContext in the order they were added to this list.
@@ -155,7 +160,7 @@ public class JSContext extends AbstractScriptRunner {
         eval(new InputStreamReader(jsCodesInputStream));
     }
 
-    public HeadlessWindow getWindow() {
+    public HWindow getWindow() {
         return window;
     }
 
