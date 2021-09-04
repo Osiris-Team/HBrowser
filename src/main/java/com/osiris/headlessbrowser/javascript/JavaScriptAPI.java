@@ -1,9 +1,5 @@
 package com.osiris.headlessbrowser.javascript;
 
-import com.osiris.headlessbrowser.JSContext;
-
-import java.io.InputStream;
-
 public interface JavaScriptAPI {
 
     /**

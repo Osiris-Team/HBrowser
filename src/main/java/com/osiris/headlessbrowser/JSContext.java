@@ -8,19 +8,24 @@ import de.undercouch.citeproc.VariableWrapperParams;
 import de.undercouch.citeproc.helper.json.JsonBuilder;
 import de.undercouch.citeproc.helper.json.JsonObject;
 import de.undercouch.citeproc.helper.json.StringJsonBuilder;
-import de.undercouch.citeproc.script.*;
+import de.undercouch.citeproc.script.AbstractScriptRunner;
+import de.undercouch.citeproc.script.GraalScriptRunner;
+import de.undercouch.citeproc.script.ScriptRunnerException;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.*;
 
 public class JSContext extends AbstractScriptRunner {
-    private HeadlessWindow window;
-    private Context rawContext = Context.newBuilder("js").allowAllAccess(true).build();
-    private Map<JavaScriptAPI, Boolean> loadedJSWebAPIs = new HashMap<>();
+    private final HeadlessWindow window;
+    private final Context rawContext = Context.newBuilder("js").allowAllAccess(true).build();
+    private final Map<JavaScriptAPI, Boolean> loadedJSWebAPIs = new HashMap<>();
 
     public JSContext(HeadlessWindow window) {
         this.window = window;
@@ -32,7 +37,7 @@ public class JSContext extends AbstractScriptRunner {
 
         // Register all JavaScript Web-APIs:
         loadedJSWebAPIs.forEach((api, override) -> {
-            try{
+            try {
                 registerAndLoad(api.getJSVarName(), api.getObject(), override);
             } catch (Exception exception) {
                 System.err.println("Failed to load one/multiple JavaScript Web-API(s) into the current JavaScript-Context! Details:");
@@ -43,113 +48,8 @@ public class JSContext extends AbstractScriptRunner {
     }
 
     /**
-     * Registers and loads this API into the provided {@link JSContext}. <br>
-     * @param id
-     */
-    public void registerAndLoad(String id, Object object, boolean override) throws DuplicateRegisteredId, IOException {
-        if(!override && rawContext.getBindings("js").getMember(id) != null)
-            throw new DuplicateRegisteredId("Failed to register because of already existing/registered id '"+id+"'.");
-        rawContext.getBindings("js").putMember(id, object);
-    }
-
-    /**
-     * Executes the given jsCode in the current context. <br>
-     * This means that all the jsCode that has been ran before in this {@link JSContext} is accessible
-     * for the given jsCode.
-     * @param jsCode JavaScript code to run in the current {@link JSContext}.
-     * @throws ScriptRunnerException
-     * @throws IOException
-     */
-    public void eval(String jsCode) throws IOException {
-        rawContext.eval("js", jsCode);
-    }
-
-    public void eval(InputStream jsCodesInputStream) throws IOException {
-        eval(new InputStreamReader(jsCodesInputStream));
-    }
-
-    public HeadlessWindow getWindow() {
-        return window;
-    }
-
-    public Context getRawContext() {
-        return rawContext;
-    }
-
-
-    /**
-     * ALL METHODS BELOW ARE TAKEN FROM {@link GraalScriptRunner}. <br>
-     * Some methods were added to provide extra functionality.
-     */
-
-
-
-    @Override
-    public String getName() {
-        return rawContext.getEngine().getImplementationName();
-    }
-
-    @Override
-    public String getVersion() {
-        return rawContext.getEngine().getVersion();
-    }
-
-    @Override
-    public void eval(Reader reader) throws IOException {
-        String jsCode = null;
-        try (BufferedReader bufferedReader = new BufferedReader(reader)) {
-            while ((jsCode = bufferedReader.readLine()) != null) {
-                jsCode = jsCode+jsCode;
-            }
-        } catch (IOException e) {
-            throw e;
-        }
-        rawContext.eval(Source.newBuilder("js", reader, null).cached(false).build());
-    }
-
-    @Override
-    public <T> T callMethod(String name, Class<T> resultType, Object... args)
-            throws ScriptRunnerException {
-        try {
-            return convert(rawContext.getBindings("js").getMember(name)
-                    .execute(convertArguments(args)), resultType);
-        } catch (IOException | PolyglotException e) {
-            throw new ScriptRunnerException("Could not call method", e);
-        }
-    }
-
-    @Override
-    public void callMethod(String name, Object... args) throws ScriptRunnerException {
-        try {
-            rawContext.getBindings("js").getMember(name).executeVoid(convertArguments(args));
-        } catch (IOException | PolyglotException e) {
-            throw new ScriptRunnerException("Could not call method", e);
-        }
-    }
-
-    @Override
-    public <T> T callMethod(Object obj, String name, Class<T> resultType, Object... args)
-            throws ScriptRunnerException {
-        try {
-            return convert(((Value)obj).getMember(name)
-                    .execute(convertArguments(args)), resultType);
-        } catch (IOException | PolyglotException e) {
-            throw new ScriptRunnerException("Could not call method", e);
-        }
-    }
-
-    @Override
-    public void callMethod(Object obj, String name, Object... args)
-            throws ScriptRunnerException {
-        try {
-            ((Value)obj).getMember(name).executeVoid(convertArguments(args));
-        } catch (IOException | PolyglotException e) {
-            throw new ScriptRunnerException("Could not call method", e);
-        }
-    }
-
-    /**
      * Recursively convert a JavaScript value to a Java object
+     *
      * @param v the value to convert
      * @return the object
      */
@@ -195,17 +95,9 @@ public class JSContext extends AbstractScriptRunner {
         return o;
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> T convert(Object o, Class<T> type) {
-        if (type != Object.class && o instanceof Value) {
-            o = convert((Value)o);
-        }
-        return (T)o;
-    }
-
     /**
      * Recursively convert a JavaScript array to a list
+     *
      * @param arr the array to convert
      * @return the list
      */
@@ -221,6 +113,7 @@ public class JSContext extends AbstractScriptRunner {
 
     /**
      * Recursively convert a JavaScript object to a map
+     *
      * @param obj the object to convert
      * @return the map
      */
@@ -235,7 +128,115 @@ public class JSContext extends AbstractScriptRunner {
     }
 
     /**
+     * Registers and loads this API into the provided {@link JSContext}. <br>
+     *
+     * @param id
+     */
+    public void registerAndLoad(String id, Object object, boolean override) throws DuplicateRegisteredId, IOException {
+        if (!override && rawContext.getBindings("js").getMember(id) != null)
+            throw new DuplicateRegisteredId("Failed to register because of already existing/registered id '" + id + "'.");
+        rawContext.getBindings("js").putMember(id, object);
+    }
+
+    /**
+     * Executes the given jsCode in the current context. <br>
+     * This means that all the jsCode that has been ran before in this {@link JSContext} is accessible
+     * for the given jsCode.
+     *
+     * @param jsCode JavaScript code to run in the current {@link JSContext}.
+     * @throws ScriptRunnerException
+     * @throws IOException
+     */
+    public void eval(String jsCode) throws IOException {
+        rawContext.eval("js", jsCode);
+    }
+
+    public void eval(InputStream jsCodesInputStream) throws IOException {
+        eval(new InputStreamReader(jsCodesInputStream));
+    }
+
+    public HeadlessWindow getWindow() {
+        return window;
+    }
+
+    public Context getRawContext() {
+        return rawContext;
+    }
+
+    /**
+     * ALL METHODS BELOW ARE TAKEN FROM {@link GraalScriptRunner}. <br>
+     * Some methods were added to provide extra functionality.
+     */
+
+
+    @Override
+    public String getName() {
+        return rawContext.getEngine().getImplementationName();
+    }
+
+    @Override
+    public String getVersion() {
+        return rawContext.getEngine().getVersion();
+    }
+
+    @Override
+    public void eval(Reader reader) throws IOException {
+        rawContext.eval(Source.newBuilder("js", reader, null).cached(false).build());
+    }
+
+    @Override
+    public <T> T callMethod(String name, Class<T> resultType, Object... args)
+            throws ScriptRunnerException {
+        try {
+            return convert(rawContext.getBindings("js").getMember(name)
+                    .execute(convertArguments(args)), resultType);
+        } catch (IOException | PolyglotException e) {
+            throw new ScriptRunnerException("Could not call method", e);
+        }
+    }
+
+    @Override
+    public void callMethod(String name, Object... args) throws ScriptRunnerException {
+        try {
+            rawContext.getBindings("js").getMember(name).executeVoid(convertArguments(args));
+        } catch (IOException | PolyglotException e) {
+            throw new ScriptRunnerException("Could not call method", e);
+        }
+    }
+
+    @Override
+    public <T> T callMethod(Object obj, String name, Class<T> resultType, Object... args)
+            throws ScriptRunnerException {
+        try {
+            return convert(((Value) obj).getMember(name)
+                    .execute(convertArguments(args)), resultType);
+        } catch (IOException | PolyglotException e) {
+            throw new ScriptRunnerException("Could not call method", e);
+        }
+    }
+
+    @Override
+    public void callMethod(Object obj, String name, Object... args)
+            throws ScriptRunnerException {
+        try {
+            ((Value) obj).getMember(name).executeVoid(convertArguments(args));
+        } catch (IOException | PolyglotException e) {
+            throw new ScriptRunnerException("Could not call method", e);
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T convert(Object o, Class<T> type) {
+        if (type != Object.class && o instanceof Value) {
+            o = convert((Value) o);
+        }
+        return (T) o;
+    }
+
+    /**
      * Convert arguments that should be passed to a JavaScript function
+     *
      * @param args the arguments
      * @return the converted arguments or `args` if conversion was not necessary
      * @throws IOException if an argument could not be converted
@@ -253,7 +254,7 @@ public class JSContext extends AbstractScriptRunner {
                         .build();
                 o = rawContext.eval(src);
             } else if (v instanceof VariableWrapper) {
-                o = new VariableWrapperWrapper((VariableWrapper)o);
+                o = new VariableWrapperWrapper((VariableWrapper) o);
             }
             if (o != v) {
                 if (copy == args) {
@@ -284,6 +285,7 @@ public class JSContext extends AbstractScriptRunner {
      * Wraps around {@link VariableWrapper} and converts
      * {@link VariableWrapperParams} objects to JSON objects. This class is
      * public because Graal JavaScript needs to be able to access it.
+     *
      * @author Michel Kraemer
      */
     public static class VariableWrapperWrapper {
@@ -295,9 +297,10 @@ public class JSContext extends AbstractScriptRunner {
 
         /**
          * Call the {@link VariableWrapper} with the given parameters
-         * @param params the context in which an item should be rendered
-         * @param prePunct the text that precedes the item to render
-         * @param str the item to render
+         *
+         * @param params    the context in which an item should be rendered
+         * @param prePunct  the text that precedes the item to render
+         * @param str       the item to render
          * @param postPunct the text that follows the item to render
          * @return the string to be rendered
          */

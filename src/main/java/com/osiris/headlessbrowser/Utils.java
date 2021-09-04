@@ -14,6 +14,7 @@ public class Utils {
 
     /**
      * Finds the wanted file inside this jar file and returns its {@link InputStream}.
+     *
      * @param filePathInJar The wanted files relative path inside of the jar.
      * @return the files {@link InputStream}.
      */
@@ -28,8 +29,9 @@ public class Utils {
 
     /**
      * Finds the wanted file inside a jar file and returns its {@link InputStream}.
+     *
      * @param filePathInJar The wanted files relative path inside of the jar.
-     * @param pathOfJar The jars absolute path.
+     * @param pathOfJar     The jars absolute path.
      * @return the files {@link InputStream}.
      */
     public static InputStream getFileFromJar(String filePathInJar, String pathOfJar) throws FileNotFoundException, MalformedURLException {
@@ -41,7 +43,7 @@ public class Utils {
             URLClassLoader fileClassLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]));
             return fileClassLoader.getResourceAsStream(filePathInJar);
         } else
-            throw new FileNotFoundException("Provided jar file with path '"+pathOfJar+"' doesnt exist!");
+            throw new FileNotFoundException("Provided jar file with path '" + pathOfJar + "' doesnt exist!");
     }
 
 

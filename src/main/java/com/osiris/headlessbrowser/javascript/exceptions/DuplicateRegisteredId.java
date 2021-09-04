@@ -1,6 +1,6 @@
 package com.osiris.headlessbrowser.javascript.exceptions;
 
-public class DuplicateRegisteredId extends Exception{
+public class DuplicateRegisteredId extends Exception {
 
     public DuplicateRegisteredId() {
     }

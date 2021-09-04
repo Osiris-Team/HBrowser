@@ -6,10 +6,11 @@ import java.io.PrintStream;
 /**
  * Implementation of: https://developer.mozilla.org/en-US/docs/Web/API/Console_API <br>
  * WORK IN PROGRESS <br>
+ *
  * @author Osiris-Team
  */
 public class JS_API_Console implements JavaScriptAPI {
-    private PrintStream out;
+    private final PrintStream out;
 
     public JS_API_Console(OutputStream out) {
         this(new PrintStream(out));
@@ -32,7 +33,7 @@ public class JS_API_Console implements JavaScriptAPI {
         return this;
     }
 
-    public void log(String msg){
+    public void log(String msg) {
         out.println(msg);
     }
         /*
