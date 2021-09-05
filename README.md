@@ -1,5 +1,5 @@
 # Headless-Browser
-A headless browser for Java.
+A headless browser written in Java.
 ```java
 HBrowser hBrowser = new HBrowser();
 HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
