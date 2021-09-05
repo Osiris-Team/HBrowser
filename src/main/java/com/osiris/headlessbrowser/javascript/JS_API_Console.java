@@ -1,5 +1,7 @@
 package com.osiris.headlessbrowser.javascript;
 
+import org.graalvm.polyglot.HostAccess;
+
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -12,8 +14,9 @@ import java.util.List;
  * @author Osiris-Team
  */
 public class JS_API_Console implements HasOptionalJSCode{
-    // This class gets loaded into the JSContext and assigned to a variable with the given name.
-    // That means that all public methods/functions and variables/fields in this class are available inside of actual JavaScript code.
+    // This class gets loaded into the JSContext and assigned to a variable with the given name in the JSContext.
+    // That means that all methods/functions and variables/fields annotated with @HostAccess.Export
+    // in this class, are available inside of actual JavaScript code.
     // The method log(String msg) below for example, can be accessed in JavaScript via console.log('Hello!');
     private final PrintStream out;
     private final List<Sendable> onLog = new ArrayList<>();
@@ -30,10 +33,12 @@ public class JS_API_Console implements HasOptionalJSCode{
         this.out = out;
     }
 
+    @HostAccess.Export
     public void clear() {
         // Do nothing.
     }
 
+    @HostAccess.Export
     public void debug(String msg) {
         if(out!=null) out.println(msg);
         for (Sendable sendable : onDebug) {
@@ -41,6 +46,7 @@ public class JS_API_Console implements HasOptionalJSCode{
         }
     }
 
+    @HostAccess.Export
     public void error(String msg) {
         if(out!=null) out.println(msg);
         for (Sendable sendable : onError) {
@@ -48,6 +54,7 @@ public class JS_API_Console implements HasOptionalJSCode{
         }
     }
 
+    @HostAccess.Export
     public void info(String msg) {
         if(out!=null) out.println(msg);
         for (Sendable sendable : onInfo) {
@@ -55,6 +62,7 @@ public class JS_API_Console implements HasOptionalJSCode{
         }
     }
 
+    @HostAccess.Export
     public void log(String msg) {
         if(out!=null) out.println(msg);
         for (Sendable sendable : onLog) {
@@ -62,6 +70,7 @@ public class JS_API_Console implements HasOptionalJSCode{
         }
     }
 
+    @HostAccess.Export
     public void warn(String msg) {
         if(out!=null) out.println(msg);
         for (Sendable sendable : onWarn) {
@@ -69,7 +78,8 @@ public class JS_API_Console implements HasOptionalJSCode{
         }
     }
 
-    // METHODS FOR JAVA
+    // Methods Only accessible from Java:
+
 
     public void onLog(Sendable runnable) {
         onLog.add(runnable);
@@ -110,34 +120,42 @@ namespace console { // but see namespace object requirements below
         return "console.assert = function a";
     }
 
+    @HostAccess.Export
     public void count(String... args){
         // Do nothing
     }
 
+    @HostAccess.Export
     public void countReset(String... args){
         // Do nothing
     }
 
+    @HostAccess.Export
     public void group(String... args){
         // Do nothing
     }
 
+    @HostAccess.Export
     public void groupCollapsed(String... args){
         // Do nothing
     }
 
+    @HostAccess.Export
     public void groupEnd(String... args){
         // Do nothing
     }
 
+    @HostAccess.Export
     public void time(String... args){
         // Do nothing
     }
 
+    @HostAccess.Export
     public void timeLog(String... args){
         // Do nothing
     }
 
+    @HostAccess.Export
     public void timeEnd(String... args){
         // Do nothing
     }

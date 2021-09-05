@@ -28,7 +28,8 @@ import java.util.*;
  */
 public class JSContext extends AbstractScriptRunner {
     private final HWindow window;
-    private final Context rawContext = Context.newBuilder("js").allowAllAccess(true).build();
+    private final Context rawContext = Context.newBuilder("js")//.allowAllAccess(true)
+            .build();
 
     // Web-APIs:
     private final JS_API_Console console = new JS_API_Console(System.out);
