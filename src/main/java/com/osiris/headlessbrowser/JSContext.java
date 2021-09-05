@@ -40,7 +40,7 @@ public class JSContext extends AbstractScriptRunner {
         // Register all JavaScript Web-APIs:
         // APIs in this list get loaded into this JSContext in the order they were added to this list.
         // If you want to add an api that depends on another one make sure to add it after that one.
-        // Note that override should be false by default.
+        // Note that override should be false.
         try {
             registerAndLoad("console", console, true); // If true overrides any existing variable with the same name
         } catch (Exception exception) {

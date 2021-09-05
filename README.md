@@ -22,9 +22,10 @@ Browsers you have to purchase, or browsers with very limited and deprecated Java
 Thats why this project exists.
 
 ## Features
- - [x] Rich Java-API | Provides various methods for modifying everything about the browser. Also uses Jsoup for editing HTML directly in Java.
- - [x] Up-To-Date | Uses the blazing fast GraalJS-Engine for handling latest JavaScript (with latest ECMA specifications).
  - [x] Free & Open-Source
+ - [x] Jsoup for HTML | Uses Jsoup for editing HTML directly in Java.
+ - [x] Up-To-Date | Uses the blazing fast GraalJS-Engine for handling latest JavaScript code (with latest ECMA specifications).
+ - [x] Access to JS-Web APIs
  - [ ] JS-Web-APIs supported | Has all, standard JavaScript Web-APIs implemented.
 
 ## Contribute/Build
