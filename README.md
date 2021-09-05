@@ -17,9 +17,13 @@ If you are working on an implementation open an issue to keep track of who is wo
 [Read this to get started.](how-to-implement-a-js-web-api.md)
 
 ## Motivation
-There are only two types of headless Java browsers currently available:
-Browsers you have to purchase, or browsers with very limited and deprecated JavaSript-Engines.
-Thats why this project exists.
+I tried multiple different things like JCEF, Pandomium, Selenium, Selenium based maven dependencies like JWebdriver, 
+HtmlUnit and maybe some more I don't remember now, but all have one thing in common. 
+They have some kind of very nasty caveat.
+
+That's why this project exists, to create a completely new browser, not dependent on Chromium or Waterfox or whatever.
+We use Jsoup to handle HTML and the GraalJS engine to handle JavaScript. 
+Both are already working and implemented. Only thing left is implementing the JS Web-APIs.
 
 ## Features
  - [x] Free & Open-Source
