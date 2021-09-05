@@ -25,7 +25,7 @@ Thats why this project exists.
  - [x] Free & Open-Source
  - [x] Jsoup for HTML | Uses Jsoup for editing HTML directly in Java.
  - [x] Up-To-Date | Uses the blazing fast GraalJS-Engine for handling latest JavaScript code (with latest ECMA specifications).
- - [x] Access to JS-Web APIs
+ - [x] Access to JS-Web APIs from within Java using `JSContext`
  - [ ] JS-Web-APIs supported | Has all, standard JavaScript Web-APIs implemented.
 
 ## Contribute/Build
