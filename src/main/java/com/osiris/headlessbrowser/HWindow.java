@@ -17,12 +17,10 @@ import java.util.Map;
  * @author Osiris-Team
  */
 public class HWindow implements AutoCloseable {
-    // Options
+    private final JSContext jsContext = new JSContext(this);
     private HBrowser parentBrowser;
     private boolean enableJavaScript;
     private Map<String, String> customHeaders;
-
-    private final JSContext jsContext = new JSContext(this);
     private Document document;
     private String authority;
     private String javaScriptCode;
@@ -47,7 +45,7 @@ public class HWindow implements AutoCloseable {
         document = Jsoup.connect(url).headers(headers)
                 .get();
 
-        if (enableJavaScript){
+        if (enableJavaScript) {
             int scriptElements = 0;
             javaScriptCode = "";
             for (Element e :

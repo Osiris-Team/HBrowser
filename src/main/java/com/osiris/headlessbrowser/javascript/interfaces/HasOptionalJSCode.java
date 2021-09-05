@@ -1,4 +1,4 @@
-package com.osiris.headlessbrowser.javascript;
+package com.osiris.headlessbrowser.javascript.interfaces;
 
 public interface HasOptionalJSCode {
 

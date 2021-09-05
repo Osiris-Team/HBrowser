@@ -1,6 +1,6 @@
 package com.osiris.headlessbrowser;
 
-import com.osiris.headlessbrowser.javascript.JS_API_Console;
+import com.osiris.headlessbrowser.javascript.apis.JS_API_Console;
 import com.osiris.headlessbrowser.javascript.exceptions.DuplicateRegisteredId;
 import de.undercouch.citeproc.VariableWrapper;
 import de.undercouch.citeproc.VariableWrapperParams;
@@ -48,10 +48,6 @@ public class JSContext extends AbstractScriptRunner {
             throw new RuntimeException(exception);
         }
 
-    }
-
-    public JS_API_Console getConsole() {
-        return console;
     }
 
     /**
@@ -132,6 +128,10 @@ public class JSContext extends AbstractScriptRunner {
             r.put(k, o);
         }
         return r;
+    }
+
+    public JS_API_Console getConsole() {
+        return console;
     }
 
     /**

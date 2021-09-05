@@ -11,9 +11,10 @@ HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
  - Make sure to watch this repository to get notified of future updates.
 
 ## IN-DEV | CONTRIBUTIONS NEEDED
-To simulate a browser nowadays we need to provide all of these web apis: https://developer.mozilla.org/en-US/docs/Web/API
-See package `com.osiris.headlessbrowser.javascript` for already implemented apis. Its indeed a big amount of work for one single person,
-but if we work together we should be able to implement all of them within some days. [Read this to get started.](how-to-implement-a-js-web-api.md)
+To simulate a browser nowadays we need to provide all of these [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API).
+It's indeed a big amount of work for one single person,
+but if we work together we should be able to implement all of them within some days.
+See package `com.osiris.headlessbrowser.javascript.apis` for already implemented apis. [Read this to get started.](how-to-implement-a-js-web-api.md)
 If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
 
 ## Motivation
