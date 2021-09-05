@@ -11,7 +11,14 @@ public class HBrowser {
     }
 
     public HWindow openNewWindow() {
-        return new HWindow();
+        return new HWindowBuilder(this).build();
+    }
+
+    /**
+     * Returns the {@link HWindowBuilder} to build custom window.
+     */
+    public HWindowBuilder openNewCustomWindow() {
+        return new HWindowBuilder(this);
     }
 
     public void closeWindow(HWindow HWindow) {
