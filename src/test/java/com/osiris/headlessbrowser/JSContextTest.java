@@ -1,7 +1,6 @@
 package com.osiris.headlessbrowser;
 
 import de.undercouch.citeproc.script.ScriptRunnerException;
-import javafx.scene.layout.HBox;
 import org.graalvm.polyglot.Context;
 import org.junit.jupiter.api.Test;
 
