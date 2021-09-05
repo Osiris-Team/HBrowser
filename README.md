@@ -10,6 +10,13 @@ HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
  - [Click here for maven/gradle/sbt/leinigen instructions.](https://jitpack.io/#Osiris-Team/Headless-Browser)
  - Make sure to watch this repository to get notified of future updates.
 
+## Features
+- [x] Free & Open-Source
+- [x] Uses Jsoup for editing HTML directly in Java.
+- [x] Uses the blazing fast GraalJS-Engine, which supports latest JavaScript code (with latest ECMA specifications).
+- [x] Access to JS-Web APIs from within Java using `JSContext`
+- [ ] Has all, standard [JavaScript Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API) implemented.
+
 ## IN-DEV | CONTRIBUTIONS NEEDED
 To simulate a browser nowadays we need to provide all of these [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API).
 It's indeed a big amount of work for one single person,
@@ -25,13 +32,6 @@ They have some kind of very nasty caveat.
 That's why this project exists, to create a completely new browser, not dependent on Chromium or Waterfox or whatever.
 We use Jsoup to handle HTML and the GraalJS engine to handle JavaScript. 
 Both are already working and implemented. Only thing left is implementing the JS Web-APIs.
-
-## Features
- - [x] Free & Open-Source
- - [x] Uses Jsoup for editing HTML directly in Java.
- - [x] Uses the blazing fast GraalJS-Engine, which supports latest JavaScript code (with latest ECMA specifications).
- - [x] Access to JS-Web APIs from within Java using `JSContext`
- - [ ] Has all, standard [JavaScript Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API) implemented.
 
 ## Contribute/Build
 
