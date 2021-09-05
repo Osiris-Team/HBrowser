@@ -121,4 +121,12 @@ public class HWindow implements AutoCloseable {
     public void setEnableJavaScript(boolean enableJavaScript) {
         this.enableJavaScript = enableJavaScript;
     }
+
+    public Map<String, String> getCustomHeaders() {
+        return customHeaders;
+    }
+
+    public void setCustomHeaders(Map<String, String> customHeaders) {
+        this.customHeaders = customHeaders;
+    }
 }
