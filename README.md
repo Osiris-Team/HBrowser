@@ -26,7 +26,7 @@ Thats why this project exists.
  - [x] Uses Jsoup for editing HTML directly in Java.
  - [x] Uses the blazing fast GraalJS-Engine, which supports latest JavaScript code (with latest ECMA specifications).
  - [x] Access to JS-Web APIs from within Java using `JSContext`
- - [ ] Has all, standard JavaScript Web-APIs implemented.
+ - [ ] Has all, standard [JavaScript Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API) implemented.
 
 ## Contribute/Build
 
