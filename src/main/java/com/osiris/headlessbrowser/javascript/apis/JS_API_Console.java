@@ -98,7 +98,11 @@ public class JS_API_Console implements HasOptionalJSCode {
     }
 
     private String formatData(String... data){
-        if (data!=null) return Arrays.toString(data);
+        if (data!=null)
+            if (data.length==1)
+                return data[0];
+            else
+                return Arrays.toString(data);
         else return null;
     }
 
