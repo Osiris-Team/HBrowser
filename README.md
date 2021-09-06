@@ -4,6 +4,15 @@ A headless browser written in Java.
 HBrowser hBrowser = new HBrowser();
 HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
 ```
+## STATUS: IN-DEV / CONTRIBUTIONS NEEDED
+This browser can already load pages and execute their JavaScript code. Problem is that most of the JavaScript code out there
+uses so called [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API), which get shipped with each browser.
+Every browser implements them differently, but they are more or less the same accross all browsers.
+Since this projects aim is to create a new browser written in Java, completly independent from Chromium, we will need to implement those APIs
+by ourselfs. It's indeed a big amount of work for one single person,
+but if we work together we should be able to implement all of them within some days and make this a browser with full JavaScript support.
+[Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
+If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
 
 ## Installation
  - Java 8 or higher required.
@@ -16,13 +25,6 @@ HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
 - [x] Uses the blazing fast GraalJS-Engine, which supports latest JavaScript code (with latest ECMA specifications).
 - [x] Access to all JS-Web APIs from within Java
 - [ ] Has all, standard [JavaScript Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API) implemented.
-
-## IN-DEV | CONTRIBUTIONS NEEDED
-To simulate a browser nowadays we need to provide all of these [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API).
-It's indeed a big amount of work for one single person,
-but if we work together we should be able to implement all of them within some days and make this a browser with full JavaScript support.
-[Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
-If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
 
 ## Motivation
 I tried multiple different things like JCEF, Pandomium, Selenium, Selenium based maven dependencies like JWebdriver, 
