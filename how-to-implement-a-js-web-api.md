@@ -25,7 +25,7 @@
 - Canvas API
 - Channel Messaging API
 - Clipboard API
-- Console API
+- ~~Console API~~
 - Contact Picker API
 - Content Index API
 - Credential Management API
