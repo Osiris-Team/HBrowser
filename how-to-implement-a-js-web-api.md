@@ -25,7 +25,6 @@
 - Canvas API
 - Channel Messaging API
 - Clipboard API
-- Console API
 - Contact Picker API
 - Content Index API
 - Credential Management API
@@ -115,3 +114,6 @@
 - Websockets API
 ### X
 - XMLHttpRequest
+
+## DONE
+- Console API
