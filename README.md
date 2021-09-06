@@ -14,7 +14,7 @@ HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
 - [x] Free & Open-Source
 - [x] Uses Jsoup for editing HTML directly in Java.
 - [x] Uses the blazing fast GraalJS-Engine, which supports latest JavaScript code (with latest ECMA specifications).
-- [x] Access to JS-Web APIs from within Java using `JSContext`
+- [x] Access to all JS-Web APIs from within Java
 - [ ] Has all, standard [JavaScript Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API) implemented.
 
 ## IN-DEV | CONTRIBUTIONS NEEDED
