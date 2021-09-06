@@ -31,6 +31,12 @@ public class HWindow implements AutoCloseable {
         this.customHeaders = customHeaders;
     }
 
+    /**
+     * Load the contents from the provided url into the current {@link HWindow}.
+     * @param url Examples: https://www.wikipedia.org or wikipedia.org.
+     * @return the current {@link HWindow} for chained method calls.
+     * @throws IOException
+     */
     public HWindow load(String url) throws IOException {
         if (!url.startsWith("http"))
             url = "https://" + url;
@@ -83,10 +89,17 @@ public class HWindow implements AutoCloseable {
         return this;
     }
 
+    /**
+     * Returns the current HTML-Document. <br>
+     * If no page has been loaded this will return null. <br>
+     */
     public Document getDocument() {
         return document;
     }
 
+    /**
+     * Returns the JavaScript context. <br>
+     */
     public JSContext getJsContext() {
         return jsContext;
     }
@@ -95,6 +108,10 @@ public class HWindow implements AutoCloseable {
         return authority;
     }
 
+    /**
+     * Returns the complete, current JavaScript code. <br>
+     * If no page has been loaded this will return null. <br>
+     */
     public String getJavaScriptCode() {
         return javaScriptCode;
     }

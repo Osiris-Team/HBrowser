@@ -7,9 +7,9 @@ package com.osiris.headlessbrowser;
  */
 public class HBrowser {
 
-    public HBrowser() {
-    }
-
+    /**
+     * Creates and returns a new {@link HWindow}, built with defaults.
+     */
     public HWindow openNewWindow() {
         return new HWindowBuilder(this).build();
     }
@@ -21,6 +21,16 @@ public class HBrowser {
         return new HWindowBuilder(this);
     }
 
+    /**
+     * Closes the provided {@link HWindow}. <br>
+     * A {@link HWindow} can automatically be closed like this:
+     * <pre>
+     * try(HWindow hWindow = openNewWindow()){
+     *     // Do stuff here...
+     * }
+     * </pre>
+     * @param HWindow
+     */
     public void closeWindow(HWindow HWindow) {
         HWindow.close();
     }
