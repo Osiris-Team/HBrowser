@@ -7,7 +7,8 @@ HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
 ## STATUS: IN-DEV
 #### Summary
 - This browser can load pages and execute JavaScript code.
-- Contributions are needed for implementing [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API)
+- Contributions are needed for implementing [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API). 
+- [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
 
 This browser can already load pages and execute their JavaScript code. Problem is that most of the JavaScript code out there
 uses so called [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API), which get shipped with each browser.
