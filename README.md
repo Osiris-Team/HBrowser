@@ -54,7 +54,7 @@ If you don't know how to import a GitHub project, check out this guide: [Intelli
   - Built with [Maven](https://maven.apache.org/), profiles: clean package
 
 ## Links
-Insert_important_links_here
+ - https://spec.whatwg.org/ | Details about JS Web-APIs
 
 ## Examples
 Insert_usage_examples_here
