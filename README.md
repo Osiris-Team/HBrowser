@@ -55,6 +55,7 @@ If you don't know how to import a GitHub project, check out this guide: [Intelli
 
 ## Links
  - https://spec.whatwg.org/ | Details about JS Web-APIs
+ - https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
 
 ## Examples
 Insert_usage_examples_here
