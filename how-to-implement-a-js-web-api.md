@@ -1,6 +1,6 @@
 # How to implement a JavaScript Web-API
 
-1. Choose the JS Web-API you want to implement from the list below, and find its documentation. The documentation can most likely be found on these websites:
+1. Choose the JS Web-API you want to implement from the TODO list below, and find its documentation. The documentation can most likely be found on these websites:
     - https://www.w3.org/TR/?tag=webapi
     - https://developer.mozilla.org/en-US/docs/Web/API
     - https://spec.whatwg.org
