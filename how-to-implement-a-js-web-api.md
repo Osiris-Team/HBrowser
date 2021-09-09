@@ -7,7 +7,7 @@
    - https://developer.mozilla.org/en-US/docs/Web/API
       - https://spec.whatwg.org
 # 2. 
-### Read the [JS_API_Example](https://github.com/Osiris-Team/Headless-Browser/blob/main/src/main/java/com/osiris/headlessbrowser/javascript/apis/JS_API_Example.java) class for further details.
+### Read the [JS_API_Example](https://github.com/Osiris-Team/Headless-Browser/blob/main/src/main/java/com/osiris/headlessbrowser/javascript/JS_API_Example.java) class for further details.
 
 ## TODO
 
