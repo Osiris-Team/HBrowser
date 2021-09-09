@@ -1,7 +1,9 @@
 # Research
+
 Organized list containing easy to forget things.
 
 ## GraalJS - JavaScript Engine
+
 Problem: `eval()` fails to detect correct binding when nested classes are used (at least in tests).
 
 ```java
@@ -18,4 +20,7 @@ public class JS_API_Test extends JavaScriptAPI {
     }
 }
 ```
+
 Fix: Simply don't use nested classes/objects.
+
+Problem: ``

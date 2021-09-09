@@ -1,6 +1,6 @@
 package com.osiris.headlessbrowser.javascript.apis;
 
-import com.osiris.headlessbrowser.javascript.interfaces.HasOptionalJSCode;
+import com.osiris.headlessbrowser.javascript.JS_API;
 import com.osiris.headlessbrowser.javascript.interfaces.Sendable;
 import org.graalvm.polyglot.HostAccess;
 
@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @author Osiris-Team
  */
-public class JS_API_Console implements HasOptionalJSCode {
+public class JS_API_Console implements JS_API {
     // This class gets loaded into the JSContext and assigned to a variable with the given name in the JSContext.
     // That means that all methods/functions and variables/fields
     // annotated with @HostAccess.Export are available inside of actual JavaScript code.
@@ -58,10 +58,16 @@ public class JS_API_Console implements HasOptionalJSCode {
     }
 
     @Override
-    public String getJSCode() {
+    public String getGlobalVariableName() {
+        return "console";
+    }
+
+    @Override
+    public String getOptionalJSCode() {
         // Since the function console.assert() is named assert we cannot define it in Java
         // and we must do it this way:
-        return "function myAssertFunc(bol, ...data) {\n" +
+        return "" +
+                "function myAssertFunc(bol, ...data) {\n" +
                 "    if (bol === true) return;\n" +
                 "    let message = 'Assertion failed!';\n" +
                 "    if (data.length === 0) data[0] = message;\n" +
@@ -97,9 +103,9 @@ public class JS_API_Console implements HasOptionalJSCode {
         // Do nothing.
     }
 
-    private String formatData(String... data){
-        if (data!=null)
-            if (data.length==1)
+    private String formatData(String... data) {
+        if (data != null)
+            if (data.length == 1)
                 return data[0];
             else
                 return Arrays.toString(data);

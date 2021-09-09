@@ -33,6 +33,7 @@ public class HWindow implements AutoCloseable {
 
     /**
      * Load the contents from the provided url into the current {@link HWindow}.
+     *
      * @param url Examples: https://www.wikipedia.org or wikipedia.org.
      * @return the current {@link HWindow} for chained method calls.
      * @throws IOException

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.osiris.headlessbrowser</groupId>
     <artifactId>Headless-Browser</artifactId>
-    <version>ALPHA-0.0.2</version>
+    <version>ALPHA-0.0.3</version>
     <packaging>jar</packaging>
 
     <name>Headless-Browser</name>
@@ -19,9 +19,16 @@
 
     <dependencies>
         <dependency>
-            <groupId>de.undercouch</groupId>
-            <artifactId>citeproc-java</artifactId>
-            <version>2.0.0</version>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>21.2.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.js</groupId>
+            <artifactId>js</artifactId>
+            <version>21.2.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
@@ -37,7 +44,8 @@
     </dependencies>
 
     <build>
-        <finalName>${project.name}</finalName> <!-- If you'd like to have version information on your output jar, remove this. -->
+        <finalName>${project.name}
+        </finalName> <!-- If you'd like to have version information on your output jar, remove this. -->
         <defaultGoal>clean package</defaultGoal>
         <plugins>
 
@@ -113,7 +121,8 @@
                             <goal>test-resource-bundle</goal>
                         </goals>
                         <configuration>
-                            <doclint>none</doclint> <!-- Remove this, if you want to get build errors when there is an issue with a comment/documentation. -->
+                            <doclint>none
+                            </doclint> <!-- Remove this, if you want to get build errors when there is an issue with a comment/documentation. -->
                             <detectOfflineLinks>false</detectOfflineLinks>
                         </configuration>
                     </execution>

@@ -29,6 +29,7 @@ public class HBrowser {
      *     // Do stuff here...
      * }
      * </pre>
+     *
      * @param HWindow
      */
     public void closeWindow(HWindow HWindow) {

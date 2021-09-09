@@ -10,7 +10,6 @@ public class CodeStyleTest {
     void test() throws IOException {
         HBrowser hBrowser = new HBrowser();
         HWindow hWindow = hBrowser.openNewCustomWindow().enableJavaScript(false).build()
-        .load("wikipedia.org");
-        System.out.println(hWindow.getDocument().toString());
+                .load("wikipedia.org");
     }
 }
