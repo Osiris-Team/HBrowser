@@ -1,12 +1,18 @@
 package com.osiris.headlessbrowser.javascript.apis.dom;
 
+import com.osiris.headlessbrowser.javascript.JS_API;
 import org.graalvm.polyglot.HostAccess;
 
 /**
  * Standard from: https://dom.spec.whatwg.org/
  * Checked: 07.09.2021
  */
-public class JS_Event_S {
+public class JS_Event_S implements JS_API {
+
+    @HostAccess.Export
+    public JS_Event_S(String type, JS_EventInit eventInitDict) {
+
+    }
 
     @HostAccess.Export
     public final short NONE = 0;
@@ -16,6 +22,16 @@ public class JS_Event_S {
     public final short AT_TARGET = 2;
     @HostAccess.Export
     public final short BUBBLING_PHASE = 3;
+
+    @Override
+    public String getGlobalVariableName() {
+        return "Event";
+    }
+
+    @Override
+    public String getOptionalJSCode() {
+        return null;
+    }
 
 /*
 

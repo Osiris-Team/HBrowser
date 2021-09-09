@@ -1,6 +1,9 @@
 package com.osiris.headlessbrowser;
 
+import com.osiris.headlessbrowser.javascript.JS_API;
+import com.osiris.headlessbrowser.javascript.exceptions.DuplicateFoundException;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.HostAccess;
 import org.junit.jupiter.api.Test;
 
 public class GraalJSPlayground {
@@ -23,4 +26,13 @@ public class GraalJSPlayground {
         // MyJavaClass with the static field HELLO so it can be accessed via MyJavaClass.HELLO.
     }
 
+    @Test
+    void testDependentObjects() throws DuplicateFoundException {
+
+        JSContext context = new HBrowser().openNewWindow().getJsContext()
+                //.registerAndLoad(new JS_Object(), false)
+                .registerAndLoad(new API_1(), false);
+
+        context.eval("api1.getJsObject().printOut();");
+    }
 }

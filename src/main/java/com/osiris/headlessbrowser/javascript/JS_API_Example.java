@@ -53,28 +53,8 @@ public class JS_API_Example implements JS_API {
 
     }
 
-    // If a JS Web-API needs special objects create them like below in the same package. (nested only for demonstration)
-    class JS_CustomObject implements JS_API {
-
-        @Override
-        public String getGlobalVariableName() {
-            return "CustomObject";
-        }
-
-        @Override
-        public String getOptionalJSCode() {
-            return null;
-        }
-
-        @HostAccess.Export
-        public void doSomething() {
-
-        }
-    }
-
     /**
      * Finally register/load your JS_API into the {@link com.osiris.headlessbrowser.JSContext}.
-     * Remember to load any custom objects it needs first.
      */
 
 }

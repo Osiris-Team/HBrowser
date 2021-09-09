@@ -47,7 +47,6 @@ public class JSContext implements AutoCloseable {
             //...
 
             globalVariables.clear();
-            globalVariables = null;
             out.println("Loaded all JS Web-APIs into successfully.");
         } catch (Exception exception) {
             System.err.println("Failed to load one/multiple JavaScript Web-API(s) into the current JavaScript-Context! Details:");
@@ -64,7 +63,7 @@ public class JSContext implements AutoCloseable {
     /**
      * Registers and loads this API into the provided {@link JSContext}. <br>
      */
-    public void registerAndLoad(JS_API jsAPI, boolean override) throws DuplicateFoundException {
+    public JSContext registerAndLoad(JS_API jsAPI, boolean override) throws DuplicateFoundException {
         out.println("Loading JS Web-API: " + jsAPI.getClass().getName() + " into context...");
 
         String globalVarName = jsAPI.getGlobalVariableName();
@@ -81,6 +80,8 @@ public class JSContext implements AutoCloseable {
 
         if (jsAPI.getOptionalJSCode() != null)
             eval(jsAPI.getOptionalJSCode());
+
+        return this;
     }
 
     public JS_API_Console getConsole() {
