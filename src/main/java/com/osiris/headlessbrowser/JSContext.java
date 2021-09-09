@@ -1,7 +1,7 @@
 package com.osiris.headlessbrowser;
 
 import com.osiris.headlessbrowser.javascript.JS_API;
-import com.osiris.headlessbrowser.javascript.apis.JS_API_Console;
+import com.osiris.headlessbrowser.javascript.apis.console.JS_API_Console;
 import com.osiris.headlessbrowser.javascript.exceptions.DuplicateFoundException;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
@@ -56,86 +56,6 @@ public class JSContext implements AutoCloseable {
 
     }
 
-    /**
-     * Recursively convert a JavaScript value to a Java object
-     *
-     * @param v the value to convert
-     * @return the object
-     */
-    private static Object convert(Value v) {
-        Object o = v;
-        if (v.isNull()) {
-            o = null;
-        } else if (v.isBoolean()) {
-            o = v.asBoolean();
-        } else if (v.isDate()) {
-            o = v.asDate();
-        } else if (v.isDuration()) {
-            o = v.asDuration();
-        } else if (v.isHostObject()) {
-            o = v.asHostObject();
-        } else if (v.isInstant()) {
-            o = v.asInstant();
-        } else if (v.isNativePointer()) {
-            o = v.asNativePointer();
-        } else if (v.isNumber()) {
-            if (v.fitsInInt()) {
-                o = v.asInt();
-            } else if (v.fitsInLong()) {
-                o = v.asLong();
-            } else if (v.fitsInDouble()) {
-                o = v.asDouble();
-            } else {
-                throw new IllegalStateException("Unknown type of number");
-            }
-        } else if (v.isProxyObject()) {
-            o = v.asProxyObject();
-        } else if (v.isString()) {
-            o = v.asString();
-        } else if (v.isTime()) {
-            o = v.asTime();
-        } else if (v.isTimeZone()) {
-            o = v.asTimeZone();
-        } else if (v.hasArrayElements()) {
-            o = convertArray(v);
-        } else if (v.hasMembers()) {
-            o = convertObject(v);
-        }
-        return o;
-    }
-
-    /**
-     * Recursively convert a JavaScript array to a list
-     *
-     * @param arr the array to convert
-     * @return the list
-     */
-    private static List<Object> convertArray(Value arr) {
-        List<Object> l = new ArrayList<>();
-        for (int i = 0; i < arr.getArraySize(); ++i) {
-            Value v = arr.getArrayElement(i);
-            Object o = convert(v);
-            l.add(o);
-        }
-        return l;
-    }
-
-    /**
-     * Recursively convert a JavaScript object to a map
-     *
-     * @param obj the object to convert
-     * @return the map
-     */
-    private static Map<String, Object> convertObject(Value obj) {
-        Map<String, Object> r = new LinkedHashMap<>();
-        for (String k : obj.getMemberKeys()) {
-            Value v = obj.getMember(k);
-            Object o = convert(v);
-            r.put(k, o);
-        }
-        return r;
-    }
-
     @Override
     public void close() {
         rawContext.close();
@@ -144,10 +64,10 @@ public class JSContext implements AutoCloseable {
     /**
      * Registers and loads this API into the provided {@link JSContext}. <br>
      */
-    public void registerAndLoad(JS_API jsWebApiObj, boolean override) throws DuplicateFoundException {
-        out.println("Loading JS Web-API: " + jsWebApiObj.getClass().getName() + " into context...");
+    public void registerAndLoad(JS_API jsAPI, boolean override) throws DuplicateFoundException {
+        out.println("Loading JS Web-API: " + jsAPI.getClass().getName() + " into context...");
 
-        String globalVarName = jsWebApiObj.getGlobalVariableName();
+        String globalVarName = jsAPI.getGlobalVariableName();
 
         if (!override && globalVariables.contains(globalVarName))
             throw new DuplicateFoundException("Duplicate global variable name found for '" + globalVarName + "'. Global variable names must be unique!");
@@ -157,10 +77,10 @@ public class JSContext implements AutoCloseable {
         if (!override && rawContext.getBindings("js").getMember(globalVarName) != null)
             throw new DuplicateFoundException("Failed to register because of already existing/registered id '" + globalVarName + "'.");
 
-        rawContext.getBindings("js").putMember(globalVarName, jsWebApiObj);
+        rawContext.getBindings("js").putMember(globalVarName, jsAPI);
 
-        if (jsWebApiObj.getOptionalJSCode() != null)
-            eval(jsWebApiObj.getOptionalJSCode());
+        if (jsAPI.getOptionalJSCode() != null)
+            eval(jsAPI.getOptionalJSCode());
     }
 
     public JS_API_Console getConsole() {
@@ -192,14 +112,6 @@ public class JSContext implements AutoCloseable {
 
     public void eval(Reader reader) throws IOException {
         rawContext.eval(Source.newBuilder("js", reader, null).cached(false).build());
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T convert(Object o, Class<T> type) {
-        if (type != Object.class && o instanceof Value) {
-            o = convert((Value) o);
-        }
-        return (T) o;
     }
 
 }

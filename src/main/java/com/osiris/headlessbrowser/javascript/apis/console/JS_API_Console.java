@@ -1,4 +1,4 @@
-package com.osiris.headlessbrowser.javascript.apis;
+package com.osiris.headlessbrowser.javascript.apis.console;
 
 import com.osiris.headlessbrowser.javascript.JS_API;
 import com.osiris.headlessbrowser.javascript.interfaces.Sendable;

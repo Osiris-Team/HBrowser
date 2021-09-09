@@ -23,5 +23,4 @@ public class GraalJSPlayground {
         // MyJavaClass with the static field HELLO so it can be accessed via MyJavaClass.HELLO.
     }
 
-
 }

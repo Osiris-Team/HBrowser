@@ -1,16 +1,13 @@
 # How to implement a JavaScript Web-API
 
-1. Choose the JS Web-API you want to implement from the TODO list below, and find its documentation. The documentation
-   can most likely be found on these websites:
-    - https://www.w3.org/TR/?tag=webapi
-    - https://developer.mozilla.org/en-US/docs/Web/API
-    - https://spec.whatwg.org
-3. Simply copy
-   the [JS_API_Console](https://github.com/Osiris-Team/Headless-Browser/blob/main/src/main/java/com/osiris/headlessbrowser/javascript/apis/JS_API_Console.java)
-   class and paste it with another name into the same package.
-3. Register your new class in
-   the [JSContext](https://github.com/Osiris-Team/Headless-Browser/blob/main/src/main/java/com/osiris/headlessbrowser/JSContext.java)
-   class, so it gets loaded into it when the user loads a page.
+# 1. 
+### Choose the JS Web-API you want to implement from the TODO list below, and find its documentation. 
+### The documentation can most likely be found on these websites:
+ - https://www.w3.org/TR/?tag=webapi
+   - https://developer.mozilla.org/en-US/docs/Web/API
+      - https://spec.whatwg.org
+# 2. 
+### Read the [JS_API_Example](https://github.com/Osiris-Team/Headless-Browser/blob/main/src/main/java/com/osiris/headlessbrowser/javascript/apis/JS_API_Example.java) class for further details.
 
 ## TODO
 
