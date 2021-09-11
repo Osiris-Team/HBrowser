@@ -6,7 +6,7 @@ import org.graalvm.polyglot.HostAccess;
 public class API_1 implements JS_API {
 
     @Override
-    public String getGlobalVariableName() {
+    public String getJSGlobalVarName() {
         return "api1";
     }
 

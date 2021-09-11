@@ -11,7 +11,7 @@ public class JS_API_Document implements JS_API {
 
 
     @Override
-    public String getGlobalVariableName() {
+    public String getJSGlobalVarName() {
         return "document";
     }
 

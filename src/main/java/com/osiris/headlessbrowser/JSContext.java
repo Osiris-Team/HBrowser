@@ -2,19 +2,19 @@ package com.osiris.headlessbrowser;
 
 import com.osiris.headlessbrowser.javascript.JS_API;
 import com.osiris.headlessbrowser.javascript.apis.console.JS_API_Console;
+import com.osiris.headlessbrowser.javascript.apis.dom.JS_Event_S;
 import com.osiris.headlessbrowser.javascript.exceptions.DuplicateFoundException;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 /**
- * JavaScript-Context.
+ * JavaScript-Context. <br>
+ * Something like a long String containing all the previously executed JS code. <br>
  *
  * @author Osiris-Team
  */
@@ -22,16 +22,17 @@ public class JSContext implements AutoCloseable {
 
     private final HWindow window;
     private final Context rawContext = Context.newBuilder("js")
-            .allowHostClassLookup(s -> true)
             .build();
 
     // Currently used for debugging
     private final PrintStream out = System.out;
     // Web-APIs:
     private final JS_API_Console console = new JS_API_Console(System.out);
-    private List<String> globalVariables = new ArrayList<>();
+    private List<String> globalVarNames = new ArrayList<>();
+    private List<String> globalClassNames = new ArrayList<>();
 
     public JSContext(HWindow window) {
+        Objects.requireNonNull(window);
         out.println("Created new JavaScript context for '" + window + "'.");
         this.window = window;
 
@@ -42,11 +43,14 @@ public class JSContext implements AutoCloseable {
         try {
             out.println("Loading JS Web-APIs into context...");
             registerAndLoad(console, true); // If true overrides any existing variable with the same name
+            // DOM API:
+            registerAndLoad(new JS_Event_S(), false);
+
             // Add future apis here:
             //registerAndLoad(example, false);
             //...
 
-            globalVariables.clear();
+            globalVarNames.clear();
             out.println("Loaded all JS Web-APIs into successfully.");
         } catch (Exception exception) {
             System.err.println("Failed to load one/multiple JavaScript Web-API(s) into the current JavaScript-Context! Details:");
@@ -61,26 +65,31 @@ public class JSContext implements AutoCloseable {
     }
 
     /**
-     * Registers and loads this API into the provided {@link JSContext}. <br>
+     * Registers and loads the provided JS-API into the current {@link JSContext}. <br>
+     * A new global variable gets created for the provided JS-API with its {@link JS_API#getJSGlobalVarName()}.
+     * @param jsAPI the JavaScript API to add.
+     * @param override if a global variable with the same name already exists, should it get overwritten?
      */
     public JSContext registerAndLoad(JS_API jsAPI, boolean override) throws DuplicateFoundException {
-        out.println("Loading JS Web-API: " + jsAPI.getClass().getName() + " into context...");
+        out.print("Loading JS Web-API: '" + jsAPI.getClass().getName() + "' into context...");
+        out.flush();
 
-        String globalVarName = jsAPI.getGlobalVariableName();
-
-        if (!override && globalVariables.contains(globalVarName))
+        String globalVarName = jsAPI.getJSGlobalVarName();
+        Objects.requireNonNull(globalVarName);
+        if (!override && globalVarNames.contains(globalVarName))
             throw new DuplicateFoundException("Duplicate global variable name found for '" + globalVarName + "'. Global variable names must be unique!");
 
-        globalVariables.add(globalVarName);
+        globalVarNames.add(globalVarName);
 
         if (!override && rawContext.getBindings("js").getMember(globalVarName) != null)
-            throw new DuplicateFoundException("Failed to register because of already existing/registered id '" + globalVarName + "'.");
+            throw new DuplicateFoundException("Failed to register because of already existing/registered global class name '" + globalVarName + "'.");
 
         rawContext.getBindings("js").putMember(globalVarName, jsAPI);
 
         if (jsAPI.getOptionalJSCode() != null)
             eval(jsAPI.getOptionalJSCode());
 
+        out.println(" SUCCESS!");
         return this;
     }
 

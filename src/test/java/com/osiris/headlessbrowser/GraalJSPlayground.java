@@ -11,13 +11,13 @@ public class GraalJSPlayground {
     @Test
     void testStaticAccessFromJSCode() {
 
-        Context ctx = Context.newBuilder("js").build();
+        Context ctx = Context.newBuilder("js").allowHostClassLookup(s->true).build();
 
         Object obj = new MyJavaClass();
 
         ctx.getBindings("js").putMember("myJavaClass", new MyJavaClass());
 
-        ctx.eval("js", "var MyJavaClass = Java.type('MyJavaClass');" +
+        ctx.eval("js", "var MyJavaClass = Java.type('"+MyJavaClass.class.getCanonicalName()+"');" +
                 "console.log(MyJavaClass.HELLO);");
 
         ctx.eval("js", "console.log(MyJavaClass.HELLO);");

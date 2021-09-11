@@ -4,14 +4,20 @@ import com.osiris.headlessbrowser.javascript.JS_API;
 import org.graalvm.polyglot.HostAccess;
 
 /**
- * Standard from: https://dom.spec.whatwg.org/
- * Checked: 07.09.2021
+ * Fake statics class. <br>
+ * Standard from: https://dom.spec.whatwg.org/ <br>
+ * Checked: 07.09.2021 <br>
  */
 public class JS_Event_S implements JS_API {
 
-    @HostAccess.Export
-    public JS_Event_S(String type, JS_EventInit eventInitDict) {
+    @Override
+    public String getJSGlobalVarName() {
+        return "Event";
+    }
 
+    @Override
+    public String getOptionalJSCode() {
+        return null;
     }
 
     @HostAccess.Export
@@ -22,58 +28,4 @@ public class JS_Event_S implements JS_API {
     public final short AT_TARGET = 2;
     @HostAccess.Export
     public final short BUBBLING_PHASE = 3;
-
-    @Override
-    public String getGlobalVariableName() {
-        return "Event";
-    }
-
-    @Override
-    public String getOptionalJSCode() {
-        return null;
-    }
-
-/*
-
-    [Exposed=(Window,Worker,AudioWorklet)]
-    interface Event {
-        constructor(DOMString type, optional EventInit eventInitDict = {});
-
-        readonly attribute DOMString type;
-        readonly attribute EventTarget? target;
-        readonly attribute EventTarget? srcElement; // legacy
-        readonly attribute EventTarget? currentTarget;
-        sequence<EventTarget> composedPath();
-
-  const unsigned short NONE = 0;
-  const unsigned short CAPTURING_PHASE = 1;
-  const unsigned short AT_TARGET = 2;
-  const unsigned short BUBBLING_PHASE = 3;
-        readonly attribute unsigned short eventPhase;
-
-        undefined stopPropagation();
-        attribute boolean cancelBubble; // legacy alias of .stopPropagation()
-        undefined stopImmediatePropagation();
-
-        readonly attribute boolean bubbles;
-        readonly attribute boolean cancelable;
-        attribute boolean returnValue;  // legacy
-        undefined preventDefault();
-        readonly attribute boolean defaultPrevented;
-        readonly attribute boolean composed;
-
-  [LegacyUnforgeable] readonly attribute boolean isTrusted;
-        readonly attribute DOMHighResTimeStamp timeStamp;
-
-        undefined initEvent(DOMString type, optional boolean bubbles = false, optional boolean cancelable = false); // legacy
-    };
-
-    dictionary EventInit {
-        boolean bubbles = false;
-        boolean cancelable = false;
-        boolean composed = false;
-    };
-
-
- */
 }

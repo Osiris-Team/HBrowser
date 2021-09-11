@@ -16,10 +16,30 @@ import java.util.List;
  * @author Osiris-Team
  */
 public class JS_API_Console implements JS_API {
-    // This class gets loaded into the JSContext and assigned to a variable with the given name in the JSContext.
-    // That means that all methods/functions and variables/fields
-    // annotated with @HostAccess.Export are available inside of actual JavaScript code.
-    // The method log(...) below for example, can be accessed in JavaScript via console.log('Hello!');
+
+    @Override
+    public String getJSGlobalVarName() {
+        return "console";
+    }
+
+    @Override
+    public String getOptionalJSCode() {
+        // Since the function console.assert() is named assert we cannot define it in Java
+        // and we must do it this way:
+        return "" +
+                "function myAssertFunc(bol, ...data) {\n" +
+                "    if (bol === true) return;\n" +
+                "    let message = 'Assertion failed!';\n" +
+                "    if (data.length === 0) data[0] = message;\n" +
+                "    console.log(data);\n" +
+                "}" +
+                "console.assert = myAssertFunc;";
+    }
+
+
+    // Only accessible from Java:
+
+
     private final PrintStream out;
     private final List<Sendable> onLog = new ArrayList<>();
     private final List<Sendable> onInfo = new ArrayList<>();
@@ -27,7 +47,7 @@ public class JS_API_Console implements JS_API {
     private final List<Sendable> onError = new ArrayList<>();
     private final List<Sendable> onWarn = new ArrayList<>();
 
-    // Only accessible from Java:
+
 
     public JS_API_Console(OutputStream out) {
         this(new PrintStream(out));
@@ -57,24 +77,6 @@ public class JS_API_Console implements JS_API {
         onWarn.add(runnable);
     }
 
-    @Override
-    public String getGlobalVariableName() {
-        return "console";
-    }
-
-    @Override
-    public String getOptionalJSCode() {
-        // Since the function console.assert() is named assert we cannot define it in Java
-        // and we must do it this way:
-        return "" +
-                "function myAssertFunc(bol, ...data) {\n" +
-                "    if (bol === true) return;\n" +
-                "    let message = 'Assertion failed!';\n" +
-                "    if (data.length === 0) data[0] = message;\n" +
-                "    console.log(data);\n" +
-                "}" +
-                "console.assert = myAssertFunc;";
-    }
 
     // Accessible from Java and JavaScript:
 
