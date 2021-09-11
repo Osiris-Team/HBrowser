@@ -6,7 +6,7 @@ public class JS_API_Example implements JS_API {
 
     // Provided by the JS_API interface.
     @Override
-    public String getGlobalVariableName() {
+    public String getJSGlobalVarName() {
         return "example";
     }
 
@@ -16,7 +16,6 @@ public class JS_API_Example implements JS_API {
         return null;
     }
 
-    // This annotation creates the method below in JavaScript code.
     // It will be accessible like this: example.doSomething()
     @HostAccess.Export
     public void doSomething() {
@@ -30,14 +29,14 @@ public class JS_API_Example implements JS_API {
     }
 
     // If a JS Web-API has static methods or fields do not make
-    // them static in Java code. Instead create a new class like below in the same package. (nested only for demonstration)
+    // them static in Java code. Instead, create a new class like below in the same package. (nested only for demonstration)
     class JS_API_Example_S implements JS_API {
 
         @HostAccess.Export
         public String STATIC_FIELD = "Hello world!"; // Example.STATIC_FIELD in JavaScript code
 
         @Override
-        public String getGlobalVariableName() {
+        public String getJSGlobalVarName() {
             return "Example";
         }
 
