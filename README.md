@@ -9,7 +9,7 @@ HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
 ## TL;DR
 
 - Can load pages and execute their JavaScript code.
-- Has partial JavaScript support. Contributions are needed for implementing [JS Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API) to achieve full JavaScript support.
+- Has partial JavaScript support. Contributions are needed for implementing all [JS Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API), to achieve full JavaScript support.
 - [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
 
 ## STATUS: IN-DEV
