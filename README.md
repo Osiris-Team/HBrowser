@@ -19,10 +19,7 @@ there uses so called [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API
 Every browser implements them differently, but they are more or less the same accross all browsers.
 
 Since this projects aim is to create a new browser written in Java, completly independent from Chromium, we will need to
-implement those APIs by ourselfs. It's indeed a big amount of work for one single person, but if we work together we
-should be able to implement all of them within some days and make this a browser with unparalleled JavaScript support.
-
-[Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
+implement those APIs by ourselfs. [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
 If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
 
 ## Installation
