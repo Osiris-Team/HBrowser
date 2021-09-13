@@ -6,9 +6,10 @@ A headless browser written in Java.
 HBrowser hBrowser = new HBrowser();
 HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
 ```
+## TL;DR
 
-- This browser can load pages and execute JavaScript code.
-- Contributions are needed for implementing [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API).
+- Can load pages and execute their JavaScript code.
+- Has partial JavaScript support. Contributions are needed for implementing [JS Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API) to achieve full JavaScript support.
 - [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
 
 ## STATUS: IN-DEV
