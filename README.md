@@ -28,7 +28,7 @@ Now you may ask: Why do you need my help? Our problem is that most of the JavaSc
 implement those APIs by ourselfs.
 
 There are a lot of Web-APIs available, so we need a lot of people to implement them.
-If you want to help us, thank you already in advance! [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
+If you want to help us, thank you **very** much, already in advance! [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
 If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
 
 ## Installation
