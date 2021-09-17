@@ -6,13 +6,21 @@ A headless browser written in Java.
 HBrowser hBrowser = new HBrowser();
 HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
 ```
-## TL;DR
+## Features
+- [x] Can load pages and partially execute their JavaScript code. Contributions are needed for implementing all [JS Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API), to achieve full JavaScript support. [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
+- [x] Uses Jsoup for editing HTML directly in Java.
+- [x] Uses GraalJS-Engine to execute JavaScript code.
+- [x] Access to all JS-Web APIs from within Java.
 
-- Can load pages and partially execute their JavaScript code.
-- Contributions are needed for implementing all [JS Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API), to achieve full JavaScript support.
-- [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
+## Installation
 
-## Why contribute?
+- Java 8 or higher required.
+- [Click here for maven/gradle/sbt/leinigen instructions.](https://jitpack.io/#Osiris-Team/Headless-Browser)
+- Make sure to watch this repository to get notified of future updates.
+
+## Contribute/Build
+
+#### Why contribute?
 
 I tried multiple different things like JCEF, Pandomium, Selenium, Selenium based Maven dependencies like JWebdriver,
 HtmlUnit and maybe some more I don't remember now, but all have one thing in common. They have some kind of very nasty
@@ -30,22 +38,6 @@ implement those APIs by ourselfs.
 There are a lot of Web-APIs available, so we need a lot of people to implement them.
 If you want to help us, thank you **very** much, already in advance! [Click here to see a list of already implemented APIs and how to implement one on your own.](how-to-implement-a-js-web-api.md)
 If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
-
-## Installation
-
-- Java 8 or higher required.
-- [Click here for maven/gradle/sbt/leinigen instructions.](https://jitpack.io/#Osiris-Team/Headless-Browser)
-- Make sure to watch this repository to get notified of future updates.
-
-## Features
-
-- [x] Free & Open-Source
-- [x] Uses Jsoup for editing HTML directly in Java.
-- [x] Uses the blazing fast GraalJS-Engine, which supports latest JavaScript code (with latest ECMA specifications).
-- [x] Access to all JS-Web APIs from within Java
-- [ ] Has all, standard [JavaScript Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API) implemented.
-
-## Contribute/Build
 
 #### Beginners
 
