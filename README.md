@@ -26,7 +26,7 @@ I worked with multiple different browsers like JCEF, Selenium, JWebdriver,
 HtmlUnit and maybe some more I don't remember now, but all have one thing in common. 
 They have some kind of caveat.
 
-That's why I started this project. To create a new browser, not dependent on Chromium or Waterfox or whatever, written in Java,
+That's why I started this project. To create a new browser, not dependent on Chromium or Waterfox etc., written in Java,
 compatible with all operating systems that can run Java.
 We use Jsoup to handle HTML and the GraalJS engine to handle JavaScript.
 
