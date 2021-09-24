@@ -3,29 +3,31 @@ package com.osiris.headlessbrowser.javascript;
 import org.graalvm.polyglot.HostAccess;
 
 public class JS_API_Example implements JS_API {
-
-    // Provided by the JS_API interface.
+    
     @Override
     public String getJSGlobalVarName() {
         return "example";
     }
-
-    // Provided by the JS_API interface.
+    
     @Override
     public String getOptionalJSCode() {
         return null;
     }
 
-    // It will be accessible like this: example.doSomething()
-    @HostAccess.Export
+    @HostAccess.Export // Makes this method accessible from JavaScript: example.doSomething()
     public void doSomething() {
-        // Java code
+        // Do something in Java code.
+    }
+
+    @HostAccess.Export
+    public String returnSomething() {
+        return "Hello world!"; // As you can see your methods can return variables/objects too.
     }
 
     // This method is only accessible from Java code, because
     // it misses the @HostAccess.Export annotation
     public void doAnotherThing() {
-
+       // Do something in Java code.
     }
 
     // If a JS Web-API has static methods or fields do not make
@@ -47,7 +49,7 @@ public class JS_API_Example implements JS_API {
 
         @HostAccess.Export
         public void staticMethod() { // Example.staticMethod() in JavaScript code
-
+            // Do something in Java code.
         }
 
     }
