@@ -67,3 +67,9 @@ Insert_usage_examples_here
 
 Frequently_asked_questions_here
 
+## Libraries
+
+| Name/Link | Usage | License |
+| :-----: | :-----: | :-----: |
+| [GraalJS](https://github.com/oracle/graaljs) | Enables executing JavaScript code from Java | [License](https://github.com/oracle/graaljs/blob/master/LICENSE) |
+| [Jsoup](https://github.com/jhy/jsoup)      | Used to load pages and modify their HTML code      |   [License](https://github.com/jhy/jsoup/blob/master/LICENSE) |
