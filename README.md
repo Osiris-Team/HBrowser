@@ -1,6 +1,6 @@
 # Headless-Browser
 
-A new, headless browser written in Java with latest JavaScript support, through the GraalJS-Engine.
+A new, headless browser written in Java with latest JavaScript support. Powered by the GraalJS-Engine.
 
 ```java
 HBrowser hBrowser = new HBrowser();
