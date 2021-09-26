@@ -3,8 +3,8 @@
 A new, headless browser written in Java with latest JavaScript support. Powered by the GraalJS-Engine.
 
 ```java
-HBrowser hBrowser=new HBrowser();
-HWindow hWindow=hBrowser.openNewWindow().load("https://wikipedia.org");
+HBrowser hBrowser = new HBrowser();
+HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
 ```
 
 ## Features
