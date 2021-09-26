@@ -98,23 +98,29 @@ public class HWindow implements AutoCloseable {
         return document;
     }
 
-    /**
-     * Returns the JavaScript context. <br>
-     */
-    public JSContext getJsContext() {
+    public JSContext getJavaScriptContext() {
         return jsContext;
+    }
+
+    /**
+     * Returns the JavaScript code extracted from the pages script elements. <br>
+     * If no page has been loaded this will return null. <br>
+     */
+    public String getLoadedJavaScriptCode() {
+        return javaScriptCode;
+    }
+
+    /**
+     * Executes the provided JavaScript code in the current context. <br>
+     * See {@link JSContext} for details. <br>
+     */
+    public HWindow executeJS(String jsCode) {
+        jsContext.eval(jsCode);
+        return this;
     }
 
     public String getAuthority() {
         return authority;
-    }
-
-    /**
-     * Returns the complete, current JavaScript code. <br>
-     * If no page has been loaded this will return null. <br>
-     */
-    public String getJavaScriptCode() {
-        return javaScriptCode;
     }
 
     @Override

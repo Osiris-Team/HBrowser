@@ -12,11 +12,11 @@ class HasGlobalVariable_ConsoleTest {
     @Test
     void test() throws IOException {
         HWindow hWindow = new HBrowser().openNewWindow();
-        hWindow.getJsContext().getConsole().onLog(msg -> Assertions.assertEquals("log", msg));
-        hWindow.getJsContext().getConsole().onDebug(msg -> Assertions.assertEquals("debug", msg));
-        hWindow.getJsContext().getConsole().onError(msg -> Assertions.assertEquals("error", msg));
-        hWindow.getJsContext().getConsole().onWarn(msg -> Assertions.assertEquals("warn", msg));
-        hWindow.getJsContext()
+        hWindow.getJavaScriptContext().getConsole().onLog(msg -> Assertions.assertEquals("log", msg));
+        hWindow.getJavaScriptContext().getConsole().onDebug(msg -> Assertions.assertEquals("debug", msg));
+        hWindow.getJavaScriptContext().getConsole().onError(msg -> Assertions.assertEquals("error", msg));
+        hWindow.getJavaScriptContext().getConsole().onWarn(msg -> Assertions.assertEquals("warn", msg));
+        hWindow.getJavaScriptContext()
                 .eval("console.log('log');" +
                         "console.debug('debug');" +
                         "console.error('error');" +

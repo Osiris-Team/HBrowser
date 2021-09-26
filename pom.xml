@@ -6,7 +6,7 @@
 
     <groupId>com.osiris.headlessbrowser</groupId>
     <artifactId>Headless-Browser</artifactId>
-    <version>ALPHA-0.0.3</version>
+    <version>0.0.4</version>
     <packaging>jar</packaging>
 
     <name>Headless-Browser</name>

@@ -1,6 +1,5 @@
 package com.osiris.headlessbrowser.javascript.apis.dom;
 
-import com.osiris.headlessbrowser.javascript.JS_API;
 import org.graalvm.polyglot.HostAccess;
 
 /**

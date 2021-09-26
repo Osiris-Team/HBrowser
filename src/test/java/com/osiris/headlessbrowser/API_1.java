@@ -16,7 +16,7 @@ public class API_1 implements JS_API {
     }
 
     @HostAccess.Export
-    public JS_Object getJsObject(){
+    public JS_Object getJsObject() {
         return new JS_Object();
     }
 }

@@ -14,10 +14,10 @@ class JSContextTest {
                 .build()) {
             context.getBindings("js").putMember("javaObj", new MyClass());
             boolean valid = context.eval("js",
-                    "    javaObj.id         == 42" +
-                            " && javaObj.text       == '42'" +
-                            " && javaObj.arr[1]     == 42" +
-                            " && javaObj.ret42()    == 42")
+                            "    javaObj.id         == 42" +
+                                    " && javaObj.text       == '42'" +
+                                    " && javaObj.arr[1]     == 42" +
+                                    " && javaObj.ret42()    == 42")
                     .asBoolean();
             context.eval("js", "javaObj.print('HELLO!!!');");
             assert valid == true;
@@ -27,7 +27,7 @@ class JSContextTest {
     @Test
     void testConsoleApi() throws IOException {
         HBrowser hBrowser = new HBrowser();
-        JSContext jsContext = hBrowser.openNewWindow().getJsContext();
+        JSContext jsContext = hBrowser.openNewWindow().getJavaScriptContext();
         jsContext.getConsole().onLog(msg -> System.out.println("JavaScript message received: " + msg));
         jsContext.eval("console.log('john stamos');");
     }
@@ -35,7 +35,7 @@ class JSContextTest {
     @Test
     void testContextWebApis() throws IOException {
         HBrowser browser = new HBrowser();
-        JSContext jsContext = browser.openNewWindow().getJsContext();
+        JSContext jsContext = browser.openNewWindow().getJavaScriptContext();
         jsContext.eval("console.log('hi!');");
     }
 

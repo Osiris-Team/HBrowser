@@ -1,9 +1,7 @@
 package com.osiris.headlessbrowser;
 
-import com.osiris.headlessbrowser.javascript.JS_API;
 import com.osiris.headlessbrowser.javascript.exceptions.DuplicateFoundException;
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.HostAccess;
 import org.junit.jupiter.api.Test;
 
 public class GraalJSPlayground {
@@ -11,13 +9,13 @@ public class GraalJSPlayground {
     @Test
     void testStaticAccessFromJSCode() {
 
-        Context ctx = Context.newBuilder("js").allowHostClassLookup(s->true).build();
+        Context ctx = Context.newBuilder("js").allowHostClassLookup(s -> true).build();
 
         Object obj = new MyJavaClass();
 
         ctx.getBindings("js").putMember("myJavaClass", new MyJavaClass());
 
-        ctx.eval("js", "var MyJavaClass = Java.type('"+MyJavaClass.class.getCanonicalName()+"');" +
+        ctx.eval("js", "var MyJavaClass = Java.type('" + MyJavaClass.class.getCanonicalName() + "');" +
                 "console.log(MyJavaClass.HELLO);");
 
         ctx.eval("js", "console.log(MyJavaClass.HELLO);");
@@ -29,7 +27,7 @@ public class GraalJSPlayground {
     @Test
     void testDependentObjects() throws DuplicateFoundException {
 
-        JSContext context = new HBrowser().openNewWindow().getJsContext()
+        JSContext context = new HBrowser().openNewWindow().getJavaScriptContext()
                 //.registerAndLoad(new JS_Object(), false)
                 .registerAndLoad(new API_1(), false);
 

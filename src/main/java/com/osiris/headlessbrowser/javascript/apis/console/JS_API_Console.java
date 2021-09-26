@@ -17,6 +17,22 @@ import java.util.List;
  */
 public class JS_API_Console implements JS_API {
 
+    private final PrintStream out;
+    private final List<Sendable> onLog = new ArrayList<>();
+
+
+    // Only accessible from Java:
+    private final List<Sendable> onInfo = new ArrayList<>();
+    private final List<Sendable> onDebug = new ArrayList<>();
+    private final List<Sendable> onError = new ArrayList<>();
+    private final List<Sendable> onWarn = new ArrayList<>();
+    public JS_API_Console(OutputStream out) {
+        this(new PrintStream(out));
+    }
+    public JS_API_Console(PrintStream out) {
+        this.out = out;
+    }
+
     @Override
     public String getJSGlobalVarName() {
         return "console";
@@ -34,27 +50,6 @@ public class JS_API_Console implements JS_API {
                 "    console.log(data);\n" +
                 "}" +
                 "console.assert = myAssertFunc;";
-    }
-
-
-    // Only accessible from Java:
-
-
-    private final PrintStream out;
-    private final List<Sendable> onLog = new ArrayList<>();
-    private final List<Sendable> onInfo = new ArrayList<>();
-    private final List<Sendable> onDebug = new ArrayList<>();
-    private final List<Sendable> onError = new ArrayList<>();
-    private final List<Sendable> onWarn = new ArrayList<>();
-
-
-
-    public JS_API_Console(OutputStream out) {
-        this(new PrintStream(out));
-    }
-
-    public JS_API_Console(PrintStream out) {
-        this.out = out;
     }
 
     public void onLog(Sendable runnable) {
