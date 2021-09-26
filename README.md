@@ -4,7 +4,7 @@ A new, headless browser written in Java with latest JavaScript support. Powered 
 
 ```java
 HBrowser hBrowser=new HBrowser();
-        HWindow hWindow=hBrowser.openNewWindow().load("https://wikipedia.org");
+HWindow hWindow=hBrowser.openNewWindow().load("https://wikipedia.org");
 ```
 
 ## Features
