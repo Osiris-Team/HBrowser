@@ -68,7 +68,8 @@ public class NodeContext implements AutoCloseable {
             }
 
             for (File f :
-                    installationDir.listFiles()[0].listFiles()) {
+                    Objects.requireNonNull(
+                            Objects.requireNonNull(installationDir.listFiles())[0].listFiles())) {
                 if (f.getName().contains(".exe")) { // TODO add support for other OS
                     executableFile = f;
                 }
@@ -165,7 +166,7 @@ public class NodeContext implements AutoCloseable {
      * </pre>
      */
     public String executeJavaScriptAndGetResult(String jsCode) throws IOException {
-        File resultFile = new File(installationDir + "/executeJavaScriptAndGetResult.txt");
+        File resultFile = new File(executableFile.getParentFile() + "/executeJavaScriptAndGetResult.txt");
         if (!resultFile.exists()) resultFile.createNewFile();
         String resultFilePath = resultFile.getAbsolutePath();
 
