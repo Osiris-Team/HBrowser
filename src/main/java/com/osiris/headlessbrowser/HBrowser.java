@@ -6,58 +6,37 @@ package com.osiris.headlessbrowser;
  * @author Osiris-Team
  */
 public class HBrowser {
-    private Type type;
-
-    enum Type {
-        /**
-         * The default browser completely written in Java. <br>
-         * Not recommended, since its currently in development and has only partial JavaScript support.
-         */
-        DEFAULT,
-        /**
-         * Downloads/Installs NodeJS into the current working directory along with Puppeteer <br>
-         * which will download a compatible version of Chromium.
-         */
-        PUPPETEER
-    }
 
     /**
-     * Initialises this browser as {@link Type#PUPPETEER}.
+     * Creates and returns a new window, built with defaults. <br>
+     * By using the {@link WindowBuilder} or the {@link #openCustomWindow()} method <br>
+     * you can decide between {@link NodeWindow} and {@link GraalWindow} windows. <br>
+     * Since the {@link GraalWindow} has only partial JavaScript support, due to <br>
+     * currently ongoing Web-APIs implementation, its recommended to use the {@link NodeWindow} instead. <br>
+     * Its powered by the latest NodeJS-Engine with the help of Puppeteer. <br>
+     * NodeJS, Puppeteer and Chromiumg get installed into the current working directory automatically (~300mb). <br>
      */
-    public HBrowser() {
-        this(Type.PUPPETEER);
-    }
-
-    public HBrowser(Type type) {
-        this.type = type;
+    public NodeWindow openWindow() {
+        return new WindowBuilder(this).buildNodeJSWindow();
     }
 
     /**
-     * Creates and returns a new {@link HWindow}, built with defaults.
+     * Returns the {@link WindowBuilder} to build custom window.
      */
-    public HWindow openNewWindow() {
-        return new HWindowBuilder(this).build();
+    public WindowBuilder openCustomWindow() {
+        return new WindowBuilder(this);
     }
 
     /**
-     * Returns the {@link HWindowBuilder} to build custom window.
-     */
-    public HWindowBuilder openNewCustomWindow() {
-        return new HWindowBuilder(this);
-    }
-
-    /**
-     * Closes the provided {@link HWindow}. <br>
-     * A {@link HWindow} can automatically be closed like this:
+     * Closes the provided {@link GraalWindow}. <br>
+     * A {@link GraalWindow} can automatically be closed like this:
      * <pre>
      * try(HWindow hWindow = openNewWindow()){
      *     // Do stuff here...
-     * }
+     * } // Window gets automatically closed when leaving the try/catch block.
      * </pre>
-     *
-     * @param HWindow
      */
-    public void closeWindow(HWindow HWindow) {
-        HWindow.close();
+    public void closeWindow(NodeWindow window) throws Exception {
+        window.close();
     }
 }

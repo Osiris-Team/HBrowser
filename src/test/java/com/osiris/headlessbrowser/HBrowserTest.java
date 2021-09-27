@@ -9,6 +9,6 @@ class HBrowserTest {
     @Test
     void test() throws IOException {
         HBrowser hBrowser = new HBrowser();
-        HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
+        NodeWindow nodeWindow = hBrowser.openWindow().load("https://wikipedia.org");
     }
 }

@@ -9,8 +9,8 @@ public class CodeStyleTest {
     @Test
     void test() throws IOException {
         HBrowser hBrowser = new HBrowser();
-        HWindow hWindow = hBrowser.openNewCustomWindow().enableJavaScript(false).build()
+        GraalWindow graalWindow = hBrowser.openCustomWindow().enableJavaScript(false).buildGraalJSWindow()
                 .load("wikipedia.org");
-        System.out.println(hWindow.getDocument().toString());
+        System.out.println(graalWindow.getDocument().toString());
     }
 }

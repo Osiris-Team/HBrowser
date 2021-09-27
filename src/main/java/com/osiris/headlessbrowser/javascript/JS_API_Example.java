@@ -1,5 +1,6 @@
 package com.osiris.headlessbrowser.javascript;
 
+import com.osiris.headlessbrowser.GraalContext;
 import org.graalvm.polyglot.HostAccess;
 
 public class JS_API_Example implements JS_API {
@@ -55,7 +56,7 @@ public class JS_API_Example implements JS_API {
     }
 
     /**
-     * Finally register/load your JS_API into the {@link com.osiris.headlessbrowser.JSContext}.
+     * Finally register/load your JS_API into the {@link GraalContext}.
      */
 
 }

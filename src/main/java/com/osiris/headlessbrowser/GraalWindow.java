@@ -16,8 +16,8 @@ import java.util.Map;
  *
  * @author Osiris-Team
  */
-public class HWindow implements AutoCloseable {
-    private final JSContext jsContext = new JSContext(this);
+public class GraalWindow implements AutoCloseable {
+    private final GraalContext graalContext = new GraalContext(this);
     private HBrowser parentBrowser;
     private boolean enableJavaScript;
     private Map<String, String> customHeaders;
@@ -25,20 +25,20 @@ public class HWindow implements AutoCloseable {
     private String authority;
     private String javaScriptCode;
 
-    public HWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders) {
+    public GraalWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders) {
         this.parentBrowser = parentBrowser;
         this.enableJavaScript = enableJavaScript;
         this.customHeaders = customHeaders;
     }
 
     /**
-     * Load the contents from the provided url into the current {@link HWindow}.
+     * Load the contents from the provided url into the current {@link GraalWindow}.
      *
      * @param url Examples: https://www.wikipedia.org or wikipedia.org.
-     * @return the current {@link HWindow} for chained method calls.
+     * @return the current {@link GraalWindow} for chained method calls.
      * @throws IOException
      */
-    public HWindow load(String url) throws IOException {
+    public GraalWindow load(String url) throws IOException {
         if (!url.startsWith("http"))
             url = "https://" + url;
 
@@ -84,7 +84,7 @@ public class HWindow implements AutoCloseable {
                 }
 
                 // Execute code
-                jsContext.eval(javaScriptCode);
+                graalContext.eval(javaScriptCode);
             }
         }
         return this;
@@ -98,8 +98,8 @@ public class HWindow implements AutoCloseable {
         return document;
     }
 
-    public JSContext getJavaScriptContext() {
-        return jsContext;
+    public GraalContext getJavaScriptContext() {
+        return graalContext;
     }
 
     /**
@@ -112,10 +112,10 @@ public class HWindow implements AutoCloseable {
 
     /**
      * Executes the provided JavaScript code in the current context. <br>
-     * See {@link JSContext} for details. <br>
+     * See {@link GraalContext} for details. <br>
      */
-    public HWindow executeJS(String jsCode) {
-        jsContext.eval(jsCode);
+    public GraalWindow executeJS(String jsCode) {
+        graalContext.eval(jsCode);
         return this;
     }
 
@@ -125,7 +125,7 @@ public class HWindow implements AutoCloseable {
 
     @Override
     public void close() {
-        jsContext.close();
+        graalContext.close();
     }
 
     public HBrowser getParentBrowser() {

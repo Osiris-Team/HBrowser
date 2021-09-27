@@ -1,5 +1,7 @@
 package com.osiris.headlessbrowser.javascript;
 
+import com.osiris.headlessbrowser.GraalContext;
+
 public interface JS_API {
 
 
@@ -7,7 +9,7 @@ public interface JS_API {
      * - Can NOT return null. <br>
      * A global variable gets created in the JS context <br>
      * with the provided global variable name, for the implementing object. <br>
-     * For details see {@link com.osiris.headlessbrowser.JSContext#registerAndLoad(JS_API, boolean)}.
+     * For details see {@link GraalContext#registerAndLoad(JS_API, boolean)}.
      */
     String getJSGlobalVarName();
 

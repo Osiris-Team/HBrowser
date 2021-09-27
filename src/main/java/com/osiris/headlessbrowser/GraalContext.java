@@ -18,19 +18,18 @@ import java.util.Objects;
  *
  * @author Osiris-Team
  */
-public class JSContext implements AutoCloseable {
-
-    private final HWindow window;
+public class GraalContext implements AutoCloseable {
+    private final GraalWindow window;
     private final Context rawContext = Context.newBuilder("js")
             .build();
-    private List<String> globalVarNames = new ArrayList<>();
     // Currently used for debugging
     private final PrintStream out = System.out;
     // Web-APIs:
     private final JS_API_Console console = new JS_API_Console(System.out);
+    private final List<String> globalVarNames = new ArrayList<>();
 
 
-    public JSContext(HWindow window) {
+    public GraalContext(GraalWindow window) {
         Objects.requireNonNull(window);
         out.println("Created new JavaScript context for window '" + window + "'.");
         this.window = window;
@@ -65,13 +64,13 @@ public class JSContext implements AutoCloseable {
     }
 
     /**
-     * Registers and loads the provided JS-API into the current {@link JSContext}. <br>
+     * Registers and loads the provided JS-API into the current {@link GraalContext}. <br>
      * A new global variable gets created for the provided JS-API with its {@link JS_API#getJSGlobalVarName()}.
      *
      * @param jsAPI    the JavaScript API to add.
      * @param override if a global variable with the same name already exists, should it get overwritten?
      */
-    public JSContext registerAndLoad(JS_API jsAPI, boolean override) throws DuplicateFoundException {
+    public GraalContext registerAndLoad(JS_API jsAPI, boolean override) throws DuplicateFoundException {
         out.print("Loading JS Web-API: '" + jsAPI.getClass().getName() + "' into context...");
         out.flush();
 
@@ -98,7 +97,7 @@ public class JSContext implements AutoCloseable {
         return console;
     }
 
-    public HWindow getWindow() {
+    public GraalWindow getWindow() {
         return window;
     }
 
@@ -108,10 +107,10 @@ public class JSContext implements AutoCloseable {
 
     /**
      * Executes the given jsCode in the current context. <br>
-     * This means that all the jsCode that has been ran before in this {@link JSContext} is accessible
+     * This means that all the jsCode that has been ran before in this {@link GraalContext} is accessible
      * for the given jsCode.
      *
-     * @param jsCode JavaScript code to run in the current {@link JSContext}.
+     * @param jsCode JavaScript code to run in the current {@link GraalContext}.
      */
     public void eval(String jsCode) {
         rawContext.eval("js", jsCode);

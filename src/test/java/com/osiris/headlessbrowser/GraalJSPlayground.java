@@ -27,7 +27,7 @@ public class GraalJSPlayground {
     @Test
     void testDependentObjects() throws DuplicateFoundException {
 
-        JSContext context = new HBrowser().openNewWindow().getJavaScriptContext()
+        GraalContext context = new HBrowser().openCustomWindow().buildGraalJSWindow().getJavaScriptContext()
                 //.registerAndLoad(new JS_Object(), false)
                 .registerAndLoad(new API_1(), false);
 
