@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Random;
 
 public class DownloadTask extends BetterThread {
     private String url;
@@ -75,7 +74,7 @@ public class DownloadTask extends BetterThread {
             else if (!body.contentType().type().equals("application"))
                 throw new Exception("Download of '" + dest.getName() + "' failed because of invalid content type: " + body.contentType().type());
 
-            if (allowedSubContentTypes!=null && !Arrays.asList(allowedSubContentTypes).contains("all")){
+            if (allowedSubContentTypes != null && !Arrays.asList(allowedSubContentTypes).contains("all")) {
                 if (!Arrays.asList(allowedSubContentTypes).contains(body.contentType().subtype()))
                     throw new Exception("Download of '" + dest.getName() + "' failed because of invalid sub-content type: " + body.contentType().subtype());
             }

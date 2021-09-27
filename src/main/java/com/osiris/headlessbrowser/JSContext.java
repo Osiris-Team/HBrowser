@@ -30,7 +30,6 @@ public class JSContext implements AutoCloseable {
     private final JS_API_Console console = new JS_API_Console(System.out);
 
 
-
     public JSContext(HWindow window) {
         Objects.requireNonNull(window);
         out.println("Created new JavaScript context for window '" + window + "'.");
@@ -52,7 +51,7 @@ public class JSContext implements AutoCloseable {
             //...
 
             globalVarNames.clear();
-            out.println("Loaded all JS Web-APIs successfully. Took "+(System.currentTimeMillis()-start)+"ms.");
+            out.println("Loaded all JS Web-APIs successfully. Took " + (System.currentTimeMillis() - start) + "ms.");
         } catch (Exception exception) {
             System.err.println("Failed to load JavaScript Web-API into the current JavaScript-Context! Details:");
             throw new RuntimeException(exception);

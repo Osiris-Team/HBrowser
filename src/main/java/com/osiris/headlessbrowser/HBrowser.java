@@ -8,7 +8,7 @@ package com.osiris.headlessbrowser;
 public class HBrowser {
     private Type type;
 
-    enum Type{
+    enum Type {
         /**
          * The default browser completely written in Java. <br>
          * Not recommended, since its currently in development and has only partial JavaScript support.
@@ -24,7 +24,7 @@ public class HBrowser {
     /**
      * Initialises this browser as {@link Type#PUPPETEER}.
      */
-    public HBrowser(){
+    public HBrowser() {
         this(Type.PUPPETEER);
     }
 

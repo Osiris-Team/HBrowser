@@ -26,9 +26,11 @@ public class JS_API_Console implements JS_API {
     private final List<Sendable> onDebug = new ArrayList<>();
     private final List<Sendable> onError = new ArrayList<>();
     private final List<Sendable> onWarn = new ArrayList<>();
+
     public JS_API_Console(OutputStream out) {
         this(new PrintStream(out));
     }
+
     public JS_API_Console(PrintStream out) {
         this.out = out;
     }
