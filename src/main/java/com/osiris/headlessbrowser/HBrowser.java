@@ -1,5 +1,7 @@
 package com.osiris.headlessbrowser;
 
+import java.io.IOException;
+
 /**
  * Headless-Browser.
  *
@@ -18,6 +20,14 @@ public class HBrowser {
      */
     public NodeWindow openWindow() {
         return new WindowBuilder(this).buildNodeJSWindow();
+    }
+
+    /**
+     * Shortcut for opening a window and loading a page into it. <br>
+     * See {@link #openWindow()} for details. <br>
+     */
+    public NodeWindow openWindowAndLoad(String url) throws IOException {
+        return openWindow().load(url);
     }
 
     /**

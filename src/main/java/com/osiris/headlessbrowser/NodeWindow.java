@@ -20,7 +20,8 @@ public class NodeWindow implements AutoCloseable {
     private Map<String, String> customHeaders;
 
     public static void main(String[] args) throws IOException {
-        System.out.println(new HBrowser().openWindow().getDocument().outerHtml());
+        //new HBrowser().openWindow().executeJS("const hello = 'hi!';").executeJS("console.log(hello);");
+        System.out.println(new HBrowser().openWindow().load("example.com").getDocument().outerHtml());
     }
 
     public NodeWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders) {
@@ -29,8 +30,10 @@ public class NodeWindow implements AutoCloseable {
         this.customHeaders = customHeaders;
         try {
             jsContext.npmInstall("puppeteer");
-            jsContext.executeJavaScript("const browser = await puppeteer.launch();\n" +
-                    "  const page = await browser.newPage();\n");
+            jsContext.executeJavaScript("" +
+                    "const puppeteer = require('puppeteer');" +
+                    "const browser = await puppeteer.launch();\n" +
+                    "const page = await browser.newPage();\n");
         } catch (Exception e) {
             System.err.println("Error during install/start of Puppeteer! Details:");
             throw new RuntimeException(e);
@@ -54,16 +57,13 @@ public class NodeWindow implements AutoCloseable {
         else
             headers = this.customHeaders;
 
-        jsContext.executeJavaScript("page.load('" + url + "');");
+        jsContext.executeJavaScript("await page.goto('" + url + "');");
         return this;
     }
 
     public Document getDocument() throws IOException {
         String rawHtml = jsContext.executeJavaScriptAndGetResult("" +
-                "var result = null;" +
-                "await page.content().then((html) => {" +
-                "result = html;" +
-                "});");
+                "var result = await page.evaluate(() => document.body.innerHTML);");
         return Jsoup.parse(rawHtml);
     }
 
