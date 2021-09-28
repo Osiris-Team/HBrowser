@@ -5,7 +5,7 @@ the NodeJs-Engine and Puppeteer.
 
 ```java
 HBrowser hBrowser = new HBrowser();
-try(HWindow hWindow = hBrowser.openWindowAndLoad("https://wikipedia.org")){
+try(NodeWindow hWindow = hBrowser.openWindowAndLoad("https://wikipedia.org")){
    // Do stuff    
 }
 ```
