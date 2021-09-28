@@ -9,9 +9,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class AsyncInputStream {
-    public List<Consumer<String>> listeners = new CopyOnWriteArrayList<>();
     private final InputStream inputStream;
     private final Thread thread;
+    public List<Consumer<String>> listeners = new CopyOnWriteArrayList<>();
 
     public AsyncInputStream(InputStream inputStream) {
         this.inputStream = inputStream;

@@ -19,19 +19,13 @@ public class NodeWindow implements AutoCloseable {
     private boolean enableJavaScript;
     private Map<String, String> customHeaders;
 
-    public static void main(String[] args) throws IOException {
-        //new HBrowser().openWindow().executeJS("const hello = 'hi!';").executeJS("console.log(hello);");
-        System.out.println(new HBrowser().openWindow().load("example.com").getDocument().outerHtml());
-    }
-
     public NodeWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders) {
         this.parentBrowser = parentBrowser;
         this.enableJavaScript = enableJavaScript;
         this.customHeaders = customHeaders;
         try {
             jsContext.npmInstall("puppeteer");
-            jsContext.executeJavaScript("" +
-                    "const puppeteer = require('puppeteer');" +
+            jsContext.executeJavaScript("const puppeteer = require('puppeteer');\n" +
                     "const browser = await puppeteer.launch();\n" +
                     "const page = await browser.newPage();\n");
         } catch (Exception e) {
@@ -61,12 +55,17 @@ public class NodeWindow implements AutoCloseable {
         return this;
     }
 
-    public Document getDocument() throws IOException {
+    public Document getDocument() {
         String rawHtml = jsContext.executeJavaScriptAndGetResult("" +
-                "var result = await page.evaluate(() => document.body.innerHTML);");
+                "var result = await page.evaluate(() => document.body.innerHTML);\n");
         return Jsoup.parse(rawHtml);
     }
 
+    public String getTitle() {
+        return jsContext.executeJavaScriptAndGetResult("" +
+                "var result = await page.title();\n" +
+                "");
+    }
 
     /**
      * Executes the provided JavaScript code in the current context. <br>

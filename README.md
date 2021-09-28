@@ -1,20 +1,27 @@
 # Headless-Browser
 
-A new, headless browser written in Java with latest JavaScript support. Powered by the GraalJS-Engine.
+A new, headless browser written in Java with latest JavaScript support. Powered by the GraalJS-Engine,
+the NodeJs-Engine and Puppeteer.
 
 ```java
 HBrowser hBrowser = new HBrowser();
-HWindow hWindow = hBrowser.openNewWindow().load("https://wikipedia.org");
+try(HWindow hWindow = hBrowser.openWindowAndLoad("https://wikipedia.org")){
+   // Do stuff    
+}
 ```
 
 ## Features
+You can choose from two JavaScript engines: NodeJs and GraalJs.
 
-- [x] Can load pages and partially execute their JavaScript code. Contributions are needed for implementing
-  all [JS Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API), to achieve full JavaScript
-  support. [Click here to see a list of already implemented APIs and how to implement one.](how-to-implement-a-js-web-api.md)
-- [x] Uses Jsoup for editing HTML directly in Java.
-- [x] Uses GraalJS-Engine to execute JavaScript code.
-- [ ] Access to all JS-Web APIs from within Java.
+The NodeJs engine is currently the default and recommended one.
+Puppeteer gets installed automatically along with the latest NodeJs version.
+Currently, only Windows 64x supported (going to change very soon)!
+
+Puppeteer and NodeJs are directly usable in Java.
+
+Creating a new browser completely in Java is ongoing work. Read more below at "Why contribute?".
+
+Jsoup is used to work with HTML in Java.
 
 ## Installation
 

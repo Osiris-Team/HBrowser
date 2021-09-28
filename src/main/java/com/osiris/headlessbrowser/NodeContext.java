@@ -10,19 +10,19 @@ import org.jsoup.nodes.Element;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class NodeContext implements AutoCloseable {
     private final File installationDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
-    private File executableFile;
     private final Process process;
     private final AsyncInputStream processInput;
     private final OutputStream processOutput;
-
     private final PrintStream out = System.out;
+    private File executableFile;
+    private File lastJsCodeExecutionResultFile;
 
     public NodeContext() {
         // Download and install NodeJS into current working directory if no installation found
@@ -94,7 +94,7 @@ public class NodeContext implements AutoCloseable {
             // Tried multiple things without success.
             // Update: Node.exe must be started with this flag to get correct I/O: --interactive
             processInput = new AsyncInputStream(process.getInputStream());
-            processInput.listeners.add(line -> out.println("[Node-JS] " + line));
+            processInput.listeners.add(line -> out.println("[" + this + "] " + line));
             new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[Node-JS-ERROR] " + line));
             processOutput = process.getOutputStream();
             out.println(" SUCCESS!");
@@ -117,7 +117,21 @@ public class NodeContext implements AutoCloseable {
         }
 
         try {
-            executeJavaScript("const executeJavaScriptAndGetResult = null;");
+            Thread.sleep(3000);
+            lastJsCodeExecutionResultFile = new File(executableFile.getParentFile() + "/JavaScriptCodeResult.txt");
+            if (!lastJsCodeExecutionResultFile.exists()) lastJsCodeExecutionResultFile.createNewFile();
+            String resultFilePath = lastJsCodeExecutionResultFile.getAbsolutePath().replace("\\", "/"); // To avoid issues with indows file path formats
+            executeJavaScript("var writeResultToJava = function(result) {\n" +
+                    "var fs = require('fs')\n" +
+                    "fs.writeFile('" + resultFilePath + "', result, err => {\n" + // the result var must be defined in the provided jsCode
+                    "  if (err) {\n" +
+                    "    console.error(err)\n" +
+                    "    return\n" +
+                    "  }\n" +
+                    "  //file written successfully\n" +
+                    "})\n" +
+                    "};" +
+                    "console.log('Context initialised!');");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -129,23 +143,45 @@ public class NodeContext implements AutoCloseable {
     }
 
     public NodeContext writeLine(String line) throws IOException {
-        processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
-        processOutput.flush();
-        processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
-        processOutput.flush();
-        processOutput.write((line + "\n").getBytes(StandardCharsets.UTF_8));
-        processOutput.flush();
-        processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
-        processOutput.flush();
-        synchronized (out) {
-            if (line.contains("\n")) {
-                out.println("START ===>");
-                out.println("// Writing line(s) to NodeJS context:");
-                out.println(line);
-                out.println("END <===");
-            } else {
+        if (line.contains("\n")) {
+            synchronized (out) {
+                out.println("Writing multiple lines to NodeJS context:");
+                out.println("START >>>>>>>>>");
+            }
+            int lineNumber = 1;
+            String singleLine = null;
+            try (BufferedReader br = new BufferedReader(new StringReader(line))) {
+                while ((singleLine = br.readLine()) != null) {
+                    synchronized (out) {
+                        out.println(lineNumber + "| " + singleLine);
+                        lineNumber++;
+                    }
+                    processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
+                    processOutput.flush();
+                    processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
+                    processOutput.flush();
+                    processOutput.write((singleLine + "\n").getBytes(StandardCharsets.UTF_8));
+                    processOutput.flush();
+                    processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
+                    processOutput.flush();
+
+                }
+            }
+            synchronized (out) {
+                out.println("END <<<<<<<<<<<");
+            }
+        } else {
+            synchronized (out) {
                 out.println("Writing line to NodeJS context: " + line);
             }
+            processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
+            processOutput.flush();
+            processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
+            processOutput.flush();
+            processOutput.write((line + "\n").getBytes(StandardCharsets.UTF_8));
+            processOutput.flush();
+            processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
+            processOutput.flush();
         }
         return this;
     }
@@ -154,8 +190,50 @@ public class NodeContext implements AutoCloseable {
      * Executes JavaScript code from the provided {@link String} in the <br>
      * current {@link NodeContext}.
      */
-    public NodeContext executeJavaScript(String jsCode) throws IOException {
-        writeLine(jsCode);
+    public synchronized NodeContext executeJavaScript(String jsCode) {
+        try {
+            if (jsCode.contains("\n")) {
+                synchronized (out) {
+                    out.println("Executing following JS-Code: ");
+                    out.println("JS-CODE START >");
+                    String singleLine = null;
+                    try (BufferedReader br = new BufferedReader(new StringReader(jsCode))) {
+                        while ((singleLine = br.readLine()) != null) {
+                            synchronized (out) {
+                                out.println(singleLine);
+                            }
+                        }
+                    }
+                    out.println("JS-CODE END <");
+                }
+            } else {
+                synchronized (out) {
+                    out.println("Executing following JS-Code: " + jsCode);
+                }
+            }
+
+            AtomicBoolean wasExecuted = new AtomicBoolean();
+            Consumer<String> listener = line -> wasExecuted.set(true);
+            processInput.listeners.add(listener);
+
+            // Writing stuff directly to the process output/NodeJs REPL console somehow is very error-prone.
+            // That's why instead we create a temp file with the js code in it and load it using the .load command.
+            File tmpJs = new File(executableFile.getParentFile() + "/temp" + new Random().nextInt() + ".js");
+            if (!tmpJs.exists()) tmpJs.createNewFile();
+            Files.write(tmpJs.toPath(), jsCode.getBytes(StandardCharsets.UTF_8));
+            executeJavaScript(tmpJs);
+
+            // Wait until we receive a response, like undefined
+            while (!wasExecuted.get()) {
+                Thread.sleep(100);
+            }
+
+            processInput.listeners.remove(listener);
+            tmpJs.delete();
+        } catch (Exception e) {
+            System.err.println("Error during JavaScript execution! Details: ");
+            throw new RuntimeException(e);
+        }
         return this;
     }
 
@@ -164,40 +242,29 @@ public class NodeContext implements AutoCloseable {
      * <pre>
      *     var result = InsertYourFunctionsResultHere;
      * </pre>
+     * That result will get returned to this Java method.
      */
-    public String executeJavaScriptAndGetResult(String jsCode) throws IOException {
-        File resultFile = new File(executableFile.getParentFile() + "/executeJavaScriptAndGetResult.txt");
-        if (!resultFile.exists()) resultFile.createNewFile();
-        String resultFilePath = resultFile.getAbsolutePath();
+    public String executeJavaScriptAndGetResult(String jsCode) {
+        try {
+            executeJavaScript(jsCode);
+            executeJavaScript("writeResultToJava(result);\n");
 
-        executeJavaScript("executeJavaScriptAndGetResult = function() {\n" +
-                jsCode + "\n" +
-                "var fs = require('fs')\n" +
-                "fs.writeFile('" + resultFilePath + "', result, err => {\n" + // the result var must be defined in the provided jsCode
-                "  if (err) {\n" +
-                "    console.error(err)\n" +
-                "    return\n" +
-                "  }\n" +
-                "  //file written successfully\n" +
-                "})\n" +
-                "};" +
-                "executeJavaScriptAndGetResult();" +
-                "executeJavaScriptAndGetResult = null;");
-
-        StringBuilder result = new StringBuilder();
-        String line = null;
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(resultFile))) {
-            while ((line = bufferedReader.readLine()) != null) {
-                result.append(line + "\n");
+            StringBuilder result = new StringBuilder();
+            String line = null;
+            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(lastJsCodeExecutionResultFile))) {
+                while ((line = bufferedReader.readLine()) != null) {
+                    result.append(line + "\n");
+                }
             }
-        }
 
-        // Clear the files content because we already got what we need
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(resultFile))) {
-            bufferedWriter.write("");
+            // Clear the files content because we already got what we need
+            try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(lastJsCodeExecutionResultFile))) {
+                bufferedWriter.write("");
+            }
+            return result.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        return result.toString();
     }
 
     /**
@@ -205,7 +272,7 @@ public class NodeContext implements AutoCloseable {
      * current {@link NodeContext}.
      */
     public NodeContext executeJavaScript(File jsFile) throws IOException {
-        writeLine(jsFile.getAbsolutePath());
+        writeLine(".load " + jsFile.getAbsolutePath());
         return this;
     }
 
@@ -248,4 +315,27 @@ public class NodeContext implements AutoCloseable {
         return process;
     }
 
+    public File getInstallationDir() {
+        return installationDir;
+    }
+
+    public File getExecutableFile() {
+        return executableFile;
+    }
+
+    public Process getProcess() {
+        return process;
+    }
+
+    public AsyncInputStream getProcessInput() {
+        return processInput;
+    }
+
+    public OutputStream getProcessOutput() {
+        return processOutput;
+    }
+
+    public PrintStream getOut() {
+        return out;
+    }
 }
