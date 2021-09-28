@@ -19,7 +19,7 @@ Currently, only Windows 64x supported (going to change very soon)!
 
 Puppeteer and NodeJs are directly usable in Java.
 
-Creating a new browser completely in Java is ongoing work. Read more below at "Why contribute?".
+Creating a new browser completely in Java is ongoing work (with GraalJs). Read more below at "Why contribute?".
 
 Jsoup is used to work with HTML in Java.
 
