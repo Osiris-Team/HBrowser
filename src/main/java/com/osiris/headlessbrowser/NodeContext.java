@@ -25,14 +25,16 @@ public class NodeContext implements AutoCloseable {
     private final OutputStream processOutput;
     private final PrintStream debugOutput;
     private File executableFile;
-    private File lastJsCodeExecutionResultFile;
+    private final File lastJsCodeExecutionResultFile;
+    private int timeout;
 
-    public NodeContext(){
-        this(null);
+    public NodeContext() {
+        this(null, 30);
     }
 
-    public NodeContext(OutputStream debugOutput) {
-        if (debugOutput==null)
+    public NodeContext(OutputStream debugOutput, int timeout) {
+        this.timeout = timeout;
+        if (debugOutput == null)
             this.debugOutput = new PrintStream(new TrashOutput());
         else
             this.debugOutput = new PrintStream(debugOutput);
@@ -127,15 +129,9 @@ public class NodeContext implements AutoCloseable {
             lastJsCodeExecutionResultFile = new File(executableFile.getParentFile() + "/JavaScriptCodeResult.txt");
             if (!lastJsCodeExecutionResultFile.exists()) lastJsCodeExecutionResultFile.createNewFile();
             String resultFilePath = lastJsCodeExecutionResultFile.getAbsolutePath().replace("\\", "/"); // To avoid issues with indows file path formats
-            executeJavaScript("var writeResultToJava = function(result) {\n" +
-                    "var fs = require('fs')\n" +
-                    "fs.writeFile('" + resultFilePath + "', result, err => {\n" + // the result var must be defined in the provided jsCode
-                    "  if (err) {\n" +
-                    "    console.error(err)\n" +
-                    "    return\n" +
-                    "  }\n" +
-                    "  //file written successfully\n" +
-                    "})\n" +
+            executeJavaScript("function writeToJava(result) {\n" +
+                    "var fs = require('fs');\n" +
+                    "var data = fs.writeFileSync('" + resultFilePath + "', result);\n" +
                     "};\n" +
                     "// Ensures that all errors get catched:\n" +
                     "// Note that process.exit() must be called explicitly because by adding the below we are in an inconsistent state\n" +
@@ -158,24 +154,21 @@ public class NodeContext implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        executeJavaScript("process.exit();");
+        //executeJavaScript("process.exit();", 0);
+        debugOutput.println("CLOSING " + this);
         process.destroy();
     }
 
-    public NodeContext writeLine(String line) throws IOException {
+    public synchronized NodeContext writeLine(String line) throws IOException {
         if (line.contains("\n")) {
-            synchronized (debugOutput) {
-                debugOutput.println("Writing multiple lines to NodeJS context:");
-                debugOutput.println("START >>>>>>>>>");
-            }
+            debugOutput.println("Writing multiple lines to NodeJS context:");
+            debugOutput.println("START >>>>>>>>>");
             int lineNumber = 1;
             String singleLine = null;
             try (BufferedReader br = new BufferedReader(new StringReader(line))) {
                 while ((singleLine = br.readLine()) != null) {
-                    synchronized (debugOutput) {
-                        debugOutput.println(lineNumber + "| " + singleLine);
-                        lineNumber++;
-                    }
+                    debugOutput.println(lineNumber + "| " + singleLine);
+                    lineNumber++;
                     processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
                     processOutput.flush();
                     processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
@@ -187,13 +180,9 @@ public class NodeContext implements AutoCloseable {
 
                 }
             }
-            synchronized (debugOutput) {
-                debugOutput.println("END <<<<<<<<<<<");
-            }
+            debugOutput.println("END <<<<<<<<<<<");
         } else {
-            synchronized (debugOutput) {
-                debugOutput.println("Writing line to NodeJS context: " + line);
-            }
+            debugOutput.println("Writing line to NodeJS context: " + line);
             processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
             processOutput.flush();
             processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
@@ -207,31 +196,34 @@ public class NodeContext implements AutoCloseable {
     }
 
     /**
+     * See {@link #executeJavaScript(String, int)} for details.
+     */
+    public NodeContext executeJavaScript(String jsCode) throws NodeJsCodeException {
+        return executeJavaScript(jsCode, timeout);
+    }
+
+    /**
      * Executes JavaScript code from the provided {@link String} in the <br>
      * current {@link NodeContext}. <br>
      * Note that everything related to JavaScript gets printed/written to the {@link #debugOutput}, which <br>
      * means that you must have provided this {@link NodeContext} a {@link #debugOutput} at initialisation to see your codes output. <br>
      */
-    public synchronized NodeContext executeJavaScript(String jsCode) throws NodeJsCodeException {
+    public synchronized NodeContext executeJavaScript(String jsCode, int timeout) throws NodeJsCodeException {
         try {
+            jsCode = jsCode + "\n" +
+                    "console.log('Done!');\n";
             if (jsCode.contains("\n")) {
-                synchronized (debugOutput) {
-                    debugOutput.println("Executing following JS-Code: ");
-                    debugOutput.println("JS-CODE START >");
-                    String singleLine = null;
-                    try (BufferedReader br = new BufferedReader(new StringReader(jsCode))) {
-                        while ((singleLine = br.readLine()) != null) {
-                            synchronized (debugOutput) {
-                                debugOutput.println(singleLine);
-                            }
-                        }
+                debugOutput.println("Executing following JS-Code: ");
+                debugOutput.println("JS-CODE START >");
+                String singleLine = null;
+                try (BufferedReader br = new BufferedReader(new StringReader(jsCode))) {
+                    while ((singleLine = br.readLine()) != null) {
+                        debugOutput.println(singleLine);
                     }
-                    debugOutput.println("JS-CODE END <");
                 }
+                debugOutput.println("JS-CODE END <");
             } else {
-                synchronized (debugOutput) {
-                    debugOutput.println("Executing following JS-Code: " + jsCode);
-                }
+                debugOutput.println("Executing following JS-Code: " + jsCode);
             }
 
             AtomicBoolean wasExecuted = new AtomicBoolean();
@@ -247,26 +239,48 @@ public class NodeContext implements AutoCloseable {
             File tmpJs = new File(executableFile.getParentFile() + "/temp" + new Random().nextInt() + ".js");
             if (!tmpJs.exists()) tmpJs.createNewFile();
             Files.write(tmpJs.toPath(), jsCode.getBytes(StandardCharsets.UTF_8));
-            executeJavaScript(tmpJs);
+            executeJavaScriptFromFile(tmpJs);
 
+            debugOutput.println("Waiting for JavaScript result...");
             // Wait until we receive a response, like undefined
-            while (!wasExecuted.get()) {
-                Thread.sleep(100);
+
+            for (int i = 0; i < timeout * 10; i++) { // Example timeout = 30s * 10 = 300loops * 100ms = 30000ms = 30s
+                if (wasExecuted.get())
+                    break;
+                else
+                    Thread.sleep(100); // Total of 30 seconds
             }
 
-            if (!errors.isEmpty()){
+            if (timeout == 0) {
+                while (!wasExecuted.get()) {
+                    Thread.sleep(100);
+                }
+            }
+
+            if (!wasExecuted.get())
+                throw new NodeJsCodeException("Script execution timeout of 30 seconds reached! This means that the script didn't finish within the last 30 seconds.", null);
+
+
+            if (!errors.isEmpty()) {
                 throw new NodeJsCodeException("Error during JavaScript code execution!", errors);
             }
 
+            processErrorInput.listeners.remove(consoleErrorLogListener);
             processInput.listeners.remove(consoleLogListener);
             tmpJs.delete();
-        } catch (NodeJsCodeException e){
+        } catch (NodeJsCodeException e) {
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return this;
+    }
+
+    /**
+     * See {@link #executeJavaScript(String, int)} for details.
+     */
+    public synchronized String executeJavaScriptAndGetResult(String jsCode) {
+        return executeJavaScriptAndGetResult(jsCode, timeout);
     }
 
     /**
@@ -276,11 +290,13 @@ public class NodeContext implements AutoCloseable {
      * </pre>
      * That result will get returned to this Java method. <br>
      * See {@link #executeJavaScript(String)} for details.
+     *
+     * @param timeout 30 seconds is the default, set to 0 to disable.
      */
-    public String executeJavaScriptAndGetResult(String jsCode) {
+    public synchronized String executeJavaScriptAndGetResult(String jsCode, int timeout) {
         try {
-            executeJavaScript(jsCode);
-            executeJavaScript("writeResultToJava(result);\n");
+            executeJavaScript(jsCode + "\n"
+                    + "writeToJava(result);\n", timeout);
 
             StringBuilder result = new StringBuilder();
             String line = null;
@@ -304,7 +320,7 @@ public class NodeContext implements AutoCloseable {
      * Executes JavaScript code from the provided {@link File} in the <br>
      * current {@link NodeContext}.
      */
-    public NodeContext executeJavaScript(File jsFile) throws IOException {
+    public NodeContext executeJavaScriptFromFile(File jsFile) throws IOException {
         writeLine(".load " + jsFile.getAbsolutePath());
         return this;
     }
@@ -319,20 +335,16 @@ public class NodeContext implements AutoCloseable {
     }
 
     public NodeContext npmInstall(String packageName) throws IOException, InterruptedException {
-        synchronized (debugOutput) {
-            debugOutput.println("[NPM-INSTALL] Installing '" + packageName + "'...");
-        }
+        debugOutput.println("[NPM-INSTALL] Installing '" + packageName + "'...");
         Process result;
-        if (packageName!=null)
+        if (packageName != null)
             result = executeNpmWithArgs("install", packageName);
         else
             result = executeNpmWithArgs("install");
         if (result.exitValue() != 0)
             throw new IOException("Failed to install/download " + packageName + "!" +
                     " Npm finished with exit code '" + process.exitValue() + "'.");
-        synchronized (debugOutput) {
-            debugOutput.println("[NPM-INSTALL] Installed '" + packageName + "' successfully!");
-        }
+        debugOutput.println("[NPM-INSTALL] Installed '" + packageName + "' successfully!");
         return this;
     }
 

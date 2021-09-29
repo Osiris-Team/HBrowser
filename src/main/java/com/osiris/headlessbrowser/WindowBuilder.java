@@ -1,7 +1,5 @@
 package com.osiris.headlessbrowser;
 
-import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
-
 import java.io.OutputStream;
 import java.util.Map;
 
@@ -10,6 +8,7 @@ public class WindowBuilder {
     private boolean enableJavaScript = true;
     private Map<String, String> customHeaders = null;
     private OutputStream debugOutputStream = null;
+    private int jsTimeout = 30;
 
 
     public WindowBuilder(HBrowser parentBrowser) {
@@ -18,13 +17,13 @@ public class WindowBuilder {
 
 
     public GraalWindow buildGraalJSWindow() {
-        // TODO debugOutputStream
+        // TODO debugOutputStream jsTimeout
         return new GraalWindow(this.parentBrowser, this.enableJavaScript, this.customHeaders);
     }
 
     public NodeWindow buildNodeJSWindow() {
         // TODO customHeaders
-        return new NodeWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream);
+        return new NodeWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout);
     }
 
     public WindowBuilder customHeaders(Map<String, String> customHeaders) {
@@ -39,6 +38,11 @@ public class WindowBuilder {
 
     public WindowBuilder debugOutputStream(OutputStream debugOutputStream) {
         this.debugOutputStream = debugOutputStream;
+        return this;
+    }
+
+    public WindowBuilder jsTimeout(int jsTimeout) {
+        this.jsTimeout = jsTimeout;
         return this;
     }
 
