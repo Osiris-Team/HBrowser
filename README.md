@@ -10,6 +10,7 @@ try(NodeWindow window = hBrowser.openWindow()){
    // ...   
 }
 ```
+Note that the first run may take a bit because Node.js and Puppeteer get installed into your current working dir.
 
 ## Features
 You can choose from two JavaScript engines: NodeJs and GraalJs.
