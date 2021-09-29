@@ -1,8 +1,10 @@
 package com.osiris.headlessbrowser;
 
 import com.osiris.betterthread.BetterThreadManager;
+import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.utils.AsyncInputStream;
 import com.osiris.headlessbrowser.utils.DownloadTask;
+import com.osiris.headlessbrowser.utils.TrashOutput;
 import net.lingala.zip4j.ZipFile;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -19,12 +21,22 @@ public class NodeContext implements AutoCloseable {
     private final File installationDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
     private final Process process;
     private final AsyncInputStream processInput;
+    private final AsyncInputStream processErrorInput;
     private final OutputStream processOutput;
-    private final PrintStream out = System.out;
+    private final PrintStream debugOutput;
     private File executableFile;
     private File lastJsCodeExecutionResultFile;
 
-    public NodeContext() {
+    public NodeContext(){
+        this(null);
+    }
+
+    public NodeContext(OutputStream debugOutput) {
+        if (debugOutput==null)
+            this.debugOutput = new PrintStream(new TrashOutput());
+        else
+            this.debugOutput = new PrintStream(debugOutput);
+        PrintStream out = this.debugOutput;
         // Download and install NodeJS into current working directory if no installation found
         try {
             if (!installationDir.exists()
@@ -95,7 +107,7 @@ public class NodeContext implements AutoCloseable {
             // Update: Node.exe must be started with this flag to get correct I/O: --interactive
             processInput = new AsyncInputStream(process.getInputStream());
             processInput.listeners.add(line -> out.println("[" + this + "] " + line));
-            new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[Node-JS-ERROR] " + line));
+            processErrorInput = new AsyncInputStream(process.getErrorStream());
             processOutput = process.getOutputStream();
             out.println(" SUCCESS!");
             out.println("Node-JS was started from: " + executableFile);
@@ -111,13 +123,7 @@ public class NodeContext implements AutoCloseable {
                 }
             });
             t.start();
-        } catch (Exception e) {
-            System.err.println("Error during start of NodeJS! Details:");
-            throw new RuntimeException(e);
-        }
 
-        try {
-            Thread.sleep(3000);
             lastJsCodeExecutionResultFile = new File(executableFile.getParentFile() + "/JavaScriptCodeResult.txt");
             if (!lastJsCodeExecutionResultFile.exists()) lastJsCodeExecutionResultFile.createNewFile();
             String resultFilePath = lastJsCodeExecutionResultFile.getAbsolutePath().replace("\\", "/"); // To avoid issues with indows file path formats
@@ -130,30 +136,44 @@ public class NodeContext implements AutoCloseable {
                     "  }\n" +
                     "  //file written successfully\n" +
                     "})\n" +
-                    "};" +
-                    "console.log('Context initialised!');");
+                    "};\n" +
+                    "// Ensures that all errors get catched:\n" +
+                    "// Note that process.exit() must be called explicitly because by adding the below we are in an inconsistent state\n" +
+                    "// Source: https://stackoverflow.com/questions/19909904/how-to-handle-all-exceptions-in-node-js\n" +
+                    "process.on('uncaughtException', function(err) {\n" +
+                    "  console.error('Caught exception: ' + err.name);\n" +
+                    "  console.error(\"with message: \"+err.message);\n" +
+                    "try {\n" +
+                    "  console.error(\"at line: \" + err.lineNumber);\n" +
+                    "  console.error(\"with stack: \" + err.stack);\n" +
+                    "} catch (e) {}\n" +
+                    "});\n" +
+                    "console.log('Context initialised!');\n");
+
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error during start of NodeJS! Details:");
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public void close() throws Exception {
+        executeJavaScript("process.exit();");
         process.destroy();
     }
 
     public NodeContext writeLine(String line) throws IOException {
         if (line.contains("\n")) {
-            synchronized (out) {
-                out.println("Writing multiple lines to NodeJS context:");
-                out.println("START >>>>>>>>>");
+            synchronized (debugOutput) {
+                debugOutput.println("Writing multiple lines to NodeJS context:");
+                debugOutput.println("START >>>>>>>>>");
             }
             int lineNumber = 1;
             String singleLine = null;
             try (BufferedReader br = new BufferedReader(new StringReader(line))) {
                 while ((singleLine = br.readLine()) != null) {
-                    synchronized (out) {
-                        out.println(lineNumber + "| " + singleLine);
+                    synchronized (debugOutput) {
+                        debugOutput.println(lineNumber + "| " + singleLine);
                         lineNumber++;
                     }
                     processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
@@ -167,12 +187,12 @@ public class NodeContext implements AutoCloseable {
 
                 }
             }
-            synchronized (out) {
-                out.println("END <<<<<<<<<<<");
+            synchronized (debugOutput) {
+                debugOutput.println("END <<<<<<<<<<<");
             }
         } else {
-            synchronized (out) {
-                out.println("Writing line to NodeJS context: " + line);
+            synchronized (debugOutput) {
+                debugOutput.println("Writing line to NodeJS context: " + line);
             }
             processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
             processOutput.flush();
@@ -188,33 +208,39 @@ public class NodeContext implements AutoCloseable {
 
     /**
      * Executes JavaScript code from the provided {@link String} in the <br>
-     * current {@link NodeContext}.
+     * current {@link NodeContext}. <br>
+     * Note that everything related to JavaScript gets printed/written to the {@link #debugOutput}, which <br>
+     * means that you must have provided this {@link NodeContext} a {@link #debugOutput} at initialisation to see your codes output. <br>
      */
-    public synchronized NodeContext executeJavaScript(String jsCode) {
+    public synchronized NodeContext executeJavaScript(String jsCode) throws NodeJsCodeException {
         try {
             if (jsCode.contains("\n")) {
-                synchronized (out) {
-                    out.println("Executing following JS-Code: ");
-                    out.println("JS-CODE START >");
+                synchronized (debugOutput) {
+                    debugOutput.println("Executing following JS-Code: ");
+                    debugOutput.println("JS-CODE START >");
                     String singleLine = null;
                     try (BufferedReader br = new BufferedReader(new StringReader(jsCode))) {
                         while ((singleLine = br.readLine()) != null) {
-                            synchronized (out) {
-                                out.println(singleLine);
+                            synchronized (debugOutput) {
+                                debugOutput.println(singleLine);
                             }
                         }
                     }
-                    out.println("JS-CODE END <");
+                    debugOutput.println("JS-CODE END <");
                 }
             } else {
-                synchronized (out) {
-                    out.println("Executing following JS-Code: " + jsCode);
+                synchronized (debugOutput) {
+                    debugOutput.println("Executing following JS-Code: " + jsCode);
                 }
             }
 
             AtomicBoolean wasExecuted = new AtomicBoolean();
-            Consumer<String> listener = line -> wasExecuted.set(true);
-            processInput.listeners.add(listener);
+            List<String> errors = new ArrayList<>();
+            Consumer<String> consoleLogListener = line -> wasExecuted.set(true);
+            processInput.listeners.add(consoleLogListener);
+
+            Consumer<String> consoleErrorLogListener = line -> errors.add(line);
+            processErrorInput.listeners.add(consoleErrorLogListener);
 
             // Writing stuff directly to the process output/NodeJs REPL console somehow is very error-prone.
             // That's why instead we create a temp file with the js code in it and load it using the .load command.
@@ -228,10 +254,16 @@ public class NodeContext implements AutoCloseable {
                 Thread.sleep(100);
             }
 
-            processInput.listeners.remove(listener);
+            if (!errors.isEmpty()){
+                throw new NodeJsCodeException("Error during JavaScript code execution!", errors);
+            }
+
+            processInput.listeners.remove(consoleLogListener);
             tmpJs.delete();
-        } catch (Exception e) {
-            System.err.println("Error during JavaScript execution! Details: ");
+        } catch (NodeJsCodeException e){
+            throw e;
+        }
+        catch (Exception e) {
             throw new RuntimeException(e);
         }
         return this;
@@ -242,7 +274,8 @@ public class NodeContext implements AutoCloseable {
      * <pre>
      *     var result = InsertYourFunctionsResultHere;
      * </pre>
-     * That result will get returned to this Java method.
+     * That result will get returned to this Java method. <br>
+     * See {@link #executeJavaScript(String)} for details.
      */
     public String executeJavaScriptAndGetResult(String jsCode) {
         try {
@@ -276,17 +309,29 @@ public class NodeContext implements AutoCloseable {
         return this;
     }
 
+    /**
+     * See <br>
+     * https://docs.npmjs.com/cli/v6/commands/npm-install <br>
+     * for details. <br>
+     */
+    public NodeContext npmInstall() throws IOException, InterruptedException {
+        return npmInstall(null);
+    }
 
     public NodeContext npmInstall(String packageName) throws IOException, InterruptedException {
-        synchronized (out) {
-            out.println("[NPM-INSTALL] Installing '" + packageName + "'...");
+        synchronized (debugOutput) {
+            debugOutput.println("[NPM-INSTALL] Installing '" + packageName + "'...");
         }
-        Process result = executeNpmWithArgs("install", packageName);
+        Process result;
+        if (packageName!=null)
+            result = executeNpmWithArgs("install", packageName);
+        else
+            result = executeNpmWithArgs("install");
         if (result.exitValue() != 0)
             throw new IOException("Failed to install/download " + packageName + "!" +
                     " Npm finished with exit code '" + process.exitValue() + "'.");
-        synchronized (out) {
-            out.println("[NPM-INSTALL] Installed '" + packageName + "' successfully!");
+        synchronized (debugOutput) {
+            debugOutput.println("[NPM-INSTALL] Installed '" + packageName + "' successfully!");
         }
         return this;
     }
@@ -308,7 +353,7 @@ public class NodeContext implements AutoCloseable {
         commands.add(npm.getAbsolutePath());
         commands.addAll(Arrays.asList(args));
         Process process = new ProcessBuilder(commands).start();
-        new AsyncInputStream(process.getInputStream()).listeners.add(line -> out.println("[NPM] " + line));
+        new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
         new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
         while (process.isAlive())
             Thread.sleep(500);
@@ -335,7 +380,7 @@ public class NodeContext implements AutoCloseable {
         return processOutput;
     }
 
-    public PrintStream getOut() {
-        return out;
+    public PrintStream getDebugOutput() {
+        return debugOutput;
     }
 }
