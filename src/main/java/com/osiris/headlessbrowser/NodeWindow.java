@@ -23,9 +23,9 @@ import java.util.Random;
  */
 public class NodeWindow implements AutoCloseable {
     private final NodeContext jsContext;
+    private final OutputStream debugOutput;
     private HBrowser parentBrowser;
     private boolean enableJavaScript;
-    private final OutputStream debugOutput;
 
     public NodeWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout) {
         this.parentBrowser = parentBrowser;

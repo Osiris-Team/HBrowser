@@ -24,9 +24,9 @@ public class NodeContext implements AutoCloseable {
     private final AsyncInputStream processErrorInput;
     private final OutputStream processOutput;
     private final PrintStream debugOutput;
-    private File executableFile;
     private final File lastJsCodeExecutionResultFile;
-    private int timeout;
+    private File executableFile;
+    private final int timeout;
 
     public NodeContext() {
         this(null, 30);
