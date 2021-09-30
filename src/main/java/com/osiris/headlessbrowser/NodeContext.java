@@ -25,8 +25,8 @@ public class NodeContext implements AutoCloseable {
     private final OutputStream processOutput;
     private final PrintStream debugOutput;
     private final File lastJsCodeExecutionResultFile;
-    private File executableFile;
     private final int timeout;
+    private File executableFile;
 
     public NodeContext() {
         this(null, 30);
@@ -133,17 +133,6 @@ public class NodeContext implements AutoCloseable {
                     "var fs = require('fs');\n" +
                     "var data = fs.writeFileSync('" + resultFilePath + "', result);\n" +
                     "};\n" +
-                    "// Ensures that all errors get catched:\n" +
-                    "// Note that process.exit() must be called explicitly because by adding the below we are in an inconsistent state\n" +
-                    "// Source: https://stackoverflow.com/questions/19909904/how-to-handle-all-exceptions-in-node-js\n" +
-                    "process.on('uncaughtException', function(err) {\n" +
-                    "  console.error('Caught exception: ' + err.name);\n" +
-                    "  console.error(\"with message: \"+err.message);\n" +
-                    "try {\n" +
-                    "  console.error(\"at line: \" + err.lineNumber);\n" +
-                    "  console.error(\"with stack: \" + err.stack);\n" +
-                    "} catch (e) {}\n" +
-                    "});\n" +
                     "console.log('Context initialised!');\n");
 
         } catch (Exception e) {
@@ -196,10 +185,10 @@ public class NodeContext implements AutoCloseable {
     }
 
     /**
-     * See {@link #executeJavaScript(String, int)} for details.
+     * See {@link #executeJavaScript(String, int, boolean)} for details.
      */
     public NodeContext executeJavaScript(String jsCode) throws NodeJsCodeException {
-        return executeJavaScript(jsCode, timeout);
+        return executeJavaScript(jsCode, timeout, true);
     }
 
     /**
@@ -208,10 +197,24 @@ public class NodeContext implements AutoCloseable {
      * Note that everything related to JavaScript gets printed/written to the {@link #debugOutput}, which <br>
      * means that you must have provided this {@link NodeContext} a {@link #debugOutput} at initialisation to see your codes output. <br>
      */
-    public synchronized NodeContext executeJavaScript(String jsCode, int timeout) throws NodeJsCodeException {
+    public synchronized NodeContext executeJavaScript(String jsCode, int timeout, boolean wrapInTryCatch) throws NodeJsCodeException {
         try {
-            jsCode = jsCode + "\n" +
-                    "console.log('Done!');\n";
+            if (wrapInTryCatch) {
+                jsCode = "try{\n" + // Just to make sure that errors get definitively caught
+                        jsCode + "\n" +
+                        "console.log('Done!');\n" +
+                        "} catch (e){\n" +
+                        "  console.error('CAUGHT JS-EXCEPTION: ' + e.name + '\\n'" +
+                        "                 + 'MESSAGE: ' + e.message + '\\n'" +
+                        "                 + 'LINE: ' + e.lineNumber + '\\n'" +
+                        "                 + 'STACK: ' + e.stack+'\\n');\n" +
+                        "}\n"
+                ;
+            } else {
+                jsCode = jsCode + "\n" +
+                        "console.log('Done!');\n";
+            }
+
             if (jsCode.contains("\n")) {
                 debugOutput.println("Executing following JS-Code: ");
                 debugOutput.println("JS-CODE START >");
@@ -227,7 +230,7 @@ public class NodeContext implements AutoCloseable {
             }
 
             AtomicBoolean wasExecuted = new AtomicBoolean();
-            List<String> errors = new ArrayList<>();
+            List<String> errors = new ArrayList<>(2);
             Consumer<String> consoleLogListener = line -> wasExecuted.set(true);
             processInput.listeners.add(consoleLogListener);
 
@@ -245,25 +248,25 @@ public class NodeContext implements AutoCloseable {
             // Wait until we receive a response, like undefined
 
             for (int i = 0; i < timeout * 10; i++) { // Example timeout = 30s * 10 = 300loops * 100ms = 30000ms = 30s
-                if (wasExecuted.get())
+                if (wasExecuted.get() || !errors.isEmpty())
                     break;
                 else
                     Thread.sleep(100); // Total of 30 seconds
             }
 
-            if (timeout == 0) {
-                while (!wasExecuted.get()) {
+            if (timeout == 0) { // Since the timeout is 0 we wait indefinitely for the script to finish
+                while (!wasExecuted.get() && errors.isEmpty()) {
                     Thread.sleep(100);
                 }
+            }
+
+            if (!errors.isEmpty()) {
+                throw new NodeJsCodeException("Error during JavaScript code execution! Details: ", errors);
             }
 
             if (!wasExecuted.get())
                 throw new NodeJsCodeException("Script execution timeout of 30 seconds reached! This means that the script didn't finish within the last 30 seconds.", null);
 
-
-            if (!errors.isEmpty()) {
-                throw new NodeJsCodeException("Error during JavaScript code execution!", errors);
-            }
 
             processErrorInput.listeners.remove(consoleErrorLogListener);
             processInput.listeners.remove(consoleLogListener);
@@ -277,10 +280,10 @@ public class NodeContext implements AutoCloseable {
     }
 
     /**
-     * See {@link #executeJavaScript(String, int)} for details.
+     * See {@link #executeJavaScript(String, int, boolean)} for details.
      */
     public synchronized String executeJavaScriptAndGetResult(String jsCode) {
-        return executeJavaScriptAndGetResult(jsCode, timeout);
+        return executeJavaScriptAndGetResult(jsCode, timeout, true);
     }
 
     /**
@@ -293,10 +296,10 @@ public class NodeContext implements AutoCloseable {
      *
      * @param timeout 30 seconds is the default, set to 0 to disable.
      */
-    public synchronized String executeJavaScriptAndGetResult(String jsCode, int timeout) {
+    public synchronized String executeJavaScriptAndGetResult(String jsCode, int timeout, boolean wrapInTryCatch) {
         try {
             executeJavaScript(jsCode + "\n"
-                    + "writeToJava(result);\n", timeout);
+                    + "writeToJava(result);\n", timeout, wrapInTryCatch);
 
             StringBuilder result = new StringBuilder();
             String line = null;

@@ -26,6 +26,7 @@ public class NodeWindow implements AutoCloseable {
     private final OutputStream debugOutput;
     private HBrowser parentBrowser;
     private boolean enableJavaScript;
+    private String url;
 
     public NodeWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout) {
         this.parentBrowser = parentBrowser;
@@ -35,7 +36,19 @@ public class NodeWindow implements AutoCloseable {
             jsContext.npmInstall("puppeteer");
             jsContext.executeJavaScript("const puppeteer = require('puppeteer');\n" +
                     "const browser = await puppeteer.launch();\n" +
-                    "const page = await browser.newPage();\n");
+                    "const page = await browser.newPage();\n" +
+                    "var downloadFile = null;\n", 30, false);
+            jsContext.executeJavaScript("" +
+                    "await page.setRequestInterception(true);\n" +
+                    "page.on('request', (request) => {\n" +
+                    "if (downloadFile!=null){" +
+                    "  // Override headers\n" +
+                    "  var content = await request.frame().content()\n" +
+                    "  console.log('FRAME: '+content);\n" +
+                    "} else{" +
+                    "request.continue();" +
+                    "}" +
+                    "});");
             setEnableJavaScript(enableJavaScript);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -60,7 +73,9 @@ public class NodeWindow implements AutoCloseable {
         if (!url.startsWith("http"))
             url = "https://" + url;
 
-        jsContext.executeJavaScript("var currentPageResponse = await page.goto('" + url + "');");
+        jsContext.executeJavaScript("" +
+                "var response = await page.goto('" + url + "');\n");
+        this.url = url;
         return this;
     }
 
@@ -84,7 +99,7 @@ public class NodeWindow implements AutoCloseable {
      * Note that the current {@link NodeContext} must have been initialised with a debugOutputStream to see JavaScript console output. <br>
      */
     public NodeWindow executeJS(String jsCode) throws NodeJsCodeException {
-        jsContext.executeJavaScript("page.evaluate(() => {\n" +
+        jsContext.executeJavaScript("await page.evaluate(() => {\n" +
                 jsCode +
                 "});\n");
         return this;
@@ -322,6 +337,35 @@ public class NodeWindow implements AutoCloseable {
     }
      */
 
+    /** TODO
+     * Downloads the currently loaded page/resource to the specified file. <br>
+     * Creates the file if not existing. <br>
+
+     public NodeWindow download(File downloadedFile) throws NodeJsCodeException, IOException {
+
+     return download(url, downloadedFile);
+     }
+     */
+
+    /**
+     * TODO
+     * Note that the url won't get loaded into the current window.
+     * <p>
+     * public NodeWindow download(String url, File downloadedFile) throws NodeJsCodeException, IOException {
+     * String filePath = downloadedFile.getAbsolutePath().replace("\\", "/");
+     * jsContext.executeJavaScript("downloadFile = '"+filePath+"';");
+     * load(url);
+     * jsContext.executeJavaScript("downloadFile = null;");
+     * <p>
+     * jsContext.executeJavaScript("" +
+     * "" +
+     * "var buffer = await response.buffer();\n" +
+     * "fs.writeFileSync(\""+filePath+"\", buffer);");
+     * <p>
+     * <p>
+     * return this;
+     * }
+     */
 
     public HBrowser getParentBrowser() {
         return parentBrowser;
