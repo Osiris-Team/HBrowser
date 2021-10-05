@@ -76,24 +76,19 @@ guide: [IntelliJ IDEA Cloning Guide](https://blog.jetbrains.com/idea/2020/10/clo
 <summary>Running Node.js independently</summary>
 <pre lang="java">
 // Installs Node.js into current working directory if needed
-NodeContext defaultNodeContext = new NodeContext(); 
-
-// Uses the provided parameters to create the context.
-NodeContext customNodeContext = new NodeContext(File installationDir, OutputStream debugOutput, int timeout);
-
+NodeContext ctx = new NodeContext(); // Use another constructor for customization
 try{
   // Easily install/update needed modules
-  defaultNodeContext.npmInstall("name of node module");
+  ctx.npmInstall("name of node module");
 
   // To be able to see the JavaScript code results.
   // Otherwise you can also init NodeContext with debugOutput=System.out to achieve this.
-  defaultNodeContext.onPrintLine(line -> System.out.println(line);
-  defaultNodeContext.executeJavaScript("console.log('hello world!');");
+  ctx.onPrintLine(line -> System.out.println(line);
+  ctx.executeJavaScript("console.log('hello world!');");
 
   // You can return JavaScript results too.
   // Note that you must have a result variable in the provided JS Code for this to work!
-  String result = defaultNodeContext.executeJavaScriptAndGetResult("var result = 'my JavaScript result!';");
-
+  String result = ctx.executeJavaScriptAndGetResult("var result = 'my JavaScript result!';");
 } catch(Exception e){
   e.printStacktrace();
 }
@@ -108,5 +103,8 @@ Frequently_asked_questions_here
 
 | Name/Link | Usage | License |
 | :-----: | :-----: | :-----: |
+| [Playwright](https://github.com/microsoft/playwright) | Emulates different types of browsers | [License](https://github.com/microsoft/playwright/blob/master/LICENSE) |
+| [Puppeteer](https://github.com/puppeteer/puppeteer) | Emulates different types of browsers  | [License](https://github.com/puppeteer/puppeteer/blob/main/LICENSE) |
+| [Node.Js](https://github.com/nodejs/node) | Enables executing JavaScript code from Java | [License](https://github.com/nodejs/node/blob/master/LICENSE) |
 | [GraalJS](https://github.com/oracle/graaljs) | Enables executing JavaScript code from Java | [License](https://github.com/oracle/graaljs/blob/master/LICENSE) |
 | [Jsoup](https://github.com/jhy/jsoup)      | Used to load pages and modify their HTML code      |   [License](https://github.com/jhy/jsoup/blob/master/LICENSE) |
