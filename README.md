@@ -72,8 +72,33 @@ guide: [IntelliJ IDEA Cloning Guide](https://blog.jetbrains.com/idea/2020/10/clo
 - https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
 
 ## Examples
+<details>
+<summary>Running Node.js independently</summary>
+<pre lang="java">
+// Installs Node.js into current working directory if needed
+NodeContext defaultNodeContext = new NodeContext(); 
 
-Insert_usage_examples_here
+// Uses the provided parameters to create the context.
+NodeContext customNodeContext = new NodeContext(File installationDir, OutputStream debugOutput, int timeout);
+
+try{
+  // Easily install/update needed modules
+  defaultNodeContext.npmInstall("name of node module");
+
+  // To be able to see the JavaScript code results.
+  // Otherwise you can also init NodeContext with debugOutput=System.out to achieve this.
+  defaultNodeContext.onPrintLine(line -> System.out.println(line);
+  defaultNodeContext.executeJavaScript("console.log('hello world!');");
+
+  // You can return JavaScript results too.
+  // Note that you must have a result variable in the provided JS Code for this to work!
+  String result = defaultNodeContext.executeJavaScriptAndGetResult("var result = 'my JavaScript result!';");
+
+} catch(Exception e){
+  e.printStacktrace();
+}
+</pre>
+</details>
 
 ## FAQ
 

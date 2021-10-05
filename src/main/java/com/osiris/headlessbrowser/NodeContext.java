@@ -13,12 +13,14 @@ import org.jsoup.nodes.Element;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class NodeContext implements AutoCloseable {
-    private final File installationDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
     private final Process process;
     private final AsyncInputStream processInput;
     private final AsyncInputStream processErrorInput;
@@ -26,19 +28,31 @@ public class NodeContext implements AutoCloseable {
     private final PrintStream debugOutput;
     private final File lastJsCodeExecutionResultFile;
     private final int timeout;
+    private final File installationDir;
     private File executableFile;
 
     public NodeContext() {
-        this(null, 30);
+        this(null, null, 30);
     }
 
-    public NodeContext(OutputStream debugOutput, int timeout) {
+    /**
+     * @param installationDir path of an empty directory (can also not exist yet) to install the latest Node.js into if needed.
+     *                        If null Node.js will get installed into ./NodeJS-Installation ("." is the current working directory).
+     * @param debugOutput     if null, debug output won't be written/printed, otherwise it gets printed/written to the provided {@link OutputStream}.
+     * @param timeout         the max time in seconds to wait for JavaScript code to finish. Set to 0 to disable.
+     */
+    public NodeContext(File installationDir, OutputStream debugOutput, int timeout) {
         this.timeout = timeout;
         if (debugOutput == null)
             this.debugOutput = new PrintStream(new TrashOutput());
         else
             this.debugOutput = new PrintStream(debugOutput);
         PrintStream out = this.debugOutput;
+        if (installationDir == null) {
+            this.installationDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
+            installationDir = this.installationDir;
+        } else
+            this.installationDir = installationDir;
         // Download and install NodeJS into current working directory if no installation found
         try {
             if (!installationDir.exists()
@@ -108,7 +122,7 @@ public class NodeContext implements AutoCloseable {
             // Tried multiple things without success.
             // Update: Node.exe must be started with this flag to get correct I/O: --interactive
             processInput = new AsyncInputStream(process.getInputStream());
-            processInput.listeners.add(line -> out.println("[" + this + "] " + line));
+            processInput.listeners.add(line -> out.println("[" + getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "|LOG] " + line));
             processErrorInput = new AsyncInputStream(process.getErrorStream());
             processOutput = process.getOutputStream();
             out.println(" SUCCESS!");
@@ -125,6 +139,10 @@ public class NodeContext implements AutoCloseable {
                 }
             });
             t.start();
+
+            executeJavaScript("function sleep(ms) {\n" +
+                    "  return new Promise(resolve => setTimeout(resolve, ms));\n" +
+                    "}");
 
             lastJsCodeExecutionResultFile = new File(executableFile.getParentFile() + "/JavaScriptCodeResult.txt");
             if (!lastJsCodeExecutionResultFile.exists()) lastJsCodeExecutionResultFile.createNewFile();
@@ -199,10 +217,16 @@ public class NodeContext implements AutoCloseable {
      */
     public synchronized NodeContext executeJavaScript(String jsCode, int timeout, boolean wrapInTryCatch) throws NodeJsCodeException {
         try {
+            // Writing stuff directly to the process output/NodeJs REPL console somehow is very error-prone.
+            // That's why instead we create a temp file with the js code in it and load it using the .load command.
+            long msStart = System.currentTimeMillis();
+            File tmpJs = new File(executableFile.getParentFile() + "/temp" + msStart + ".js");
+            if (!tmpJs.exists()) tmpJs.createNewFile();
+
             if (wrapInTryCatch) {
                 jsCode = "try{\n" + // Just to make sure that errors get definitively caught
                         jsCode + "\n" +
-                        "console.log('Done!');\n" +
+                        "console.log('Execution of JS-Code(" + msStart + ") finished!');\n" +
                         "} catch (e){\n" +
                         "  console.error('CAUGHT JS-EXCEPTION: ' + e.name + '\\n'" +
                         "                 + 'MESSAGE: ' + e.message + '\\n'" +
@@ -212,7 +236,7 @@ public class NodeContext implements AutoCloseable {
                 ;
             } else {
                 jsCode = jsCode + "\n" +
-                        "console.log('Done!');\n";
+                        "console.log('Execution of JS-Code(" + msStart + ") finished!');\n";
             }
 
             if (jsCode.contains("\n")) {
@@ -231,19 +255,16 @@ public class NodeContext implements AutoCloseable {
 
             AtomicBoolean wasExecuted = new AtomicBoolean();
             List<String> errors = new ArrayList<>(2);
-            Consumer<String> consoleLogListener = line -> wasExecuted.set(true);
+            Consumer<String> consoleLogListener = line -> {
+                if (line.contains("" + msStart)) wasExecuted.set(true);
+            };
             processInput.listeners.add(consoleLogListener);
 
             Consumer<String> consoleErrorLogListener = line -> errors.add(line);
             processErrorInput.listeners.add(consoleErrorLogListener);
 
-            // Writing stuff directly to the process output/NodeJs REPL console somehow is very error-prone.
-            // That's why instead we create a temp file with the js code in it and load it using the .load command.
-            File tmpJs = new File(executableFile.getParentFile() + "/temp" + new Random().nextInt() + ".js");
-            if (!tmpJs.exists()) tmpJs.createNewFile();
             Files.write(tmpJs.toPath(), jsCode.getBytes(StandardCharsets.UTF_8));
             executeJavaScriptFromFile(tmpJs);
-
             debugOutput.println("Waiting for JavaScript result...");
             // Wait until we receive a response, like undefined
 
@@ -259,6 +280,8 @@ public class NodeContext implements AutoCloseable {
                     Thread.sleep(100);
                 }
             }
+
+            debugOutput.println("Took " + (System.currentTimeMillis() - msStart) + "ms.");
 
             if (!errors.isEmpty()) {
                 throw new NodeJsCodeException("Error during JavaScript code execution! Details: ", errors);
@@ -373,6 +396,15 @@ public class NodeContext implements AutoCloseable {
         while (process.isAlive())
             Thread.sleep(500);
         return process;
+    }
+
+    /**
+     * Events get fired when a line gets printed to the <br>
+     * Node.js consoles {@link OutputStream}.<br>
+     */
+    public NodeContext onPrintLine(Consumer<String> listener) {
+        processInput.listeners.add(listener);
+        return this;
     }
 
     public File getInstallationDir() {

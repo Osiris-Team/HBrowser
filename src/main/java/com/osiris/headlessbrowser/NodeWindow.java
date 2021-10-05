@@ -13,6 +13,7 @@ import java.net.HttpCookie;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -27,28 +28,130 @@ public class NodeWindow implements AutoCloseable {
     private HBrowser parentBrowser;
     private boolean enableJavaScript;
     private String url;
+    private final boolean isHeadless;
+    private final File userDataDir;
+    private final boolean isDevTools;
+    private final int debuggingPort;
+    private final String[] additionalStartupArgs;
+    private final File downloadTempDir;
 
-    public NodeWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout) {
+    /**
+     * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
+     * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
+     *
+     * @param parentBrowser         The {@link HBrowser} this window was started from. <br><br>
+     * @param enableJavaScript      Enable/Disable JavaScript code execution for this window. <br><br>
+     * @param debugOutput           Default is null. Otherwise, writes/prints debug related information and JavaScript code console output to the debug output. <br><br>
+     * @param jsTimeout             Default is 30s. The timeout in seconds to wait before throwing a {@link NodeJsCodeException}, if the running js code didn't finish. Set to 0 to disable. <br><br>
+     * @param isHeadless            Whether to run browser in headless mode. Defaults to true unless the devtools option is true. <br><br>
+     * @param userDataDir           Path to a User Data Directory. Default is ./headless-browser/user-data (the "." represents the current working directory). <br><br>
+     * @param isDevTools            Whether to auto-open a DevTools panel for each tab. If this option is true, the headless option will be set false. <br><br>
+     * @param debuggingPort         Default is 0. Specify custom debugging port. Pass 0 to discover a random port. <br><br>
+     * @param additionalStartupArgs Default is null. Additional arguments to pass to the browser instance. The list of Chromium flags can be found here: https://peter.sh/experiments/chromium-command-line-switches/ <br><br>
+     */
+    public NodeWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
+                      boolean isHeadless, File userDataDir, boolean isDevTools, int debuggingPort, String... additionalStartupArgs) {
         this.parentBrowser = parentBrowser;
         this.debugOutput = debugOutput;
-        this.jsContext = new NodeContext(debugOutput, jsTimeout);
+        this.isHeadless = isHeadless;
+        this.userDataDir = userDataDir;
+        this.isDevTools = isDevTools;
+        this.debuggingPort = debuggingPort;
+        this.additionalStartupArgs = additionalStartupArgs;
         try {
+            this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
             jsContext.npmInstall("puppeteer");
-            jsContext.executeJavaScript("const puppeteer = require('puppeteer');\n" +
-                    "const browser = await puppeteer.launch();\n" +
-                    "const page = await browser.newPage();\n" +
-                    "var downloadFile = null;\n", 30, false);
-            jsContext.executeJavaScript("" +
-                    "await page.setRequestInterception(true);\n" +
-                    "page.on('request', (request) => {\n" +
-                    "if (downloadFile!=null){" +
-                    "  // Override headers\n" +
-                    "  var content = await request.frame().content()\n" +
-                    "  console.log('FRAME: '+content);\n" +
-                    "} else{" +
-                    "request.continue();" +
+            // Define global variables/constants
+            jsContext.executeJavaScript(
+                    "const puppeteer = require('puppeteer');\n" +
+                            "var browser = null;\n" +
+                            "var page = null;\n" +
+                            "var downloadFile = null;\n", 30, false);
+
+            StringBuilder jsInitCode = new StringBuilder();
+            jsInitCode.append("var defaultArgs = {\n");
+            jsInitCode.append("  headless : " + isHeadless + ",\n");
+            if (additionalStartupArgs != null) {
+                jsInitCode.append("  args: " + Arrays.toString(additionalStartupArgs) + ",\n");
+            }
+            if (userDataDir == null) {
+                userDataDir = new WindowBuilder(null).userDataDir; // Get the default value
+            }
+            if (userDataDir.isFile())
+                throw new Exception("userDataDir must be a directory and cannot be a file (" + userDataDir.getAbsolutePath() + ")!");
+            if (!userDataDir.exists()) userDataDir.mkdirs();
+            jsInitCode.append("  userDataDir: \"" + userDataDir.getAbsolutePath().replace("\\", "/") + "\",\n");
+            jsInitCode.append("  devtools: " + isDevTools + ",\n");
+            jsInitCode.append("  debuggingPort: " + debuggingPort + "\n");
+            jsInitCode.append("};\n" +
+                    "var argsAsArray = puppeteer.defaultArgs(defaultArgs);\n" +
+                    "console.log(puppeteer.defaultArgs(defaultArgs));\n");
+            //jsInitCode.append("browser = await puppeteer.launch(defaultArgs);\n");
+            jsInitCode.append("browser = await puppeteer.launch({\n" +
+                    "ignoreDefaultArgs: true,\n" +
+                    "args: [\n" +
+                    //"   '--disable-background-networking',\n" +
+                    //"   '--enable-features=NetworkService,NetworkServiceInProcess',\n" + // Make sure to enable all features
+                    "   '--disable-background-timer-throttling',\n" +
+                    //"   '--disable-backgrounding-occluded-windows',\n" +
+                    "   '--disable-breakpad',\n" +
+                    "   '--disable-client-side-phishing-detection',\n" +
+                    //"   '--disable-component-extensions-with-background-pages',\n" +
+                    "   '--disable-default-apps',\n" +
+                    "   '--disable-dev-shm-usage',\n" +
+                    "   '--disable-extensions',\n" +
+                    "   '--disable-features=Translate',\n" +
+                    "   '--disable-hang-monitor',\n" +
+                    "   '--disable-ipc-flooding-protection',\n" +
+                    "   '--disable-popup-blocking',\n" +
+                    "   '--disable-prompt-on-repost',\n" +
+                    "   '--disable-web-security',\n" + // NEW  !
+                    //"   '--disable-renderer-backgrounding',\n" +
+                    "   '--disable-sync',\n" +
+                    "   '--test-type=browser',\n" + //NEW !
+                    "   '--force-color-profile=srgb',\n" +
+                    "   '--metrics-recording-only',\n" +
+                    "   '--no-first-run',\n" +
+                    //"   '--enable-automation',\n" +
+                    "   '--password-store=basic',\n" +
+                    "   '--use-mock-keychain',\n" +
+                    "   '--enable-blink-features=IdleDetection',\n" +
+                    "   '--user-data-dir=D:\\\\Coding\\\\JAVA\\\\Headless-Browser\\\\headless-browser\\\\user-data',\n" +
+                    "   '--headless',\n" +
+                    "   '--hide-scrollbars',\n" +
+                    "   '--mute-audio',\n" +
+                    "   '--evaluate_capability=capabilities:{" +
+                    "\"browserName\":\"chrome\"," +
+                    "\"acceptInsecureCerts\":true," +
+                    "\"chromeOptions\":{" +
+                    "\"prefs\":{" +
+                    "\"download\":{" +
+                    "\"prompt_for_download\":false," +
+                    "\"download_restrictions\":0," +
+                    "\"directory_upgrade\":true," +
+                    "\"default_directory\":\"D:\\\\Coding\\\\JAVA\\\\Headless-Browser\\\\headless-browser\\\\user-data\"," +
+                    "\"safebrowsing.enabled\":false," +
+                    "\"safebrowsing.disable_download_protection\":true," +
+                    "}," +
+                    "\"safebrowsing\":{" +
+                    "\"enabled\":true" +
                     "}" +
-                    "});");
+                    "}" +
+                    "}" +
+                    "}',\n" +
+                    "   'about:blank'\n" +
+                    " ]\n" +
+                    "});\n");
+            jsInitCode.append("page = await browser.newPage();\n");
+            jsContext.executeJavaScript(jsInitCode.toString(), 30, false);
+
+            // To be able to download files:
+            downloadTempDir = new File(userDataDir + "/downloads-temp");
+            if (!downloadTempDir.exists()) downloadTempDir.mkdirs();
+            jsContext.executeJavaScript("var cdpSession = await page.target().createCDPSession();\n" +
+                    "await cdpSession.send('Page.setDownloadBehavior', {'behavior': 'allow', 'downloadPath': " +
+                    "'" + downloadTempDir.getAbsolutePath().replace("\\", "\\\\") + "'});\n"); // Windows path must stay windows path
+
             setEnableJavaScript(enableJavaScript);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -337,15 +440,22 @@ public class NodeWindow implements AutoCloseable {
     }
      */
 
-    /** TODO
+    /**
+     * TODO
      * Downloads the currently loaded page/resource to the specified file. <br>
      * Creates the file if not existing. <br>
-
-     public NodeWindow download(File downloadedFile) throws NodeJsCodeException, IOException {
-
-     return download(url, downloadedFile);
-     }
+     * <p>
+     * public NodeWindow download(File downloadedFile) throws NodeJsCodeException, IOException {
+     * <p>
+     * return download(url, downloadedFile);
+     * }
      */
+
+    public NodeWindow download(String url) throws NodeJsCodeException {
+        executeJS("var downloadWindow = window.open('" + url + "');\n" +
+                "downloadWindow.focus();\n");
+        return this;
+    }
 
     /**
      * TODO
@@ -398,5 +508,29 @@ public class NodeWindow implements AutoCloseable {
      */
     public String getBrowserType() {
         return jsContext.executeJavaScriptAndGetResult("var result = puppeteer.product;");
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public boolean isHeadless() {
+        return isHeadless;
+    }
+
+    public File getUserDataDir() {
+        return userDataDir;
+    }
+
+    public boolean isDevTools() {
+        return isDevTools;
+    }
+
+    public int getDebuggingPort() {
+        return debuggingPort;
+    }
+
+    public String[] getAdditionalStartupArgs() {
+        return additionalStartupArgs;
     }
 }
