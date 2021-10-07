@@ -102,6 +102,18 @@ public class PlaywrightWindow implements AutoCloseable {
         return Jsoup.parse(rawHtml);
     }
 
+    /**
+     * Executes the provided JavaScript code in the current pages/windows context. <br>
+     * If you want to execute JavaScript code in the current Node.js context however use {@link NodeContext#executeJavaScript(String)}. <br>
+     * Note that the current {@link NodeContext} must have been initialised with a debugOutputStream to see JavaScript console output. <br>
+     */
+    public PlaywrightWindow executeJS(String jsCode) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.evaluate(() => {\n" +
+                jsCode +
+                "});\n");
+        return this;
+    }
+
     public PlaywrightWindow download(String url, File dest) throws IOException {
         File download = new File(jsContext.executeJavaScriptAndGetResult("" +
                 "console.log('preparing download'); \n" +
