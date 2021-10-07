@@ -18,7 +18,7 @@ public class WindowBuilder {
 
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public WindowBuilder(HBrowser parentBrowser) {
         this.parentBrowser = parentBrowser;
@@ -31,16 +31,16 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
-    public NodeWindow buildNodeJSWindow() {
+    public PuppeteerWindow buildNodeJSWindow() {
         // TODO customHeaders
-        return new NodeWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
+        return new PuppeteerWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
                 this.isHeadless, this.userDataDir, this.isDevTools, this.debuggingPort, this.additionalStartupArgs);
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public PlaywrightWindow buildPlaywrightWindow() {
         return new PlaywrightWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
@@ -60,7 +60,7 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public WindowBuilder debugOutputStream(OutputStream val) {
         this.debugOutputStream = val;
@@ -68,7 +68,7 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public WindowBuilder jsTimeout(int val) {
         this.jsTimeout = val;
@@ -76,7 +76,7 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public WindowBuilder headless(boolean val) {
         this.isHeadless = val;
@@ -84,7 +84,7 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public WindowBuilder userDataDir(File val) {
         this.userDataDir = val;
@@ -92,7 +92,7 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public WindowBuilder devTools(boolean val) {
         this.isDevTools = val;
@@ -100,7 +100,7 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public WindowBuilder debuggingPort(int val) {
         this.debuggingPort = val;
@@ -108,7 +108,7 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link NodeWindow#NodeWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
     public WindowBuilder additionalStartupArgs(String... val) {
         this.additionalStartupArgs = val;

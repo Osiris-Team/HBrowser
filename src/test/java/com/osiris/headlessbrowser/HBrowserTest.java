@@ -10,6 +10,6 @@ class HBrowserTest {
     @Test
     void test() throws IOException, NodeJsCodeException {
         HBrowser hBrowser = new HBrowser();
-        NodeWindow nodeWindow = hBrowser.openWindow().load("https://wikipedia.org");
+        PuppeteerWindow puppeteerWindow = hBrowser.openWindow().load("https://wikipedia.org");
     }
 }

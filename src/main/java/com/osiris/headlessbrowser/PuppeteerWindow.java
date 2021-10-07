@@ -22,7 +22,7 @@ import java.util.Random;
  *
  * @author Osiris-Team
  */
-public class NodeWindow implements AutoCloseable {
+public class PuppeteerWindow implements AutoCloseable {
     private final NodeContext jsContext;
     private final OutputStream debugOutput;
     private HBrowser parentBrowser;
@@ -49,8 +49,8 @@ public class NodeWindow implements AutoCloseable {
      * @param debuggingPort         Default is 0. Specify custom debugging port. Pass 0 to discover a random port. <br><br>
      * @param additionalStartupArgs Default is null. Additional arguments to pass to the browser instance. The list of Chromium flags can be found here: https://peter.sh/experiments/chromium-command-line-switches/ <br><br>
      */
-    public NodeWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
-                      boolean isHeadless, File userDataDir, boolean isDevTools, int debuggingPort, String... additionalStartupArgs) {
+    public PuppeteerWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
+                           boolean isHeadless, File userDataDir, boolean isDevTools, int debuggingPort, String... additionalStartupArgs) {
         this.parentBrowser = parentBrowser;
         this.debugOutput = debugOutput;
         this.isHeadless = isHeadless;
@@ -166,13 +166,13 @@ public class NodeWindow implements AutoCloseable {
     }
 
     /**
-     * Load the contents from the provided url into the current {@link NodeWindow}.
+     * Load the contents from the provided url into the current {@link PuppeteerWindow}.
      *
      * @param url Examples: https://www.wikipedia.org or wikipedia.org.
-     * @return the current {@link NodeWindow} for chained method calls.
+     * @return the current {@link PuppeteerWindow} for chained method calls.
      * @throws IOException
      */
-    public NodeWindow load(String url) throws IOException, NodeJsCodeException {
+    public PuppeteerWindow load(String url) throws IOException, NodeJsCodeException {
         if (!url.startsWith("http"))
             url = "https://" + url;
 
@@ -201,7 +201,7 @@ public class NodeWindow implements AutoCloseable {
      * If you want to execute JavaScript code in the current Node.js context however use {@link NodeContext#executeJavaScript(String)}. <br>
      * Note that the current {@link NodeContext} must have been initialised with a debugOutputStream to see JavaScript console output. <br>
      */
-    public NodeWindow executeJS(String jsCode) throws NodeJsCodeException {
+    public PuppeteerWindow executeJS(String jsCode) throws NodeJsCodeException {
         jsContext.executeJavaScript("await page.evaluate(() => {\n" +
                 jsCode +
                 "});\n");
@@ -212,7 +212,7 @@ public class NodeWindow implements AutoCloseable {
     /**
      * See {@link #makeScreenshot(File, boolean)} for details.
      */
-    public NodeWindow makeScreenshot(String filePath, boolean captureFullPage) throws IOException, NodeJsCodeException {
+    public PuppeteerWindow makeScreenshot(String filePath, boolean captureFullPage) throws IOException, NodeJsCodeException {
         return makeScreenshot(new File(filePath), captureFullPage);
     }
 
@@ -222,18 +222,18 @@ public class NodeWindow implements AutoCloseable {
      * @param file            should be a .png file. If not created yet gets created. <br>
      * @param captureFullPage should the complete page (top to bottom) be captured, or only the currently visible part?
      */
-    public NodeWindow makeScreenshot(File file, boolean captureFullPage) throws IOException, NodeJsCodeException {
+    public PuppeteerWindow makeScreenshot(File file, boolean captureFullPage) throws IOException, NodeJsCodeException {
         if (!file.exists()) file.createNewFile();
         String path = file.getAbsolutePath().replace("\\", "/"); // Windows paths don't work that's why we do this
         jsContext.executeJavaScript("await page.screenshot({ path: '" + path + "', fullPage: " + captureFullPage + " });");
         return this;
     }
 
-    public NodeWindow setScreenSize(String width, String height) throws NodeJsCodeException {
+    public PuppeteerWindow setScreenSize(String width, String height) throws NodeJsCodeException {
         return setScreenSize(Integer.parseInt(width), Integer.parseInt(height));
     }
 
-    public NodeWindow setScreenSize(int width, int height) throws NodeJsCodeException {
+    public PuppeteerWindow setScreenSize(int width, int height) throws NodeJsCodeException {
         jsContext.executeJavaScript("await page.setViewport({ width: " + width + ", height: " + height + " })");
         return this;
     }
@@ -241,7 +241,7 @@ public class NodeWindow implements AutoCloseable {
     /**
      * See {@link #setCookie(String, String, String, boolean, boolean)} for details.
      */
-    public NodeWindow setCookie(HttpCookie cookie) throws MalformedURLException, NodeJsCodeException {
+    public PuppeteerWindow setCookie(HttpCookie cookie) throws MalformedURLException, NodeJsCodeException {
         return setCookie(cookie.getName(), cookie.getValue(), cookie.getDomain(), cookie.isHttpOnly(), cookie.getSecure());
     }
 
@@ -250,7 +250,7 @@ public class NodeWindow implements AutoCloseable {
      *
      * @param urlOrDomain Can be the domain or complete url. Example: https://example.com or .example.com
      */
-    public NodeWindow setCookie(String name, String value, String urlOrDomain, boolean isHttpOnly, boolean isSecure) throws MalformedURLException, NodeJsCodeException {
+    public PuppeteerWindow setCookie(String name, String value, String urlOrDomain, boolean isHttpOnly, boolean isSecure) throws MalformedURLException, NodeJsCodeException {
         String domain;
         URL url;
         if (urlOrDomain.contains("/")) {
@@ -343,11 +343,11 @@ public class NodeWindow implements AutoCloseable {
         return cookies;
     }
 
-    public NodeWindow printCookiesAsJsonArray() throws NodeJsCodeException, IOException {
+    public PuppeteerWindow printCookiesAsJsonArray() throws NodeJsCodeException, IOException {
         return printCookiesAsJsonArray(System.out);
     }
 
-    public NodeWindow printCookiesAsJsonArray(PrintStream out) throws NodeJsCodeException, IOException {
+    public PuppeteerWindow printCookiesAsJsonArray(PrintStream out) throws NodeJsCodeException, IOException {
         out.println(new GsonBuilder().setPrettyPrinting().create().toJson(getCookiesAsJsonArray()));
         return this;
     }
@@ -373,7 +373,7 @@ public class NodeWindow implements AutoCloseable {
      * List of all available devices here: <br>
      * https://github.com/puppeteer/puppeteer/blob/main/src/common/DeviceDescriptors.ts
      */
-    public NodeWindow setDevice(String deviceName) throws NodeJsCodeException {
+    public PuppeteerWindow setDevice(String deviceName) throws NodeJsCodeException {
         jsContext.executeJavaScript("var device = puppeteer.devices['" + deviceName + "'];\n" +
                 "await page.emulate(device);\n");
         return this;
@@ -383,7 +383,7 @@ public class NodeWindow implements AutoCloseable {
      * Performs one left-click on the element found by the selector. <br>
      * See {@link #click(String, String, int, int)} for details. <br>
      */
-    public NodeWindow leftClick(String selector) throws NodeJsCodeException {
+    public PuppeteerWindow leftClick(String selector) throws NodeJsCodeException {
         return click(selector, "left");
     }
 
@@ -391,7 +391,7 @@ public class NodeWindow implements AutoCloseable {
      * Performs one right-click on the element found by the selector. <br>
      * See {@link #click(String, String, int, int)} for details. <br>
      */
-    public NodeWindow rightClick(String selector) throws NodeJsCodeException {
+    public PuppeteerWindow rightClick(String selector) throws NodeJsCodeException {
         return click(selector, "right");
     }
 
@@ -399,14 +399,14 @@ public class NodeWindow implements AutoCloseable {
      * Performs one middle-click on the element found by the selector. <br>
      * See {@link #click(String, String, int, int)} for details. <br>
      */
-    public NodeWindow middleClick(String selector) throws NodeJsCodeException {
+    public PuppeteerWindow middleClick(String selector) throws NodeJsCodeException {
         return click(selector, "middle");
     }
 
     /**
      * See {@link #click(String, String, int, int)} for details.
      */
-    public NodeWindow click(String selector, String type) throws NodeJsCodeException {
+    public PuppeteerWindow click(String selector, String type) throws NodeJsCodeException {
         int max = 1000;
         int min = 200;
         return click(selector, type, 1, new Random().nextInt(max + 1 - min) + min);
@@ -422,7 +422,7 @@ public class NodeWindow implements AutoCloseable {
      * @param clickCount the amount of clicks.
      * @param delay      the time to wait between mousedown and mouseup in milliseconds.
      */
-    public NodeWindow click(String selector, String type, int clickCount, int delay) throws NodeJsCodeException {
+    public PuppeteerWindow click(String selector, String type, int clickCount, int delay) throws NodeJsCodeException {
         jsContext.executeJavaScript("var options = {\n" +
                 "button: '" + type + "',\n" +
                 "clickCount: " + clickCount + ",\n" +
@@ -451,7 +451,7 @@ public class NodeWindow implements AutoCloseable {
      * }
      */
 
-    public NodeWindow download(String url) throws NodeJsCodeException {
+    public PuppeteerWindow download(String url) throws NodeJsCodeException {
         executeJS("var downloadWindow = window.open('" + url + "');\n" +
                 "downloadWindow.focus();\n");
         return this;
@@ -489,7 +489,7 @@ public class NodeWindow implements AutoCloseable {
         return enableJavaScript;
     }
 
-    public NodeWindow setEnableJavaScript(boolean enableJavaScript) throws NodeJsCodeException {
+    public PuppeteerWindow setEnableJavaScript(boolean enableJavaScript) throws NodeJsCodeException {
         jsContext.executeJavaScript("await page.setJavaScriptEnabled(" + enableJavaScript + ");");
         this.enableJavaScript = enableJavaScript;
         return this;

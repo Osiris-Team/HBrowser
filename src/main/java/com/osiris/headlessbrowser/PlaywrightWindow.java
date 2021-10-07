@@ -63,7 +63,7 @@ public class PlaywrightWindow implements AutoCloseable {
                             "{ acceptDownloads: true,\n" +
                             "  headless : " + isHeadless + ",\n" +
                             "  javaScriptEnabled: " + enableJavaScript + ",\n" +
-                            "  downloadsPath: '" + downloadTempDir.getAbsolutePath().replace("\\", "/") + "',\n" +
+                            //"  downloadsPath: '" + downloadTempDir.getAbsolutePath().replace("\\", "/") + "',\n" + // Active issue at: https://github.com/microsoft/playwright/issues/9279
                             "  devtools: " + isDevTools + "\n" +
                             "});\n" +
                             "page = await browser.newPage();\n", 30, false);
@@ -84,23 +84,25 @@ public class PlaywrightWindow implements AutoCloseable {
 
     public PlaywrightWindow download(String url, File dest) throws IOException {
         File download = new File(jsContext.executeJavaScriptAndGetResult("" +
-                "await page.goto('about:blank');\n" + // To make sure we got a page where we can actually add the download link and click on it
-                "var event = page.waitForEvent('download');\n" +
                 "console.log('preparing download'); \n" +
+                "await page.goto('about:blank');\n" + // To make sure we got a page where we can actually add the download link and click on it
                 "await page.evaluate(`" +
                 "var myCUSTel = document.createElement('a');" +
                 "myCUSTel.innerHTML = 'Download';" +
                 "myCUSTel.setAttribute('href', '" + url + "');" +
                 "myCUSTel.setAttribute('id', 'myCUSTel');" +
                 "document.getElementsByTagName('body')[0].appendChild(myCUSTel);`);\n" +
-                "await page.click('id=myCUSTel');\n" +
-                "var download = await event;\n" +
+                "var [ download ] = await Promise.all([\n" +
+                "  page.waitForEvent('download'), // wait for download to start\n" +
+                "  page.click('id=myCUSTel')\n" +
+                "]);\n" +
                 "var downloadError = await download.failure();\n" +
                 "if (downloadError!=null) throw new Error(downloadError);\n" +
-                "var result = await download.path();\n", 0, true));
-        if (dest != null)
+                "var result = await download.path();\n", 0, true).trim());
+        if (dest != null){
             Files.copy(download.toPath(), dest.toPath());
-        dest.delete();
+            download.delete();
+        }
         this.url = url;
         return this;
     }

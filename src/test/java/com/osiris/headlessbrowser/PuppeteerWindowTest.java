@@ -2,11 +2,11 @@ package com.osiris.headlessbrowser;
 
 import org.junit.jupiter.api.Test;
 
-class NodeWindowTest {
+class PuppeteerWindowTest {
 
     public static void main(String[] args) throws Exception {
         HBrowser hBrowser = new HBrowser();
-        try (NodeWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).buildNodeJSWindow()) {
+        try (PuppeteerWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).buildNodeJSWindow()) {
             window.load("https://github.com/Osiris-Team");
             System.out.println(window.getBrowserType());
             window.printCookiesAsJsonArray();

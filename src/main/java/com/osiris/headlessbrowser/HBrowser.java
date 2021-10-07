@@ -14,13 +14,13 @@ public class HBrowser {
     /**
      * Creates and returns a new window, built with defaults. <br>
      * By using the {@link WindowBuilder} or the {@link #openCustomWindow()} method <br>
-     * you can decide between {@link NodeWindow} and {@link GraalWindow} windows. <br>
+     * you can decide between {@link PuppeteerWindow} and {@link GraalWindow} windows. <br>
      * Since the {@link GraalWindow} has only partial JavaScript support, due to <br>
-     * currently ongoing Web-APIs implementation, its recommended to use the {@link NodeWindow} instead. <br>
+     * currently ongoing Web-APIs implementation, its recommended to use the {@link PuppeteerWindow} instead. <br>
      * Its powered by the latest NodeJS-Engine with the help of Puppeteer. <br>
      * NodeJS, Puppeteer and Chromiumg get installed into the current working directory automatically (~300mb). <br>
      */
-    public NodeWindow openWindow() {
+    public PuppeteerWindow openWindow() {
         return new WindowBuilder(this).buildNodeJSWindow();
     }
 
@@ -28,7 +28,7 @@ public class HBrowser {
      * Shortcut for opening a window and loading a page into it. <br>
      * See {@link #openWindow()} for details. <br>
      */
-    public NodeWindow openWindowAndLoad(String url) throws IOException, NodeJsCodeException {
+    public PuppeteerWindow openWindowAndLoad(String url) throws IOException, NodeJsCodeException {
         return openWindow().load(url);
     }
 
@@ -48,7 +48,7 @@ public class HBrowser {
      * } // Window gets automatically closed when leaving the try/catch block.
      * </pre>
      */
-    public void closeWindow(NodeWindow window) throws Exception {
+    public void closeWindow(PuppeteerWindow window) throws Exception {
         window.close();
     }
 }
