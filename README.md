@@ -1,37 +1,42 @@
 # Headless-Browser
 
-A new, headless browser written in Java with latest JavaScript support. Powered by the GraalJS-Engine,
-the NodeJs-Engine and Puppeteer.
+A new, headless browser for Java.
 
 ```java
 HBrowser hBrowser = new HBrowser();
-try(NodeWindow window = hBrowser.openWindow()){
+try(PlaywrightWindow window = hBrowser.openWindow()){
     window.load("https://example.com");
    // ...   
 }
 ```
-Note that the first run may take a bit because Node.js and Puppeteer get installed into your current working dir.
+Note that the first run may take a bit because Node.js and its modules get installed into your current working dir.
 
-## Features
-You can choose from two JavaScript engines: NodeJs and GraalJs.
-
-The NodeJs engine is currently the default and recommended one.
-Puppeteer gets installed automatically along with the latest NodeJs version.
-Currently, only Windows 64x supported (going to change very soon)!
-
-Puppeteer and NodeJs are directly usable in Java.
-
-Creating a new browser completely in Java is ongoing work (with GraalJs). Read more below at "Why contribute?".
-
-Jsoup is used to work with HTML in Java.
-
-## Installation
+### Installation
 
 - Java 8 or higher required.
 - [Click here for maven/gradle/sbt/leinigen instructions.](https://jitpack.io/#Osiris-Team/Headless-Browser)
 - Make sure to watch this repository to get notified of future updates.
 
-## Contribute/Build
+### Features
+ - Multiple browsers to choose from (Playwright, Puppeteer etc.)
+ - Implemented GraalJS and Node.js engines
+ - Jsoup for easy HTML handling
+ - Supported platforms are all from Java and all from Node.js
+
+### Browsers
+
+| Name | Latest JS | JS-Engine | Downloads | Full Java
+| :-----: | :-----: | :-----: | :-----: | :-----: |
+| [Playwright](https://github.com/microsoft/playwright) | Yes | Node.js | Yes | No |
+| [Puppeteer](https://github.com/puppeteer/puppeteer) | Yes | Node.js | No | No |
+| [Graal](https://github.com/oracle/graaljs) | Yes | GraalJS | No | Yes |
+
+### Definitions
+ - JS: JavaScript
+ - Full Java: If the browser is completely written in Java or not
+ - Downloads: If the browser is able to download files other than html/xml/pdf
+
+### Contribute/Build
 
 #### Why contribute?
 
@@ -66,12 +71,12 @@ guide: [IntelliJ IDEA Cloning Guide](https://blog.jetbrains.com/idea/2020/10/clo
   of [IntelliJ IDEA](https://www.jetbrains.com/idea/)
 - Built with [Maven](https://maven.apache.org/), profiles: clean package
 
-## Links
+### Links
 
 - https://spec.whatwg.org/ | Details about JS Web-APIs
 - https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
 
-## Examples
+### Examples
 <details>
 <summary>Running Node.js independently</summary>
 <pre lang="java">
@@ -95,11 +100,18 @@ try{
 </pre>
 </details>
 
-## FAQ
+### FAQ
+<details>
+<summary>What about GraalJS and a full Java browser?</summary>
+Creating a new browser completely in Java is ongoing work (with GraalJs).
+Since this is something that looks like it could take year, I
+implemented the Node.js engine to be completely usable in Java and some 
+'Browser Drivers' like Puppeteer and Playwright, which run on Node.js,
+to have something usable right now.
+Read more about this in "Why contribute?".
+</details>
 
-Frequently_asked_questions_here
-
-## Libraries
+### Libraries
 
 | Name/Link | Usage | License |
 | :-----: | :-----: | :-----: |

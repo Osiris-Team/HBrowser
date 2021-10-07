@@ -6,9 +6,11 @@ import com.osiris.headlessbrowser.utils.AsyncInputStream;
 import com.osiris.headlessbrowser.utils.DownloadTask;
 import com.osiris.headlessbrowser.utils.TrashOutput;
 import net.lingala.zip4j.ZipFile;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.rauschig.jarchivelib.ArchiverFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +32,8 @@ public class NodeContext implements AutoCloseable {
     private final int timeout;
     private final File installationDir;
     private File executableFile;
+    private OperatingSystemArchitectureType osArchitectureType = null;
+    private OperatingSystemType osType;
 
     public NodeContext() {
         this(null, null, 30);
@@ -55,44 +59,64 @@ public class NodeContext implements AutoCloseable {
             this.installationDir = installationDir;
         // Download and install NodeJS into current working directory if no installation found
         try {
+            determineArchAndOs();
             if (!installationDir.exists()
                     || Objects.requireNonNull(installationDir.listFiles()).length == 0) {
                 String url = "https://nodejs.org/dist/latest/";
                 out.println("Installing latest NodeJS release from '" + url + "'...");
                 Document docLatest = Jsoup.connect(url).get();
+
                 String downloadUrl = null;
                 for (Element e :
                         docLatest.getElementsByTag("a")) {
                     String attr = e.attr("href");
-                    // TODO add support for other OS
-                    if (attr.contains("win") && attr.contains("x64") && attr.contains(".zip")) {
+                    if (isCorrectFileForOs(attr)) {
                         downloadUrl = url + attr;
                         break;
                     }
                 }
 
                 if (downloadUrl == null)
-                    throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "'.");
+                    throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + osType.name() + "' with ARCH '" + osArchitectureType.name() + "'.");
 
                 // Download the zip file and extract its contents
                 if (!installationDir.exists()) installationDir.mkdirs();
-                File downloadZip = new File(installationDir + "/download.zip");
-                if (downloadZip.exists()) downloadZip.delete();
-                downloadZip.createNewFile();
-                DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
-                downloadTask.start();
-                while (!downloadTask.isFinished()) {
+                if (osType.equals(OperatingSystemType.WINDOWS)) {
+                    File downloadZip = new File(installationDir + "/download.zip");
+                    if (downloadZip.exists()) downloadZip.delete();
+                    downloadZip.createNewFile();
+                    DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
+                    downloadTask.start();
+                    while (!downloadTask.isFinished()) {
+                        out.println("Download-Task > " + downloadTask.getStatus());
+                        Thread.sleep(1000);
+                    }
                     out.println("Download-Task > " + downloadTask.getStatus());
-                    Thread.sleep(1000);
-                }
-                out.println("Download-Task > " + downloadTask.getStatus());
 
-                out.print("Extracting NodeJS files...");
-                out.flush();
-                ZipFile zipFile = new ZipFile(downloadZip);
-                zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
-                downloadZip.delete();
-                out.println(" SUCCESS!");
+                    out.print("Extracting NodeJS files...");
+                    out.flush();
+                    ZipFile zipFile = new ZipFile(downloadZip);
+                    zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
+                    downloadZip.delete();
+                    out.println(" SUCCESS!");
+                } else {
+                    File downloadFile = new File(installationDir + "/download.tar.gz");
+                    if (downloadFile.exists()) downloadFile.delete();
+                    downloadFile.createNewFile();
+                    DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
+                    downloadTask.start();
+                    while (!downloadTask.isFinished()) {
+                        out.println("Download-Task > " + downloadTask.getStatus());
+                        Thread.sleep(1000);
+                    }
+                    out.println("Download-Task > " + downloadTask.getStatus());
+                    out.print("Extracting NodeJS files...");
+                    out.flush();
+                    ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
+                    // Result should be .../headless-browser/node-js/node<version>/...
+                    downloadFile.delete();
+                    out.println(" SUCCESS!");
+                }
             }
 
             for (File f :
@@ -157,6 +181,83 @@ public class NodeContext implements AutoCloseable {
             System.err.println("Error during start of NodeJS! Details:");
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Note that {@link #determineArchAndOs()} must have been called before executing this method. <br>
+     *
+     * @param fileName example: node-v16.10.0-darwin-arm64.tar.gz
+     * @return true if the provided file name contains details matching the current system.
+     */
+    private boolean isCorrectFileForOs(String fileName) {
+        if (!fileName.contains("."))
+            return false; // cannot be a directory
+        if (osType.equals(OperatingSystemType.MAC)) {
+            if (!fileName.contains(".tar.gz"))
+                return false;
+            // Mac has another name: darwin instead of mac
+            if (StringUtils.containsIgnoreCase(fileName, "darwin") && StringUtils.containsIgnoreCase(fileName, osArchitectureType.name))
+                return true;
+        } else if (osType.equals(OperatingSystemType.WINDOWS)) {
+            // Must be a zip file
+            if (!fileName.contains(".zip"))
+                return false;
+        } else {
+            if (!fileName.contains(".tar.gz"))
+                return false;
+        }
+        return StringUtils.containsIgnoreCase(fileName, osType.name) && StringUtils.containsIgnoreCase(fileName, osArchitectureType.name);
+    }
+
+    private void determineArchAndOs() {
+        // First set the details we need
+        // Start by setting the operating systems architecture type
+        String actualOsArchitecture = System.getProperty("os.arch").toLowerCase();
+        for (OperatingSystemArchitectureType type :
+                OperatingSystemArchitectureType.values()) {
+            if (actualOsArchitecture.equals(type.toString().toLowerCase())) // Not comparing the actual names because the enum has more stuff matching one name
+                osArchitectureType = type;
+        }
+        if (osArchitectureType == null) {
+            // Do another check.
+            // On windows it can be harder to detect the right architecture that's why we do the stuff below:
+            // Source: https://stackoverflow.com/questions/4748673/how-can-i-check-the-bitness-of-my-os-using-java-j2se-not-os-arch/5940770#5940770
+            String arch = System.getenv("PROCESSOR_ARCHITECTURE");
+            String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
+            boolean is64 = arch != null && arch.endsWith("64")
+                    || wow64Arch != null && wow64Arch.endsWith("64"); // Otherwise its 32bit
+            if (is64)
+                osArchitectureType = OperatingSystemArchitectureType.X64;
+            else
+                osArchitectureType = OperatingSystemArchitectureType.X32;
+            debugOutput.println("The current operating systems architecture '" + actualOsArchitecture +
+                    "' was not found in the architectures list '" + Arrays.toString(OperatingSystemArchitectureType.values()) + "'." +
+                    " Defaulting to '" + osArchitectureType + "'.");
+        }
+        debugOutput.println("Determined '" + osArchitectureType.name() + "' as operating systems architecture.");
+
+        // Set the operating systems type
+
+        String actualOsType = System.getProperty("os.name").toLowerCase();
+        if (actualOsType.contains("alpine"))
+            osType = OperatingSystemType.ALPINE_LINUX;
+        if (actualOsType.contains("win"))
+            osType = OperatingSystemType.WINDOWS;
+        else if (actualOsType.contains("mac"))
+            osType = OperatingSystemType.MAC;
+        else if (actualOsType.contains("aix"))
+            osType = OperatingSystemType.AIX;
+        else if (actualOsType.contains("nix")
+                || actualOsType.contains("nux"))
+            osType = OperatingSystemType.LINUX;
+        else if (actualOsType.contains("sunos"))
+            osType = OperatingSystemType.SOLARIS;
+        else {
+            osType = OperatingSystemType.LINUX;
+            debugOutput.println("The current operating system '" + actualOsType + "' was not found in the supported operating systems list." +
+                    " Defaulting to '" + OperatingSystemType.LINUX.name() + "'.");
+        }
+        debugOutput.println("Determined '" + osType.name() + "' as operating system.");
     }
 
     @Override
@@ -429,5 +530,64 @@ public class NodeContext implements AutoCloseable {
 
     public PrintStream getDebugOutput() {
         return debugOutput;
+    }
+
+    public AsyncInputStream getProcessErrorInput() {
+        return processErrorInput;
+    }
+
+    public File getLastJsCodeExecutionResultFile() {
+        return lastJsCodeExecutionResultFile;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public OperatingSystemArchitectureType getOsArchitectureType() {
+        return osArchitectureType;
+    }
+
+    public OperatingSystemType getOsType() {
+        return osType;
+    }
+
+    public enum OperatingSystemArchitectureType {
+        X64("x64"),
+        X86("x86"),
+        X32("x32"),
+        PPC64("ppc64"),
+        PPC64LE("ppc64le"),
+        S390X("s390x"),
+        AARCH64("aarch64"),
+        ARM("arm"),
+        SPARCV9("sparcv9"),
+        RISCV64("riscv64"),
+        // x64 with alternative names:
+        AMD64("x64"),
+        X86_64("x64"),
+        // x32 with alternative names:
+        I386("x32");
+
+        private final String name;
+
+        OperatingSystemArchitectureType(String name) {
+            this.name = name;
+        }
+    }
+
+    public enum OperatingSystemType {
+        LINUX("linux"),
+        WINDOWS("windows"),
+        MAC("mac"),
+        SOLARIS("solaris"),
+        AIX("aix"),
+        ALPINE_LINUX("alpine-linux");
+
+        private final String name;
+
+        OperatingSystemType(String name) {
+            this.name = name;
+        }
     }
 }

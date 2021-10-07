@@ -33,7 +33,7 @@ public class WindowBuilder {
     /**
      * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
      */
-    public PuppeteerWindow buildNodeJSWindow() {
+    public PuppeteerWindow buildPuppeteerWindow() {
         // TODO customHeaders
         return new PuppeteerWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
                 this.isHeadless, this.userDataDir, this.isDevTools, this.debuggingPort, this.additionalStartupArgs);

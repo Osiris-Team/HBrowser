@@ -25,15 +25,14 @@ import java.util.Random;
 public class PuppeteerWindow implements AutoCloseable {
     private final NodeContext jsContext;
     private final OutputStream debugOutput;
-    private HBrowser parentBrowser;
-    private boolean enableJavaScript;
-    private String url;
     private final boolean isHeadless;
     private final File userDataDir;
     private final boolean isDevTools;
     private final int debuggingPort;
     private final String[] additionalStartupArgs;
-    private final File downloadTempDir;
+    private HBrowser parentBrowser;
+    private boolean enableJavaScript;
+    private String url;
 
     /**
      * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
@@ -86,72 +85,9 @@ public class PuppeteerWindow implements AutoCloseable {
             jsInitCode.append("};\n" +
                     "var argsAsArray = puppeteer.defaultArgs(defaultArgs);\n" +
                     "console.log(puppeteer.defaultArgs(defaultArgs));\n");
-            //jsInitCode.append("browser = await puppeteer.launch(defaultArgs);\n");
-            jsInitCode.append("browser = await puppeteer.launch({\n" +
-                    "ignoreDefaultArgs: true,\n" +
-                    "args: [\n" +
-                    //"   '--disable-background-networking',\n" +
-                    //"   '--enable-features=NetworkService,NetworkServiceInProcess',\n" + // Make sure to enable all features
-                    "   '--disable-background-timer-throttling',\n" +
-                    //"   '--disable-backgrounding-occluded-windows',\n" +
-                    "   '--disable-breakpad',\n" +
-                    "   '--disable-client-side-phishing-detection',\n" +
-                    //"   '--disable-component-extensions-with-background-pages',\n" +
-                    "   '--disable-default-apps',\n" +
-                    "   '--disable-dev-shm-usage',\n" +
-                    "   '--disable-extensions',\n" +
-                    "   '--disable-features=Translate',\n" +
-                    "   '--disable-hang-monitor',\n" +
-                    "   '--disable-ipc-flooding-protection',\n" +
-                    "   '--disable-popup-blocking',\n" +
-                    "   '--disable-prompt-on-repost',\n" +
-                    "   '--disable-web-security',\n" + // NEW  !
-                    //"   '--disable-renderer-backgrounding',\n" +
-                    "   '--disable-sync',\n" +
-                    "   '--test-type=browser',\n" + //NEW !
-                    "   '--force-color-profile=srgb',\n" +
-                    "   '--metrics-recording-only',\n" +
-                    "   '--no-first-run',\n" +
-                    //"   '--enable-automation',\n" +
-                    "   '--password-store=basic',\n" +
-                    "   '--use-mock-keychain',\n" +
-                    "   '--enable-blink-features=IdleDetection',\n" +
-                    "   '--user-data-dir=D:\\\\Coding\\\\JAVA\\\\Headless-Browser\\\\headless-browser\\\\user-data',\n" +
-                    "   '--headless',\n" +
-                    "   '--hide-scrollbars',\n" +
-                    "   '--mute-audio',\n" +
-                    "   '--evaluate_capability=capabilities:{" +
-                    "\"browserName\":\"chrome\"," +
-                    "\"acceptInsecureCerts\":true," +
-                    "\"chromeOptions\":{" +
-                    "\"prefs\":{" +
-                    "\"download\":{" +
-                    "\"prompt_for_download\":false," +
-                    "\"download_restrictions\":0," +
-                    "\"directory_upgrade\":true," +
-                    "\"default_directory\":\"D:\\\\Coding\\\\JAVA\\\\Headless-Browser\\\\headless-browser\\\\user-data\"," +
-                    "\"safebrowsing.enabled\":false," +
-                    "\"safebrowsing.disable_download_protection\":true," +
-                    "}," +
-                    "\"safebrowsing\":{" +
-                    "\"enabled\":true" +
-                    "}" +
-                    "}" +
-                    "}" +
-                    "}',\n" +
-                    "   'about:blank'\n" +
-                    " ]\n" +
-                    "});\n");
+            jsInitCode.append("browser = await puppeteer.launch(defaultArgs);\n");
             jsInitCode.append("page = await browser.newPage();\n");
             jsContext.executeJavaScript(jsInitCode.toString(), 30, false);
-
-            // To be able to download files:
-            downloadTempDir = new File(userDataDir + "/downloads-temp");
-            if (!downloadTempDir.exists()) downloadTempDir.mkdirs();
-            jsContext.executeJavaScript("var cdpSession = await page.target().createCDPSession();\n" +
-                    "await cdpSession.send('Page.setDownloadBehavior', {'behavior': 'allow', 'downloadPath': " +
-                    "'" + downloadTempDir.getAbsolutePath().replace("\\", "\\\\") + "'});\n"); // Windows path must stay windows path
-
             setEnableJavaScript(enableJavaScript);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -432,50 +368,18 @@ public class PuppeteerWindow implements AutoCloseable {
         return this;
     }
 
-    /*
-    TODO Somehow causes the code to freeze thus currently disabled:
     public int getStatusCode() throws NodeJsCodeException {
         return Integer.parseInt(jsContext.executeJavaScriptAndGetResult("" +
                 "var result = await currentPageResponse.headers().status;\n"));
     }
-     */
 
-    /**
-     * TODO
-     * Downloads the currently loaded page/resource to the specified file. <br>
-     * Creates the file if not existing. <br>
-     * <p>
-     * public NodeWindow download(File downloadedFile) throws NodeJsCodeException, IOException {
-     * <p>
-     * return download(url, downloadedFile);
-     * }
-     */
-
+    /* TODO https://github.com/puppeteer/puppeteer/issues/7618
+    // Current not supported due to puppeteer not supporting it
     public PuppeteerWindow download(String url) throws NodeJsCodeException {
         executeJS("var downloadWindow = window.open('" + url + "');\n" +
                 "downloadWindow.focus();\n");
         return this;
-    }
-
-    /**
-     * TODO
-     * Note that the url won't get loaded into the current window.
-     * <p>
-     * public NodeWindow download(String url, File downloadedFile) throws NodeJsCodeException, IOException {
-     * String filePath = downloadedFile.getAbsolutePath().replace("\\", "/");
-     * jsContext.executeJavaScript("downloadFile = '"+filePath+"';");
-     * load(url);
-     * jsContext.executeJavaScript("downloadFile = null;");
-     * <p>
-     * jsContext.executeJavaScript("" +
-     * "" +
-     * "var buffer = await response.buffer();\n" +
-     * "fs.writeFileSync(\""+filePath+"\", buffer);");
-     * <p>
-     * <p>
-     * return this;
-     * }
-     */
+    }*/
 
     public HBrowser getParentBrowser() {
         return parentBrowser;
