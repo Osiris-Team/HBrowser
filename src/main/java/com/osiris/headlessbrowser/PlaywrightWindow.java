@@ -108,9 +108,9 @@ public class PlaywrightWindow implements AutoCloseable {
      * Note that the current {@link NodeContext} must have been initialised with a debugOutputStream to see JavaScript console output. <br>
      */
     public PlaywrightWindow executeJS(String jsCode) throws NodeJsCodeException {
-        jsContext.executeJavaScript("await page.evaluate(() => {\n" +
+        jsContext.executeJavaScript("await page.evaluate(`\n" +
                 jsCode +
-                "});\n");
+                "`);\n");
         return this;
     }
 
