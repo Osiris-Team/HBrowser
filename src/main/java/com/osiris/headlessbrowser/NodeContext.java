@@ -203,6 +203,10 @@ public class NodeContext implements AutoCloseable {
             // Must be a zip file
             if (!fileName.contains(".zip"))
                 return false;
+            // Mac has another name: win instead of windows
+            if (StringUtils.containsIgnoreCase(fileName, "win")
+                    && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || StringUtils.containsIgnoreCase(fileName, osArchitectureType.altName)))
+                return true;
         } else {
             if (!fileName.contains(".tar.gz"))
                 return false;
