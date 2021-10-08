@@ -196,7 +196,8 @@ public class NodeContext implements AutoCloseable {
             if (!fileName.contains(".tar.gz"))
                 return false;
             // Mac has another name: darwin instead of mac
-            if (StringUtils.containsIgnoreCase(fileName, "darwin") && StringUtils.containsIgnoreCase(fileName, osArchitectureType.name))
+            if (StringUtils.containsIgnoreCase(fileName, "darwin")
+                    && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || StringUtils.containsIgnoreCase(fileName, osArchitectureType.altName)))
                 return true;
         } else if (osType.equals(OperatingSystemType.WINDOWS)) {
             // Must be a zip file
@@ -206,7 +207,8 @@ public class NodeContext implements AutoCloseable {
             if (!fileName.contains(".tar.gz"))
                 return false;
         }
-        return StringUtils.containsIgnoreCase(fileName, osType.name) && StringUtils.containsIgnoreCase(fileName, osArchitectureType.name);
+        return StringUtils.containsIgnoreCase(fileName, osType.name)
+                && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || StringUtils.containsIgnoreCase(fileName, osArchitectureType.altName));
     }
 
     private void determineArchAndOs() {
@@ -569,10 +571,13 @@ public class NodeContext implements AutoCloseable {
         // x32 with alternative names:
         I386("x32");
 
-        private final String name;
+        /**
+         * Alternative name.
+         */
+        private final String altName;
 
-        OperatingSystemArchitectureType(String name) {
-            this.name = name;
+        OperatingSystemArchitectureType(String altName) {
+            this.altName = altName;
         }
     }
 
