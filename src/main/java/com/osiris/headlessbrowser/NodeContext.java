@@ -71,7 +71,7 @@ public class NodeContext implements AutoCloseable {
                 for (Element e :
                         docLatest.getElementsByTag("a")) {
                     String attr = e.attr("href");
-                    if (isCorrectFileForOs(new URL(attr).getFile())) {
+                    if (isCorrectFileForOs(attr.replace(url, ""))) {
                         downloadUrl = url + attr;
                         break;
                     }
