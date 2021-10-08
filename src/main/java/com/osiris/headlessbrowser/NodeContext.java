@@ -13,7 +13,6 @@ import org.jsoup.nodes.Element;
 import org.rauschig.jarchivelib.ArchiverFactory;
 
 import java.io.*;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -413,8 +412,23 @@ public class NodeContext implements AutoCloseable {
     /**
      * See {@link #executeJavaScript(String, int, boolean)} for details.
      */
-    public synchronized String executeJavaScriptAndGetResult(String jsCode) {
-        return executeJavaScriptAndGetResult(jsCode, timeout, true);
+    public synchronized String executeJSAndGetResult(String jsCode) {
+        return executeJSAndGetResult(jsCode, timeout, true);
+    }
+
+    /**
+     * Expects: [val1, val2, ...] <br>
+     * or expects: val1, val2, ... <br>
+     */
+    public String[] parseJSStringArrayToJavaStringArray(String jsCodeResult){
+        String[] array = jsCodeResult.replace("[", "")
+                .replace("]", "")
+                .split(",");
+        for (String val :
+                array) {
+            val = val.trim();
+        }
+        return array;
     }
 
     /**
@@ -427,7 +441,7 @@ public class NodeContext implements AutoCloseable {
      *
      * @param timeout 30 seconds is the default, set to 0 to disable.
      */
-    public synchronized String executeJavaScriptAndGetResult(String jsCode, int timeout, boolean wrapInTryCatch) {
+    public synchronized String executeJSAndGetResult(String jsCode, int timeout, boolean wrapInTryCatch) {
         try {
             executeJavaScript(jsCode + "\n"
                     + "writeToJava(result);\n", timeout, wrapInTryCatch);

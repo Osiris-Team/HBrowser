@@ -122,13 +122,13 @@ public class PuppeteerWindow implements AutoCloseable {
      * Returns a copy of the currently loaded html document. <br>
      */
     public Document getDocument() {
-        String rawHtml = jsContext.executeJavaScriptAndGetResult("" +
+        String rawHtml = jsContext.executeJSAndGetResult("" +
                 "var result = await page.evaluate(() => document.body.innerHTML);\n");
         return Jsoup.parse(rawHtml);
     }
 
     public String getTitle() {
-        return jsContext.executeJavaScriptAndGetResult("" +
+        return jsContext.executeJSAndGetResult("" +
                 "var result = await page.title();\n");
     }
 
@@ -236,7 +236,7 @@ public class PuppeteerWindow implements AutoCloseable {
                 "}";
         String rawCookies;
         if (urls == null || urls.length == 0) {
-            rawCookies = jsContext.executeJavaScriptAndGetResult("" +
+            rawCookies = jsContext.executeJSAndGetResult("" +
                     "var cookiesArray = await page.cookies();\n" +
                     jsCodeForConvertingCookiesToPlainText);
         } else {
@@ -248,7 +248,7 @@ public class PuppeteerWindow implements AutoCloseable {
                 } else
                     urlsString = urlsString + url;
             }
-            rawCookies = jsContext.executeJavaScriptAndGetResult("" +
+            rawCookies = jsContext.executeJSAndGetResult("" +
                     "var cookiesArray = await page.cookies(" + urlsString + ");\n" +
                     jsCodeForConvertingCookiesToPlainText);
         }
@@ -369,7 +369,7 @@ public class PuppeteerWindow implements AutoCloseable {
     }
 
     public int getStatusCode() throws NodeJsCodeException {
-        return Integer.parseInt(jsContext.executeJavaScriptAndGetResult("" +
+        return Integer.parseInt(jsContext.executeJSAndGetResult("" +
                 "var result = await currentPageResponse.headers().status;\n"));
     }
 
@@ -411,7 +411,7 @@ public class PuppeteerWindow implements AutoCloseable {
      * Returns "chrome" or "firefox".
      */
     public String getBrowserType() {
-        return jsContext.executeJavaScriptAndGetResult("var result = puppeteer.product;");
+        return jsContext.executeJSAndGetResult("var result = puppeteer.product;");
     }
 
     public String getUrl() {

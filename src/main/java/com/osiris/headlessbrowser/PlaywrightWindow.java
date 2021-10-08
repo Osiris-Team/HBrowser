@@ -69,12 +69,13 @@ public class PlaywrightWindow implements AutoCloseable {
             if (!downloadTempDir.exists()) downloadTempDir.mkdirs();
 
             jsContext.executeJavaScript(
-                    "browserCtx = await playwright['chromium'].launchPersistentContext('" + userDataDir.getAbsolutePath().replace("\\", "/") + "', " +
-                            "{ acceptDownloads: true,\n" +
+                    "browserCtx = await playwright['chromium'].launchPersistentContext('" + userDataDir.getAbsolutePath().replace("\\", "/") + "', {\n" +
+                            "  acceptDownloads: true,\n" +
                             "  headless : " + isHeadless + ",\n" +
                             "  javaScriptEnabled: " + enableJavaScript + ",\n" +
                             //"  downloadsPath: '" + downloadTempDir.getAbsolutePath().replace("\\", "/") + "',\n" + // Active issue at: https://github.com/microsoft/playwright/issues/9279
-                            "  devtools: " + isDevTools + "\n" +
+                            "  devtools: " + isDevTools + ",\n" +
+                            "  args: ['--enable-automation=false']\n" +
                             "});\n" +
                             "browser = browserCtx.browser();\n" +
                             "page = await browserCtx.newPage();\n", 30, false);
@@ -97,7 +98,7 @@ public class PlaywrightWindow implements AutoCloseable {
      * Returns a copy of the currently loaded html document. <br>
      */
     public Document getDocument() {
-        String rawHtml = jsContext.executeJavaScriptAndGetResult("" +
+        String rawHtml = jsContext.executeJSAndGetResult("" +
                 "var result = await page.evaluate(() => document.body.innerHTML);\n");
         return Jsoup.parse(rawHtml);
     }
@@ -114,7 +115,28 @@ public class PlaywrightWindow implements AutoCloseable {
         return this;
     }
 
+    /**
+     * Downloads a file from the specified url.
+     * @param url not null. The download url.
+     * @param dest if null file gets downloaded to {@link #downloadTempDir}, otherwise to the provided destination/file.
+     */
     public PlaywrightWindow download(String url, File dest) throws IOException {
+        String[] results = jsContext.parseJSStringArrayToJavaStringArray(
+                jsContext.executeJSAndGetResult("" +
+                        "  await page.goto('about:blank');\n" +
+                        "  var event = page.waitForEvent('download');\n" +
+                        "  await page.evaluate(`var myCUSTel = document.createElement('a');myCUSTel.innerHTML = 'Download';myCUSTel.setAttribute('href', '"+url+"');myCUSTel.setAttribute('id', 'myCUSTel');document.getElementsByTagName('body')[0].appendChild(myCUSTel);`);\n" +
+                        "  await page.click('id=myCUSTel');\n" +
+                        "  var download = await event;\n" +
+                        "  console.log(event);\n" +
+                        "  var downloadError = await download.failure();\n" +
+                        "  if (downloadError != null) throw new Error(downloadError);\n" +
+                        "  var downloadPath = await download.path();\n" +
+                        "  var downloadFileName = await download.suggestedFilename();\n" +
+                        "  var result = downloadPath+','+downloadFileName;\n"));
+        File download = new File(results[0]);
+        String fileName = results[1]; // Contains extension
+        /*
         File download = new File(jsContext.executeJavaScriptAndGetResult("" +
                 "console.log('preparing download'); \n" +
                 "await page.goto('about:blank');\n" + // To make sure we got a page where we can actually add the download link and click on it
@@ -131,11 +153,16 @@ public class PlaywrightWindow implements AutoCloseable {
                 "var downloadError = await download.failure();\n" +
                 "if (downloadError!=null) throw new Error(downloadError);\n" +
                 "var result = await download.path();\n", 0, true).trim());
+
+         */
+
         if (dest != null) {
-            if (download.exists()) download.delete();
+            if (dest.exists()) dest.delete();
             Files.copy(download.toPath(), dest.toPath());
-            download.delete();
+        } else{
+            Files.copy(download.toPath(), new File(downloadTempDir+"/"+fileName).toPath());
         }
+        download.delete();
         this.url = "about:blank";
         return this;
     }
@@ -202,7 +229,7 @@ public class PlaywrightWindow implements AutoCloseable {
                 "}";
         String rawCookies;
         if (urls == null || urls.length == 0) {
-            rawCookies = jsContext.executeJavaScriptAndGetResult("" +
+            rawCookies = jsContext.executeJSAndGetResult("" +
                     "var cookiesArray = await browserCtx.cookies();\n" +
                     jsCodeForConvertingCookiesToPlainText);
         } else {
@@ -214,7 +241,7 @@ public class PlaywrightWindow implements AutoCloseable {
                 } else
                     urlsString = urlsString + url;
             }
-            rawCookies = jsContext.executeJavaScriptAndGetResult("" +
+            rawCookies = jsContext.executeJSAndGetResult("" +
                     "var cookiesArray = await browserCtx.cookies(" + urlsString + ");\n" +
                     jsCodeForConvertingCookiesToPlainText);
         }
