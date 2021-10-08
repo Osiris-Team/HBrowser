@@ -13,6 +13,7 @@ import org.jsoup.nodes.Element;
 import org.rauschig.jarchivelib.ArchiverFactory;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class NodeContext implements AutoCloseable {
                 for (Element e :
                         docLatest.getElementsByTag("a")) {
                     String attr = e.attr("href");
-                    if (isCorrectFileForOs(attr)) {
+                    if (isCorrectFileForOs(new URL(attr).getFile())) {
                         downloadUrl = url + attr;
                         break;
                     }
