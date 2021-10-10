@@ -1,8 +1,6 @@
-package com.osiris.headlessbrowser;
+package com.osiris.headlessbrowser.utils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -25,6 +23,32 @@ public class Utils {
                 .getLocation()
                 .toURI()
                 .getPath());
+    }
+
+    /**
+     * Reads the file and returns its content as string.
+     */
+    public static String getFileContentFromThisJar(String filePathInJar) throws Exception {
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(getFileFromThisJar(filePathInJar)));
+            StringBuilder result = new StringBuilder();
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                result.append(line + "\n");
+            }
+            reader.close();
+            return result.toString();
+        } catch (Exception e) {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            throw e;
+        }
     }
 
     /**

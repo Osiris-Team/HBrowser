@@ -4,6 +4,7 @@ package com.osiris.headlessbrowser;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -23,16 +24,16 @@ import java.util.Random;
  * @author Osiris-Team
  */
 public class PuppeteerWindow implements AutoCloseable {
-    private final NodeContext jsContext;
-    private final OutputStream debugOutput;
-    private final boolean isHeadless;
-    private final File userDataDir;
-    private final boolean isDevTools;
-    private final int debuggingPort;
-    private final String[] additionalStartupArgs;
-    private HBrowser parentBrowser;
-    private boolean enableJavaScript;
-    private String url;
+    final NodeContext jsContext;
+    final OutputStream debugOutput;
+    final boolean isHeadless;
+    final File userDataDir;
+    final boolean isDevTools;
+    final int debuggingPort;
+    final String[] additionalStartupArgs;
+    HBrowser parentBrowser;
+    boolean enableJavaScript;
+    String url;
 
     /**
      * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
@@ -46,10 +47,11 @@ public class PuppeteerWindow implements AutoCloseable {
      * @param userDataDir           Path to a User Data Directory. Default is ./headless-browser/user-data (the "." represents the current working directory). <br><br>
      * @param isDevTools            Whether to auto-open a DevTools panel for each tab. If this option is true, the headless option will be set false. <br><br>
      * @param debuggingPort         Default is 0. Specify custom debugging port. Pass 0 to discover a random port. <br><br>
+     * @param makeUndetectable      Makes this window indistinguishable from 'real', user operated windows, by using the npm packages puppeteer-extra and puppeteer-extra-plugin-stealth. <br><br>
      * @param additionalStartupArgs Default is null. Additional arguments to pass to the browser instance. The list of Chromium flags can be found here: https://peter.sh/experiments/chromium-command-line-switches/ <br><br>
      */
     public PuppeteerWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
-                           boolean isHeadless, File userDataDir, boolean isDevTools, int debuggingPort, String... additionalStartupArgs) {
+                           boolean isHeadless, File userDataDir, boolean isDevTools, int debuggingPort, boolean makeUndetectable, String... additionalStartupArgs) {
         this.parentBrowser = parentBrowser;
         this.debugOutput = debugOutput;
         this.isHeadless = isHeadless;
@@ -59,13 +61,28 @@ public class PuppeteerWindow implements AutoCloseable {
         this.additionalStartupArgs = additionalStartupArgs;
         try {
             this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
-            jsContext.npmInstall("puppeteer");
+
             // Define global variables/constants
-            jsContext.executeJavaScript(
-                    "const puppeteer = require('puppeteer');\n" +
-                            "var browser = null;\n" +
-                            "var page = null;\n" +
-                            "var downloadFile = null;\n", 30, false);
+            if (makeUndetectable){
+                jsContext.npmInstall("puppeteer");
+                jsContext.npmInstall("puppeteer-extra");
+                jsContext.npmInstall("puppeteer-extra-plugin-stealth");
+                jsContext.executeJavaScript(
+                        "const puppeteer = require('puppeteer-extra');\n" +
+                                "const StealthPlugin = require('puppeteer-extra-plugin-stealth');\n" +
+                                "puppeteer.use(StealthPlugin());\n" +
+                                "var browser = null;\n" +
+                                "var page = null;\n" +
+                                "var downloadFile = null;\n", 30, false);
+            }else{
+                jsContext.npmInstall("puppeteer");
+                jsContext.executeJavaScript(
+                        "const puppeteer = require('puppeteer');\n" +
+                                "var browser = null;\n" +
+                                "var page = null;\n" +
+                                "var downloadFile = null;\n", 30, false);
+            }
+
 
             StringBuilder jsInitCode = new StringBuilder();
             jsInitCode.append("var defaultArgs = {\n");
@@ -87,8 +104,95 @@ public class PuppeteerWindow implements AutoCloseable {
                     "console.log(puppeteer.defaultArgs(defaultArgs));\n");
             jsInitCode.append("browser = await puppeteer.launch(defaultArgs);\n");
             jsInitCode.append("page = await browser.newPage();\n");
+            jsInitCode.append("await page.setExtraHTTPHeaders("+new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson())+");\n");
             jsContext.executeJavaScript(jsInitCode.toString(), 30, false);
             setEnableJavaScript(enableJavaScript);
+
+            /*
+            if (makeUndetectable) {
+                jsContext.executeJavaScript("" +
+                        "// Credits go to: https://intoli.com/blog/not-possible-to-block-chrome-headless/\n" +
+                        "await page.setUserAgent('"+new ChromeHeaders().user_agent+"');\n" +
+                        "await page.evaluateOnNewDocument(() => {\n" +
+                        "    // Pass the Webdriver Test.\n" +
+                        "    Object.defineProperty(navigator, 'webdriver', {\n" +
+                        "      get: () => false,\n" +
+                        "    });\n" +
+                        "    if(navigator.webdriver) throw new Error('Failed to set navigator.webdriver to false!');\n" +
+                        "    window.chrome = {\n" +
+                        "  \"app\": {\n" +
+                        "    \"isInstalled\": false,\n" +
+                        "    \"InstallState\": {\n" +
+                        "      \"DISABLED\": \"disabled\",\n" +
+                        "      \"INSTALLED\": \"installed\",\n" +
+                        "      \"NOT_INSTALLED\": \"not_installed\"\n" +
+                        "    },\n" +
+                        "    \"RunningState\": {\n" +
+                        "      \"CANNOT_RUN\": \"cannot_run\",\n" +
+                        "      \"READY_TO_RUN\": \"ready_to_run\",\n" +
+                        "      \"RUNNING\": \"running\"\n" +
+                        "    }\n" +
+                        "  },\n" +
+                        "  \"runtime\": {\n" +
+                        "    \"OnInstalledReason\": {\n" +
+                        "      \"CHROME_UPDATE\": \"chrome_update\",\n" +
+                        "      \"INSTALL\": \"install\",\n" +
+                        "      \"SHARED_MODULE_UPDATE\": \"shared_module_update\",\n" +
+                        "      \"UPDATE\": \"update\"\n" +
+                        "    },\n" +
+                        "    \"OnRestartRequiredReason\": {\n" +
+                        "      \"APP_UPDATE\": \"app_update\",\n" +
+                        "      \"OS_UPDATE\": \"os_update\",\n" +
+                        "      \"PERIODIC\": \"periodic\"\n" +
+                        "    },\n" +
+                        "    \"PlatformArch\": {\n" +
+                        "      \"ARM\": \"arm\",\n" +
+                        "      \"ARM64\": \"arm64\",\n" +
+                        "      \"MIPS\": \"mips\",\n" +
+                        "      \"MIPS64\": \"mips64\",\n" +
+                        "      \"X86_32\": \"x86-32\",\n" +
+                        "      \"X86_64\": \"x86-64\"\n" +
+                        "    },\n" +
+                        "    \"PlatformNaclArch\": {\n" +
+                        "      \"ARM\": \"arm\",\n" +
+                        "      \"MIPS\": \"mips\",\n" +
+                        "      \"MIPS64\": \"mips64\",\n" +
+                        "      \"X86_32\": \"x86-32\",\n" +
+                        "      \"X86_64\": \"x86-64\"\n" +
+                        "    },\n" +
+                        "    \"PlatformOs\": {\n" +
+                        "      \"ANDROID\": \"android\",\n" +
+                        "      \"CROS\": \"cros\",\n" +
+                        "      \"LINUX\": \"linux\",\n" +
+                        "      \"MAC\": \"mac\",\n" +
+                        "      \"OPENBSD\": \"openbsd\",\n" +
+                        "      \"WIN\": \"win\"\n" +
+                        "    },\n" +
+                        "    \"RequestUpdateCheckStatus\": {\n" +
+                        "      \"NO_UPDATE\": \"no_update\",\n" +
+                        "      \"THROTTLED\": \"throttled\",\n" +
+                        "      \"UPDATE_AVAILABLE\": \"update_available\"\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}\n" +
+                        " // Overwrite the `plugins` property to use a custom getter.\n" +
+                        "    Object.defineProperty(navigator, 'plugins', {\n" +
+                        "      // This just needs to have `length > 0` for the current test,\n" +
+                        "      // but we could mock the plugins too if necessary.\n" +
+                        "      get: () => [1, 2, 3, 4, 5],\n" +
+                        "    });\n" +
+                        "try{ // Inside try/catch to ensure variables are only accessible from here" +
+                        "  var originalQuery = window.navigator.permissions.query;\n" +
+                        "  return window.navigator.permissions.query = (parameters) => (\n" +
+                        "    parameters.name === 'notifications' ?\n" +
+                        "      Promise.resolve({ state: Notification.permission }) :\n" +
+                        "      originalQuery(parameters)\n" +
+                        "  );\n" +
+                        "}catch(e){throw e;}\n" +
+                        "  });\n");
+            }
+
+             */
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -144,6 +248,12 @@ public class PuppeteerWindow implements AutoCloseable {
         return this;
     }
 
+    public String executeJSAndGetResult(String jsCode) throws NodeJsCodeException {
+        return jsContext.executeJSAndGetResult("var result = await page.evaluate(() => {\n" +
+                jsCode +
+                "});\n");
+    }
+
 
     /**
      * See {@link #makeScreenshot(File, boolean)} for details.
@@ -159,7 +269,8 @@ public class PuppeteerWindow implements AutoCloseable {
      * @param captureFullPage should the complete page (top to bottom) be captured, or only the currently visible part?
      */
     public PuppeteerWindow makeScreenshot(File file, boolean captureFullPage) throws IOException, NodeJsCodeException {
-        if (!file.exists()) file.createNewFile();
+        if (file.exists()) file.delete();
+        file.createNewFile();
         String path = file.getAbsolutePath().replace("\\", "/"); // Windows paths don't work that's why we do this
         jsContext.executeJavaScript("await page.screenshot({ path: '" + path + "', fullPage: " + captureFullPage + " });");
         return this;

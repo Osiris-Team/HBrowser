@@ -15,15 +15,11 @@ public class WindowBuilder {
     public boolean isDevTools = false;
     public int debuggingPort = 0;
     public String[] additionalStartupArgs = null;
+    public boolean makeUndetectable = false;
 
-
-    /**
-     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
-     */
     public WindowBuilder(HBrowser parentBrowser) {
         this.parentBrowser = parentBrowser;
     }
-
 
     public GraalWindow buildGraalJSWindow() {
         // TODO debugOutputStream jsTimeout
@@ -31,20 +27,30 @@ public class WindowBuilder {
     }
 
     /**
-     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, boolean, String...)}.
      */
     public PuppeteerWindow buildPuppeteerWindow() {
         // TODO customHeaders
         return new PuppeteerWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
-                this.isHeadless, this.userDataDir, this.isDevTools, this.debuggingPort, this.additionalStartupArgs);
+                this.isHeadless, this.userDataDir, this.isDevTools, this.debuggingPort, this.makeUndetectable, this.additionalStartupArgs);
     }
 
     /**
-     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, String...)}.
+     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, boolean, String...)}.
      */
     public PlaywrightWindow buildPlaywrightWindow() {
         return new PlaywrightWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
-                this.isHeadless, this.userDataDir, this.isDevTools);
+                this.isHeadless, this.userDataDir, this.isDevTools, this.makeUndetectable);
+    }
+
+    public LightWindow buildLightWindow() {
+        return new LightWindow(this.parentBrowser, this.enableJavaScript, this.customHeaders, this.debugOutputStream,
+                this.isHeadless, this.userDataDir, this.isDevTools, this.jsTimeout, this.makeUndetectable);
+    }
+
+    public WindowBuilder makeUndetectable(boolean val) {
+        this.makeUndetectable = val;
+        return this;
     }
 
 

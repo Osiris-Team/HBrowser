@@ -2,43 +2,81 @@ package com.osiris.headlessbrowser;
 
 
 import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
+import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
+import com.osiris.headlessbrowser.utils.HtmlView;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
- * Headless-Window.
+ * Headless-Window with Node.js as JavaScript engine and Node modules replacing the regular web-apis.
  *
  * @author Osiris-Team
  */
-public class GraalWindow implements AutoCloseable {
-    private final GraalContext graalContext = new GraalContext(this);
-    private HBrowser parentBrowser;
+public class LightWindow implements AutoCloseable {
+    private final NodeContext jsContext;
+    private final OutputStream debugOutput;
+    private final HBrowser parentBrowser;
+    private final boolean isHeadless;
+    private final File userDataDir;
+    private final boolean isDevTools;
+    private final File downloadTempDir;
     private boolean enableJavaScript;
+    private String url;
     private Map<String, String> customHeaders;
     private Document document;
     private String authority;
     private String javaScriptCode;
 
-    public GraalWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders) {
+    public LightWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders,
+                       OutputStream debugOutput, boolean isHeadless, File userDataDir, boolean isDevTools, int jsTimeout, boolean makeUndetectable) {
         this.parentBrowser = parentBrowser;
         this.enableJavaScript = enableJavaScript;
         this.customHeaders = customHeaders;
+        this.debugOutput = debugOutput;
+        this.isHeadless = isHeadless;
+        this.userDataDir = userDataDir;
+        this.isDevTools = isDevTools;
+        try {
+            this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
+            jsContext.npmInstall("jsdom");
+            jsContext.executeJavaScript("" +
+                    "const jsdom = require(\"jsdom\");\n" +
+                    "const { JSDOM } = jsdom;\n", 30, false);
+
+
+            // Define global variables/constants
+            if (userDataDir == null) {
+                userDataDir = new WindowBuilder(null).userDataDir; // Get the default value
+            }
+            if (userDataDir.isFile())
+                throw new Exception("userDataDir must be a directory and cannot be a file (" + userDataDir.getAbsolutePath() + ")!");
+            if (!userDataDir.exists()) userDataDir.mkdirs();
+
+            // To be able to download files:
+            downloadTempDir = new File(userDataDir + "/downloads-temp");
+            if (!downloadTempDir.exists()) downloadTempDir.mkdirs();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * Load the contents from the provided url into the current {@link GraalWindow}.
+     * Load the contents from the provided url into the current {@link LightWindow}.
      *
      * @param url Examples: https://www.wikipedia.org or wikipedia.org.
-     * @return the current {@link GraalWindow} for chained method calls.
+     * @return the current {@link LightWindow} for chained method calls.
      * @throws IOException
      */
-    public GraalWindow load(String url) throws IOException {
+    public LightWindow load(String url) throws IOException, NodeJsCodeException {
         if (!url.startsWith("http"))
             url = "https://" + url;
 
@@ -49,8 +87,11 @@ public class GraalWindow implements AutoCloseable {
             headers = this.customHeaders;
 
         authority = new URL(url).getAuthority();
-        document = Jsoup.connect(url).headers(headers)
+        document = Jsoup.connect(url).ignoreHttpErrors(true).headers(headers)
                 .get();
+
+        jsContext.executeJavaScript("var document = new JSDOM(`" + document + "`);\n" +
+                "var { window } = document;\n");
 
         if (enableJavaScript) {
             int scriptElements = 0;
@@ -84,9 +125,19 @@ public class GraalWindow implements AutoCloseable {
                 }
 
                 // Execute code
-                graalContext.eval(javaScriptCode);
+                jsContext.executeJavaScript(javaScriptCode);
             }
         }
+
+        if (!isHeadless) {
+            String finalUrl = url;
+            SwingUtilities.invokeLater(() -> {
+                JFrame j = new HtmlView().getFrame(finalUrl, document.toString());
+                j.setLocationRelativeTo(null);
+                j.setVisible(true);
+            });
+        }
+
         return this;
     }
 
@@ -98,8 +149,8 @@ public class GraalWindow implements AutoCloseable {
         return document;
     }
 
-    public GraalContext getJavaScriptContext() {
-        return graalContext;
+    public NodeContext getJavaScriptContext() {
+        return jsContext;
     }
 
     /**
@@ -114,8 +165,8 @@ public class GraalWindow implements AutoCloseable {
      * Executes the provided JavaScript code in the current context. <br>
      * See {@link GraalContext} for details. <br>
      */
-    public GraalWindow executeJS(String jsCode) {
-        graalContext.eval(jsCode);
+    public LightWindow executeJS(String jsCode) throws NodeJsCodeException {
+        jsContext.executeJavaScript(jsCode);
         return this;
     }
 
@@ -124,16 +175,12 @@ public class GraalWindow implements AutoCloseable {
     }
 
     @Override
-    public void close() {
-        graalContext.close();
+    public void close() throws Exception {
+        jsContext.close();
     }
 
     public HBrowser getParentBrowser() {
         return parentBrowser;
-    }
-
-    public void setParentBrowser(HBrowser parentBrowser) {
-        this.parentBrowser = parentBrowser;
     }
 
     public boolean isEnableJavaScript() {

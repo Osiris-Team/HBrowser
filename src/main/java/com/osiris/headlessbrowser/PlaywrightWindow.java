@@ -3,6 +3,7 @@ package com.osiris.headlessbrowser;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -38,9 +39,11 @@ public class PlaywrightWindow implements AutoCloseable {
      * @param isHeadless       Whether to run browser in headless mode. Defaults to true unless the devtools option is true. <br><br>
      * @param userDataDir      Path to a User Data Directory. Default is ./headless-browser/user-data (the "." represents the current working directory). <br><br>
      * @param isDevTools       Whether to auto-open a DevTools panel for each tab. If this option is true, the headless option will be set false. <br><br>
+     * @param makeUndetectable Makes this window indistinguishable from 'real', user operated windows, by using the npm packages playwright-extra and playwright-extra-plugin-stealth.
+     *                        Note that the playwright-extra-plugin-stealth package is currently still under development and thus not available yet!<br><br>
      */
     public PlaywrightWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
-                            boolean isHeadless, File userDataDir, boolean isDevTools) {
+                            boolean isHeadless, File userDataDir, boolean isDevTools, boolean makeUndetectable) {
         this.parentBrowser = parentBrowser;
         this.debugOutput = debugOutput;
         this.isHeadless = isHeadless;
@@ -75,10 +78,98 @@ public class PlaywrightWindow implements AutoCloseable {
                             "  javaScriptEnabled: " + enableJavaScript + ",\n" +
                             //"  downloadsPath: '" + downloadTempDir.getAbsolutePath().replace("\\", "/") + "',\n" + // Active issue at: https://github.com/microsoft/playwright/issues/9279
                             "  devtools: " + isDevTools + ",\n" +
-                            "  args: ['--enable-automation=false']\n" +
+                            //"  ignoreDefaultArgs: true,\n" +
+                            //"  args: [],\n" + // '--enable-automation=false'
+                            "  extraHTTPHeaders: "+new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson())+",\n" +
+                            "  userAgent: '"+new ChromeHeaders().user_agent+"'\n" + // Just to make sure...
                             "});\n" +
                             "browser = browserCtx.browser();\n" +
                             "page = await browserCtx.newPage();\n", 30, false);
+
+            /*
+            if (makeUndetectable) {
+                jsContext.executeJavaScript("" +
+                        "  // Credits go to: https://intoli.com/blog/not-possible-to-block-chrome-headless/\n" +
+                        "  // Pass the Webdriver Test.\n" +
+                        "await page.addInitScript(() => {\n" +
+                        "    Object.defineProperty(navigator, 'webdriver', {\n" +
+                        "      get: () => false,\n" +
+                        "    });\n" +
+                        "    if(navigator.webdriver) throw new Error('Failed to set navigator.webdriver to false!');\n" +
+                        "    window.chrome = {\n" +
+                        "  \"app\": {\n" +
+                        "    \"isInstalled\": false,\n" +
+                        "    \"InstallState\": {\n" +
+                        "      \"DISABLED\": \"disabled\",\n" +
+                        "      \"INSTALLED\": \"installed\",\n" +
+                        "      \"NOT_INSTALLED\": \"not_installed\"\n" +
+                        "    },\n" +
+                        "    \"RunningState\": {\n" +
+                        "      \"CANNOT_RUN\": \"cannot_run\",\n" +
+                        "      \"READY_TO_RUN\": \"ready_to_run\",\n" +
+                        "      \"RUNNING\": \"running\"\n" +
+                        "    }\n" +
+                        "  },\n" +
+                        "  \"runtime\": {\n" +
+                        "    \"OnInstalledReason\": {\n" +
+                        "      \"CHROME_UPDATE\": \"chrome_update\",\n" +
+                        "      \"INSTALL\": \"install\",\n" +
+                        "      \"SHARED_MODULE_UPDATE\": \"shared_module_update\",\n" +
+                        "      \"UPDATE\": \"update\"\n" +
+                        "    },\n" +
+                        "    \"OnRestartRequiredReason\": {\n" +
+                        "      \"APP_UPDATE\": \"app_update\",\n" +
+                        "      \"OS_UPDATE\": \"os_update\",\n" +
+                        "      \"PERIODIC\": \"periodic\"\n" +
+                        "    },\n" +
+                        "    \"PlatformArch\": {\n" +
+                        "      \"ARM\": \"arm\",\n" +
+                        "      \"ARM64\": \"arm64\",\n" +
+                        "      \"MIPS\": \"mips\",\n" +
+                        "      \"MIPS64\": \"mips64\",\n" +
+                        "      \"X86_32\": \"x86-32\",\n" +
+                        "      \"X86_64\": \"x86-64\"\n" +
+                        "    },\n" +
+                        "    \"PlatformNaclArch\": {\n" +
+                        "      \"ARM\": \"arm\",\n" +
+                        "      \"MIPS\": \"mips\",\n" +
+                        "      \"MIPS64\": \"mips64\",\n" +
+                        "      \"X86_32\": \"x86-32\",\n" +
+                        "      \"X86_64\": \"x86-64\"\n" +
+                        "    },\n" +
+                        "    \"PlatformOs\": {\n" +
+                        "      \"ANDROID\": \"android\",\n" +
+                        "      \"CROS\": \"cros\",\n" +
+                        "      \"LINUX\": \"linux\",\n" +
+                        "      \"MAC\": \"mac\",\n" +
+                        "      \"OPENBSD\": \"openbsd\",\n" +
+                        "      \"WIN\": \"win\"\n" +
+                        "    },\n" +
+                        "    \"RequestUpdateCheckStatus\": {\n" +
+                        "      \"NO_UPDATE\": \"no_update\",\n" +
+                        "      \"THROTTLED\": \"throttled\",\n" +
+                        "      \"UPDATE_AVAILABLE\": \"update_available\"\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}\n" +
+                        " // Overwrite the `plugins` property to use a custom getter.\n" +
+                        "    Object.defineProperty(navigator, 'plugins', {\n" +
+                        "      // This just needs to have `length > 0` for the current test,\n" +
+                        "      // but we could mock the plugins too if necessary.\n" +
+                        "      get: () => [1, 2, 3, 4, 5],\n" +
+                        "    });\n" +
+                        "try{ // Inside try/catch to ensure variables are only accessible from here" +
+                        "  var originalQuery = window.navigator.permissions.query;\n" +
+                        "  return window.navigator.permissions.query = (parameters) => (\n" +
+                        "    parameters.name === 'notifications' ?\n" +
+                        "      Promise.resolve({ state: Notification.permission }) :\n" +
+                        "      originalQuery(parameters)\n" +
+                        "  );\n" +
+                        "}catch(e){throw e;}\n" +
+                        "  });\n");
+            }
+
+             */
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -117,7 +208,8 @@ public class PlaywrightWindow implements AutoCloseable {
 
     /**
      * Downloads a file from the specified url.
-     * @param url not null. The download url.
+     *
+     * @param url  not null. The download url.
      * @param dest if null file gets downloaded to {@link #downloadTempDir}, otherwise to the provided destination/file.
      */
     public PlaywrightWindow download(String url, File dest) throws IOException {
@@ -125,7 +217,7 @@ public class PlaywrightWindow implements AutoCloseable {
                 jsContext.executeJSAndGetResult("" +
                         "  await page.goto('about:blank');\n" +
                         "  var event = page.waitForEvent('download');\n" +
-                        "  await page.evaluate(`var myCUSTel = document.createElement('a');myCUSTel.innerHTML = 'Download';myCUSTel.setAttribute('href', '"+url+"');myCUSTel.setAttribute('id', 'myCUSTel');document.getElementsByTagName('body')[0].appendChild(myCUSTel);`);\n" +
+                        "  await page.evaluate(`var myCUSTel = document.createElement('a');myCUSTel.innerHTML = 'Download';myCUSTel.setAttribute('href', '" + url + "');myCUSTel.setAttribute('id', 'myCUSTel');document.getElementsByTagName('body')[0].appendChild(myCUSTel);`);\n" +
                         "  await page.click('id=myCUSTel');\n" +
                         "  var download = await event;\n" +
                         "  console.log(event);\n" +
@@ -159,8 +251,8 @@ public class PlaywrightWindow implements AutoCloseable {
         if (dest != null) {
             if (dest.exists()) dest.delete();
             Files.copy(download.toPath(), dest.toPath());
-        } else{
-            Files.copy(download.toPath(), new File(downloadTempDir+"/"+fileName).toPath());
+        } else {
+            Files.copy(download.toPath(), new File(downloadTempDir + "/" + fileName).toPath());
         }
         download.delete();
         this.url = "about:blank";

@@ -31,7 +31,9 @@ public class NodeContext implements AutoCloseable {
     private final File lastJsCodeExecutionResultFile;
     private final int timeout;
     private final File installationDir;
-    private File executableFile;
+    private File nodeExeFile;
+    private File npmExeFile;
+    private File npxExeFile;
     private OperatingSystemArchitectureType osArchitectureType = null;
     private OperatingSystemType osType;
 
@@ -119,13 +121,19 @@ public class NodeContext implements AutoCloseable {
                 }
             }
 
-            for (File f :
-                    Objects.requireNonNull(
-                            Objects.requireNonNull(installationDir.listFiles())[0].listFiles())) {
-                if (f.getName().contains(".exe")) { // TODO add support for other OS
-                    executableFile = f;
-                }
+            if (osType.equals(OperatingSystemType.WINDOWS)){
+                nodeExeFile = new File(installationDir.listFiles()[0]+"/node.exe");
+                npmExeFile = new File(installationDir.listFiles()[0]+"/npm.cmd");
+                npxExeFile = new File(installationDir.listFiles()[0]+"/npx.cmd");
+            } else{ // Linux, mac and co.
+                nodeExeFile = new File(installationDir.listFiles()[0]+"/bin/node");
+                npmExeFile = new File(installationDir.listFiles()[0]+"/bin/npm");
+                npxExeFile = new File(installationDir.listFiles()[0]+"/bin/npx");
             }
+
+            if (!nodeExeFile.exists()) throw new Exception("node.exe couldn't be found in "+installationDir.listFiles()[0]);
+            if (!npmExeFile.exists()) throw new Exception("npm.cmd couldn't be found in "+installationDir.listFiles()[0]);
+            if (!npxExeFile.exists()) throw new Exception("npx.cmd couldn't be found in "+installationDir.listFiles()[0]);
         } catch (Exception e) {
             System.err.println("Error during installation of NodeJS. Details:");
             throw new RuntimeException(e);
@@ -136,7 +144,7 @@ public class NodeContext implements AutoCloseable {
             out.print("Initialising NodeJS...");
             out.flush();
             ProcessBuilder processBuilder = new ProcessBuilder(Arrays.asList(
-                    executableFile.getAbsolutePath(), "--interactive"));
+                    nodeExeFile.getAbsolutePath(), "--interactive"));
             // Must be inherited so that NodeJS closes when this application closes.
             // Wrong! It seems like NodeJS closes if the parent process dies, even if its Piped I/O.
             process = processBuilder.start();
@@ -150,7 +158,7 @@ public class NodeContext implements AutoCloseable {
             processErrorInput = new AsyncInputStream(process.getErrorStream());
             processOutput = process.getOutputStream();
             out.println(" SUCCESS!");
-            out.println("Node-JS was started from: " + executableFile);
+            out.println("Node-JS was started from: " + nodeExeFile);
 
             Thread t = new Thread(() -> {
                 // Keeps the java application running until NodeJS closes
@@ -168,7 +176,7 @@ public class NodeContext implements AutoCloseable {
                     "  return new Promise(resolve => setTimeout(resolve, ms));\n" +
                     "}");
 
-            lastJsCodeExecutionResultFile = new File(executableFile.getParentFile() + "/JavaScriptCodeResult.txt");
+            lastJsCodeExecutionResultFile = new File(nodeExeFile.getParentFile() + "/JavaScriptCodeResult.txt");
             if (!lastJsCodeExecutionResultFile.exists()) lastJsCodeExecutionResultFile.createNewFile();
             String resultFilePath = lastJsCodeExecutionResultFile.getAbsolutePath().replace("\\", "/"); // To avoid issues with indows file path formats
             executeJavaScript("function writeToJava(result) {\n" +
@@ -323,11 +331,12 @@ public class NodeContext implements AutoCloseable {
      * means that you must have provided this {@link NodeContext} a {@link #debugOutput} at initialisation to see your codes output. <br>
      */
     public synchronized NodeContext executeJavaScript(String jsCode, int timeout, boolean wrapInTryCatch) throws NodeJsCodeException {
+        File tmpJs = null;
         try {
             // Writing stuff directly to the process output/NodeJs REPL console somehow is very error-prone.
             // That's why instead we create a temp file with the js code in it and load it using the .load command.
             long msStart = System.currentTimeMillis();
-            File tmpJs = new File(executableFile.getParentFile() + "/temp" + msStart + ".js");
+            tmpJs = new File(nodeExeFile.getParentFile() + "/temp" + msStart + ".js");
             if (!tmpJs.exists()) tmpJs.createNewFile();
 
             if (wrapInTryCatch) {
@@ -402,8 +411,10 @@ public class NodeContext implements AutoCloseable {
             processInput.listeners.remove(consoleLogListener);
             tmpJs.delete();
         } catch (NodeJsCodeException e) {
+            tmpJs.delete();
             throw e;
         } catch (Exception e) {
+            if (tmpJs!=null) tmpJs.delete();
             throw new RuntimeException(e);
         }
         return this;
@@ -420,7 +431,7 @@ public class NodeContext implements AutoCloseable {
      * Expects: [val1, val2, ...] <br>
      * or expects: val1, val2, ... <br>
      */
-    public String[] parseJSStringArrayToJavaStringArray(String jsCodeResult){
+    public String[] parseJSStringArrayToJavaStringArray(String jsCodeResult) {
         String[] array = jsCodeResult.replace("[", "")
                 .replace("]", "")
                 .split(",");
@@ -508,13 +519,25 @@ public class NodeContext implements AutoCloseable {
      */
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
         Objects.requireNonNull(args);
-        File npm = new File(installationDir.listFiles()[0] + "/npm.cmd");
         List<String> commands = new ArrayList<>();
-        commands.add(npm.getAbsolutePath());
+        commands.add(npmExeFile.getAbsolutePath());
         commands.addAll(Arrays.asList(args));
         Process process = new ProcessBuilder(commands).start();
         new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
         new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
+        while (process.isAlive())
+            Thread.sleep(500);
+        return process;
+    }
+
+    public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
+        Objects.requireNonNull(args);
+        List<String> commands = new ArrayList<>();
+        commands.add(npxExeFile.getAbsolutePath());
+        commands.addAll(Arrays.asList(args));
+        Process process = new ProcessBuilder(commands).start();
+        new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPX] " + line));
+        new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));
         while (process.isAlive())
             Thread.sleep(500);
         return process;
@@ -533,8 +556,8 @@ public class NodeContext implements AutoCloseable {
         return installationDir;
     }
 
-    public File getExecutableFile() {
-        return executableFile;
+    public File getNodeExeFile() {
+        return nodeExeFile;
     }
 
     public Process getProcess() {
