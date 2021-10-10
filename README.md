@@ -92,6 +92,7 @@ implemented the Node.js engine to be completely usable in Java and some
 to have something usable right now.
 Read more about this in "Why contribute?".
 </details>
+<details>
 <summary>Why contribute?</summary>
 I worked with multiple different browsers like JCEF, Selenium, JWebdriver, HtmlUnit and maybe some more I don't remember
 now, but all have one thing in common. They have some kind of caveat.
