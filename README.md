@@ -11,6 +11,10 @@ try(PlaywrightWindow window = hBrowser.openWindow()){
 ```
 Note that the first run may take a bit because Node.js and its modules get installed into your current working dir.
 
+### Motivation/Aim
+There are only Java browsers available that you have to buy, or they are free but come with some caveat.
+Thats why this project exists.
+
 ### Installation
 
 - Java 8 or higher required.
