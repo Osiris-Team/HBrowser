@@ -31,10 +31,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
 | [Puppeteer](https://github.com/puppeteer/puppeteer) | Yes | Node.js | No | No |
 | [Graal](https://github.com/oracle/graaljs) | Yes | GraalJS | No | Yes |
 
-### Definitions
- - JS: JavaScript
- - Full Java: If the browser is completely written in Java or not
- - Downloads: If the browser is able to download files other than html/xml/pdf
+(JS = JavaScript; Full Java = If the browser is completely written in Java or not; Downloads = If the browser is able to download files other than html/xml/pdf)
 
 ### Contribute/Build
 
