@@ -11,10 +11,6 @@ try(PlaywrightWindow window = hBrowser.openWindow()){
 ```
 Note that the first run may take a bit because Node.js and its modules get installed into your current working dir.
 
-### Motivation/Aim
-There are only Java browsers available that you have to buy, or they are free but come with some caveat.
-Thats why this project exists.
-
 ### Installation
 
 - Java 8 or higher required.
@@ -113,6 +109,12 @@ There are a lot of Web-APIs available, so we need some motivated people to imple
 you <b>very</b> much, already in
 advance! Here is a list of already implemented APIs and how to implement one: /how-to-implement-a-js-web-api.md
 If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
+</details>
+<details>
+<summary>What is the motivation behind this project?</summary>
+There are only Java browsers available that you have to buy, or they are free but come with some caveat.
+Thats why this project exists.
+We want to provide the latest and best technologies regarding headless browsers and make them available to Java applications.
 </details>
 
 ### Libraries
