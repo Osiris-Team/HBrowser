@@ -38,24 +38,6 @@ Note that the first run may take a bit because Node.js and its modules get insta
 
 ### Contribute/Build
 
-#### Why contribute?
-
-I worked with multiple different browsers like JCEF, Selenium, JWebdriver, HtmlUnit and maybe some more I don't remember
-now, but all have one thing in common. They have some kind of caveat.
-
-That's why I started this project. To create a new browser, not dependent on Chromium or Waterfox etc., written in Java,
-compatible with all operating systems that can run Java. We use Jsoup to handle HTML and the GraalJS engine to handle
-JavaScript.
-
-Now you may ask: Why do you need my help? Our problem is that most of the JavaScript code out there uses so
-called [Web-APIs](https://developer.mozilla.org/en-US/docs/Web/API)
-, which get shipped with each browser. We will need to implement those APIs by ourselfs.
-
-There are a lot of Web-APIs available, so we need some motivated people to implement them. If you want to help, thank
-you **very** much, already in
-advance! [Click here to see a list of already implemented APIs and how to implement one.](how-to-implement-a-js-web-api.md)
-If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
-
 #### Beginners
 
 If you have never contributed before, we recommend
@@ -109,6 +91,23 @@ implemented the Node.js engine to be completely usable in Java and some
 'Browser Drivers' like Puppeteer and Playwright, which run on Node.js,
 to have something usable right now.
 Read more about this in "Why contribute?".
+</details>
+<summary>Why contribute?</summary>
+I worked with multiple different browsers like JCEF, Selenium, JWebdriver, HtmlUnit and maybe some more I don't remember
+now, but all have one thing in common. They have some kind of caveat.
+
+That's why I started this project. To create a new browser, not dependent on Chromium or Waterfox etc., written in Java,
+compatible with all operating systems that can run Java. We use Jsoup to handle HTML and the GraalJS engine to handle
+JavaScript.
+
+Now you may ask: Why do you need my help? Our problem is that most of the JavaScript code out there uses so
+called Web-APIs: https://developer.mozilla.org/en-US/docs/Web/API
+, which get shipped with each browser. We will need to implement those APIs by ourselfs.
+
+There are a lot of Web-APIs available, so we need some motivated people to implement them. If you want to help, thank
+you <b>very</b> much, already in
+advance! Here is a list of already implemented APIs and how to implement one: /how-to-implement-a-js-web-api.md
+If you are working on an implementation open an issue to keep track of who is working on what and avoid duplicate work.
 </details>
 
 ### Libraries
