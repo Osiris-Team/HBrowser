@@ -1,5 +1,6 @@
 package com.osiris.headlessbrowser;
 
+import com.osiris.headlessbrowser.js.contexts.GraalContext;
 import org.graalvm.polyglot.Context;
 import org.junit.jupiter.api.Test;
 

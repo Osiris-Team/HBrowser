@@ -1,4 +1,4 @@
-package com.osiris.headlessbrowser.javascript.exceptions;
+package com.osiris.headlessbrowser.exceptions;
 
 public class DuplicateFoundException extends Exception {
 

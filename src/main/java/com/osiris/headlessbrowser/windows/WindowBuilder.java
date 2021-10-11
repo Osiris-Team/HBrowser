@@ -1,4 +1,6 @@
-package com.osiris.headlessbrowser;
+package com.osiris.headlessbrowser.windows;
+
+import com.osiris.headlessbrowser.HBrowser;
 
 import java.io.File;
 import java.io.OutputStream;

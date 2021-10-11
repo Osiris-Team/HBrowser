@@ -1,4 +1,4 @@
-package com.osiris.headlessbrowser.javascript.apis.dom;
+package com.osiris.headlessbrowser.graal.apis.dom;
 
 import org.graalvm.polyglot.HostAccess;
 

@@ -1,11 +1,15 @@
-package com.osiris.headlessbrowser;
+package com.osiris.headlessbrowser.windows;
 
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.osiris.headlessbrowser.HBrowser;
 import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
+import com.osiris.headlessbrowser.js.contexts.NodeContext;
+import com.osiris.headlessbrowser.js.raw.EvasionsInside;
+import com.osiris.headlessbrowser.js.raw.EvasionsOutside;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -63,7 +67,8 @@ public class PuppeteerWindow implements AutoCloseable {
             this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
 
             // Define global variables/constants
-            if (makeUndetectable){
+            if (makeUndetectable) {
+                /* // Doesnt work
                 jsContext.npmInstall("puppeteer");
                 jsContext.npmInstall("puppeteer-extra");
                 jsContext.npmInstall("puppeteer-extra-plugin-stealth");
@@ -74,22 +79,28 @@ public class PuppeteerWindow implements AutoCloseable {
                                 "var browser = null;\n" +
                                 "var page = null;\n" +
                                 "var downloadFile = null;\n", 30, false);
-            }else{
-                jsContext.npmInstall("puppeteer");
-                jsContext.executeJavaScript(
-                        "const puppeteer = require('puppeteer');\n" +
-                                "var browser = null;\n" +
-                                "var page = null;\n" +
-                                "var downloadFile = null;\n", 30, false);
+                 */
+            } else {
+
             }
+            jsContext.npmInstall("puppeteer");
+            jsContext.executeJavaScript(
+                    "const puppeteer = require('puppeteer');\n" +
+                            "var browser = null;\n" +
+                            "var page = null;\n" +
+                            "var downloadFile = null;\n", 30, false);
 
 
             StringBuilder jsInitCode = new StringBuilder();
             jsInitCode.append("var defaultArgs = {\n");
             jsInitCode.append("  headless : " + isHeadless + ",\n");
+            List<String> argsAsList = new ArrayList<>();
             if (additionalStartupArgs != null) {
-                jsInitCode.append("  args: " + Arrays.toString(additionalStartupArgs) + ",\n");
+                argsAsList.addAll(Arrays.asList(additionalStartupArgs));
             }
+            if (!argsAsList.contains("--disable-blink-features=AutomationControlled"))
+                argsAsList.add("--disable-blink-features=AutomationControlled");
+            jsInitCode.append("  args: " + jsContext.parseJavaListToJSArray(argsAsList) + ",\n");
             if (userDataDir == null) {
                 userDataDir = new WindowBuilder(null).userDataDir; // Get the default value
             }
@@ -98,101 +109,27 @@ public class PuppeteerWindow implements AutoCloseable {
             if (!userDataDir.exists()) userDataDir.mkdirs();
             jsInitCode.append("  userDataDir: \"" + userDataDir.getAbsolutePath().replace("\\", "/") + "\",\n");
             jsInitCode.append("  devtools: " + isDevTools + ",\n");
-            jsInitCode.append("  debuggingPort: " + debuggingPort + "\n");
-            jsInitCode.append("};\n" +
-                    "var argsAsArray = puppeteer.defaultArgs(defaultArgs);\n" +
-                    "console.log(puppeteer.defaultArgs(defaultArgs));\n");
+            jsInitCode.append("  debuggingPort: " + debuggingPort + "};\n");
+            jsInitCode.append("var argsAsArray = puppeteer.defaultArgs(defaultArgs);\n");
+            //if (makeUndetectable){
+            //    jsInitCode.append(new EvasionsOutside().navigator_webdriver);
+            //}
+            jsInitCode.append("console.log(puppeteer.defaultArgs(defaultArgs));\n");
             jsInitCode.append("browser = await puppeteer.launch(defaultArgs);\n");
             jsInitCode.append("page = await browser.newPage();\n");
-            jsInitCode.append("await page.setExtraHTTPHeaders("+new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson())+");\n");
+            jsInitCode.append("await page.setExtraHTTPHeaders(" + new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson()) + ");\n");
             jsContext.executeJavaScript(jsInitCode.toString(), 30, false);
             setEnableJavaScript(enableJavaScript);
 
-            /*
-            if (makeUndetectable) {
-                jsContext.executeJavaScript("" +
-                        "// Credits go to: https://intoli.com/blog/not-possible-to-block-chrome-headless/\n" +
-                        "await page.setUserAgent('"+new ChromeHeaders().user_agent+"');\n" +
-                        "await page.evaluateOnNewDocument(() => {\n" +
-                        "    // Pass the Webdriver Test.\n" +
-                        "    Object.defineProperty(navigator, 'webdriver', {\n" +
-                        "      get: () => false,\n" +
-                        "    });\n" +
-                        "    if(navigator.webdriver) throw new Error('Failed to set navigator.webdriver to false!');\n" +
-                        "    window.chrome = {\n" +
-                        "  \"app\": {\n" +
-                        "    \"isInstalled\": false,\n" +
-                        "    \"InstallState\": {\n" +
-                        "      \"DISABLED\": \"disabled\",\n" +
-                        "      \"INSTALLED\": \"installed\",\n" +
-                        "      \"NOT_INSTALLED\": \"not_installed\"\n" +
-                        "    },\n" +
-                        "    \"RunningState\": {\n" +
-                        "      \"CANNOT_RUN\": \"cannot_run\",\n" +
-                        "      \"READY_TO_RUN\": \"ready_to_run\",\n" +
-                        "      \"RUNNING\": \"running\"\n" +
-                        "    }\n" +
-                        "  },\n" +
-                        "  \"runtime\": {\n" +
-                        "    \"OnInstalledReason\": {\n" +
-                        "      \"CHROME_UPDATE\": \"chrome_update\",\n" +
-                        "      \"INSTALL\": \"install\",\n" +
-                        "      \"SHARED_MODULE_UPDATE\": \"shared_module_update\",\n" +
-                        "      \"UPDATE\": \"update\"\n" +
-                        "    },\n" +
-                        "    \"OnRestartRequiredReason\": {\n" +
-                        "      \"APP_UPDATE\": \"app_update\",\n" +
-                        "      \"OS_UPDATE\": \"os_update\",\n" +
-                        "      \"PERIODIC\": \"periodic\"\n" +
-                        "    },\n" +
-                        "    \"PlatformArch\": {\n" +
-                        "      \"ARM\": \"arm\",\n" +
-                        "      \"ARM64\": \"arm64\",\n" +
-                        "      \"MIPS\": \"mips\",\n" +
-                        "      \"MIPS64\": \"mips64\",\n" +
-                        "      \"X86_32\": \"x86-32\",\n" +
-                        "      \"X86_64\": \"x86-64\"\n" +
-                        "    },\n" +
-                        "    \"PlatformNaclArch\": {\n" +
-                        "      \"ARM\": \"arm\",\n" +
-                        "      \"MIPS\": \"mips\",\n" +
-                        "      \"MIPS64\": \"mips64\",\n" +
-                        "      \"X86_32\": \"x86-32\",\n" +
-                        "      \"X86_64\": \"x86-64\"\n" +
-                        "    },\n" +
-                        "    \"PlatformOs\": {\n" +
-                        "      \"ANDROID\": \"android\",\n" +
-                        "      \"CROS\": \"cros\",\n" +
-                        "      \"LINUX\": \"linux\",\n" +
-                        "      \"MAC\": \"mac\",\n" +
-                        "      \"OPENBSD\": \"openbsd\",\n" +
-                        "      \"WIN\": \"win\"\n" +
-                        "    },\n" +
-                        "    \"RequestUpdateCheckStatus\": {\n" +
-                        "      \"NO_UPDATE\": \"no_update\",\n" +
-                        "      \"THROTTLED\": \"throttled\",\n" +
-                        "      \"UPDATE_AVAILABLE\": \"update_available\"\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}\n" +
-                        " // Overwrite the `plugins` property to use a custom getter.\n" +
-                        "    Object.defineProperty(navigator, 'plugins', {\n" +
-                        "      // This just needs to have `length > 0` for the current test,\n" +
-                        "      // but we could mock the plugins too if necessary.\n" +
-                        "      get: () => [1, 2, 3, 4, 5],\n" +
-                        "    });\n" +
-                        "try{ // Inside try/catch to ensure variables are only accessible from here" +
-                        "  var originalQuery = window.navigator.permissions.query;\n" +
-                        "  return window.navigator.permissions.query = (parameters) => (\n" +
-                        "    parameters.name === 'notifications' ?\n" +
-                        "      Promise.resolve({ state: Notification.permission }) :\n" +
-                        "      originalQuery(parameters)\n" +
-                        "  );\n" +
-                        "}catch(e){throw e;}\n" +
-                        "  });\n");
-            }
 
-             */
+            if (makeUndetectable) {
+                jsContext.executeJavaScript(new EvasionsOutside().getAll());
+                EvasionsInside evasionsInside = new EvasionsInside();
+                jsContext.executeJavaScript("" +
+                        "await page.evaluateOnNewDocument(() => {\n" +
+                        evasionsInside.getAll() +
+                        "\n});\n");
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -248,9 +185,18 @@ public class PuppeteerWindow implements AutoCloseable {
         return this;
     }
 
+    /**
+     * Note that the provided code must return a string variable. Example:
+     * <pre>
+     *     var result = 'no results yet!';
+     *     //... do stuff
+     *     return result;
+     * </pre>
+     * That variable gets then returned by this method.
+     */
     public String executeJSAndGetResult(String jsCode) throws NodeJsCodeException {
         return jsContext.executeJSAndGetResult("var result = await page.evaluate(() => {\n" +
-                jsCode +
+                jsCode + "\n" +
                 "});\n");
     }
 

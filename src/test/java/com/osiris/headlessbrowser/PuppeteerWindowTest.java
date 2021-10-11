@@ -1,5 +1,6 @@
 package com.osiris.headlessbrowser;
 
+import com.osiris.headlessbrowser.windows.PuppeteerWindow;
 import org.junit.jupiter.api.Test;
 
 class PuppeteerWindowTest {

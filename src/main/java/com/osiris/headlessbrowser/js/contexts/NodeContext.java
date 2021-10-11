@@ -1,4 +1,4 @@
-package com.osiris.headlessbrowser;
+package com.osiris.headlessbrowser.js.contexts;
 
 import com.osiris.betterthread.BetterThreadManager;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
@@ -31,9 +31,9 @@ public class NodeContext implements AutoCloseable {
     private final File lastJsCodeExecutionResultFile;
     private final int timeout;
     private final File installationDir;
-    private File nodeExeFile;
-    private File npmExeFile;
-    private File npxExeFile;
+    private final File nodeExeFile;
+    private final File npmExeFile;
+    private final File npxExeFile;
     private OperatingSystemArchitectureType osArchitectureType = null;
     private OperatingSystemType osType;
 
@@ -121,19 +121,22 @@ public class NodeContext implements AutoCloseable {
                 }
             }
 
-            if (osType.equals(OperatingSystemType.WINDOWS)){
-                nodeExeFile = new File(installationDir.listFiles()[0]+"/node.exe");
-                npmExeFile = new File(installationDir.listFiles()[0]+"/npm.cmd");
-                npxExeFile = new File(installationDir.listFiles()[0]+"/npx.cmd");
-            } else{ // Linux, mac and co.
-                nodeExeFile = new File(installationDir.listFiles()[0]+"/bin/node");
-                npmExeFile = new File(installationDir.listFiles()[0]+"/bin/npm");
-                npxExeFile = new File(installationDir.listFiles()[0]+"/bin/npx");
+            if (osType.equals(OperatingSystemType.WINDOWS)) {
+                nodeExeFile = new File(installationDir.listFiles()[0] + "/node.exe");
+                npmExeFile = new File(installationDir.listFiles()[0] + "/npm.cmd");
+                npxExeFile = new File(installationDir.listFiles()[0] + "/npx.cmd");
+            } else { // Linux, mac and co.
+                nodeExeFile = new File(installationDir.listFiles()[0] + "/bin/node");
+                npmExeFile = new File(installationDir.listFiles()[0] + "/bin/npm");
+                npxExeFile = new File(installationDir.listFiles()[0] + "/bin/npx");
             }
 
-            if (!nodeExeFile.exists()) throw new Exception("node.exe couldn't be found in "+installationDir.listFiles()[0]);
-            if (!npmExeFile.exists()) throw new Exception("npm.cmd couldn't be found in "+installationDir.listFiles()[0]);
-            if (!npxExeFile.exists()) throw new Exception("npx.cmd couldn't be found in "+installationDir.listFiles()[0]);
+            if (!nodeExeFile.exists())
+                throw new Exception("node.exe couldn't be found in " + installationDir.listFiles()[0]);
+            if (!npmExeFile.exists())
+                throw new Exception("npm.cmd couldn't be found in " + installationDir.listFiles()[0]);
+            if (!npxExeFile.exists())
+                throw new Exception("npx.cmd couldn't be found in " + installationDir.listFiles()[0]);
         } catch (Exception e) {
             System.err.println("Error during installation of NodeJS. Details:");
             throw new RuntimeException(e);
@@ -414,7 +417,7 @@ public class NodeContext implements AutoCloseable {
             tmpJs.delete();
             throw e;
         } catch (Exception e) {
-            if (tmpJs!=null) tmpJs.delete();
+            if (tmpJs != null) tmpJs.delete();
             throw new RuntimeException(e);
         }
         return this;
@@ -440,6 +443,17 @@ public class NodeContext implements AutoCloseable {
             val = val.trim();
         }
         return array;
+    }
+
+    public String parseJavaListToJSArray(List<String> list) {
+        StringBuilder result = new StringBuilder("[");
+        for (int i = 0; i < list.size(); i++) {
+            String val = list.get(i);
+            if (i == list.size() - 1) result.append("'" + val + "'");
+            else result.append("'" + val + "',");
+        }
+        result.append("]");
+        return result.toString();
     }
 
     /**
@@ -595,6 +609,7 @@ public class NodeContext implements AutoCloseable {
     public OperatingSystemType getOsType() {
         return osType;
     }
+
 
     public enum OperatingSystemArchitectureType {
         X64("x64"),

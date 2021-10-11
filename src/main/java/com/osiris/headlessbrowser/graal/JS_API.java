@@ -1,6 +1,6 @@
-package com.osiris.headlessbrowser.javascript;
+package com.osiris.headlessbrowser.graal;
 
-import com.osiris.headlessbrowser.GraalContext;
+import com.osiris.headlessbrowser.js.contexts.GraalContext;
 
 public interface JS_API {
 

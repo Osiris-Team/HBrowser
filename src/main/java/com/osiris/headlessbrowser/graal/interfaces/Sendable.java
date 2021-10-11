@@ -1,4 +1,4 @@
-package com.osiris.headlessbrowser.javascript.interfaces;
+package com.osiris.headlessbrowser.graal.interfaces;
 
 public interface Sendable {
 

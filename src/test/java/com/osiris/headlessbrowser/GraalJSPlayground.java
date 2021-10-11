@@ -1,6 +1,7 @@
 package com.osiris.headlessbrowser;
 
-import com.osiris.headlessbrowser.javascript.exceptions.DuplicateFoundException;
+import com.osiris.headlessbrowser.exceptions.DuplicateFoundException;
+import com.osiris.headlessbrowser.js.contexts.GraalContext;
 import org.graalvm.polyglot.Context;
 import org.junit.jupiter.api.Test;
 

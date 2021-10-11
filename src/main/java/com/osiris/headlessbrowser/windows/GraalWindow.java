@@ -1,7 +1,9 @@
-package com.osiris.headlessbrowser;
+package com.osiris.headlessbrowser.windows;
 
 
+import com.osiris.headlessbrowser.HBrowser;
 import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
+import com.osiris.headlessbrowser.js.contexts.GraalContext;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

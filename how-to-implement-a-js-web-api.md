@@ -5,7 +5,7 @@
     - https://www.w3.org/TR/?tag=webapi
     - https://developer.mozilla.org/en-US/docs/Web/API
     - https://spec.whatwg.org
-2. Create a new package in `com.osiris.headlessbrowser.javascript.apis` with your APIs name
+2. Create a new package in `com.osiris.headlessbrowser.javascript.graal.apis` with your APIs name
 3. Inside that new package create a new class named something like `JS_API_MyApiName` and implement the `JS_API`
    interface.
 4. Read

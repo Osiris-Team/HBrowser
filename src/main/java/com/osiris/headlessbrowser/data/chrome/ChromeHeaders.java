@@ -15,15 +15,15 @@ public class ChromeHeaders {
     public String accept_encoding = "gzip, deflate, br";
     public String accept_language = "en-US,en;";
     public String cache_crontrol = "max-age=0";
-    public String referer = "https://google.com/";
     public String sec_ch_ua = ("`Chromium`;v=`94`, `Google Chrome`;v=`94`, `;Not A Brand`;v=`99`").replace("`", "\"");
-    public String sec_ch_ua_mobile = "?1";
+    public String sec_ch_ua_mobile = "?0";
+    public String sec_ch_ua_platform = "Windows";
     public String sec_fetch_dest = "document";
     public String sec_fetch_mode = "navigate";
-    public String sec_fetch_site = "same-origin";
+    public String sec_fetch_site = "none";
     public String sec_fetch_user = "?1";
     public String upgrade_insecure_requests = "1";
-    public String user_agent = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Mobile Safari/537.36";
+    public String user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36";
 
     public Map<String, String> getMap() {
         Map<String, String> headers = new HashMap<>();
@@ -31,9 +31,9 @@ public class ChromeHeaders {
         headers.put("accept-encoding", accept_encoding);
         headers.put("accept-language", accept_language);
         headers.put("cache-control", cache_crontrol);
-        headers.put("referer", referer);
         headers.put("sec-ch-ua", sec_ch_ua);
         headers.put("sec-ch-ua-mobile", sec_ch_ua_mobile);
+        headers.put("sec-ch-ua-platform", sec_ch_ua_platform);
         headers.put("sec-fetch-dest", sec_fetch_dest);
         headers.put("sec-fetch-mode", sec_fetch_mode);
         headers.put("sec-fetch-site", sec_fetch_site);
@@ -43,15 +43,15 @@ public class ChromeHeaders {
         return headers;
     }
 
-    public JsonObject getJson(){
+    public JsonObject getJson() {
         JsonObject headers = new JsonObject();
         headers.addProperty("accept", accept);
         headers.addProperty("accept-encoding", accept_encoding);
         headers.addProperty("accept-language", accept_language);
         headers.addProperty("cache-control", cache_crontrol);
-        headers.addProperty("referer", referer);
         headers.addProperty("sec-ch-ua", sec_ch_ua);
         headers.addProperty("sec-ch-ua-mobile", sec_ch_ua_mobile);
+        headers.addProperty("sec-ch-ua-platform", sec_ch_ua_platform);
         headers.addProperty("sec-fetch-dest", sec_fetch_dest);
         headers.addProperty("sec-fetch-mode", sec_fetch_mode);
         headers.addProperty("sec-fetch-site", sec_fetch_site);

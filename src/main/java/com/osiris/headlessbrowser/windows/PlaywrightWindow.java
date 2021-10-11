@@ -1,10 +1,13 @@
-package com.osiris.headlessbrowser;
+package com.osiris.headlessbrowser.windows;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.osiris.headlessbrowser.HBrowser;
 import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
+import com.osiris.headlessbrowser.js.contexts.NodeContext;
+import com.osiris.headlessbrowser.js.raw.EvasionsInside;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -40,7 +43,7 @@ public class PlaywrightWindow implements AutoCloseable {
      * @param userDataDir      Path to a User Data Directory. Default is ./headless-browser/user-data (the "." represents the current working directory). <br><br>
      * @param isDevTools       Whether to auto-open a DevTools panel for each tab. If this option is true, the headless option will be set false. <br><br>
      * @param makeUndetectable Makes this window indistinguishable from 'real', user operated windows, by using the npm packages playwright-extra and playwright-extra-plugin-stealth.
-     *                        Note that the playwright-extra-plugin-stealth package is currently still under development and thus not available yet!<br><br>
+     *                         Note that the playwright-extra-plugin-stealth package is currently still under development and thus not available yet!<br><br>
      */
     public PlaywrightWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
                             boolean isHeadless, File userDataDir, boolean isDevTools, boolean makeUndetectable) {
@@ -79,12 +82,20 @@ public class PlaywrightWindow implements AutoCloseable {
                             //"  downloadsPath: '" + downloadTempDir.getAbsolutePath().replace("\\", "/") + "',\n" + // Active issue at: https://github.com/microsoft/playwright/issues/9279
                             "  devtools: " + isDevTools + ",\n" +
                             //"  ignoreDefaultArgs: true,\n" +
-                            //"  args: [],\n" + // '--enable-automation=false'
-                            "  extraHTTPHeaders: "+new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson())+",\n" +
-                            "  userAgent: '"+new ChromeHeaders().user_agent+"'\n" + // Just to make sure...
+                            "  args: ['--disable-blink-features=AutomationControlled'],\n" + // '--enable-automation=false'
+                            "  extraHTTPHeaders: " + new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson()) + ",\n" +
+                            "  userAgent: '" + new ChromeHeaders().user_agent + "'\n" + // Just to make sure...
                             "});\n" +
                             "browser = browserCtx.browser();\n" +
                             "page = await browserCtx.newPage();\n", 30, false);
+
+            if (makeUndetectable) {
+                EvasionsInside evasionsInside = new EvasionsInside();
+                jsContext.executeJavaScript("" +
+                        "await page.evaluateOnNewDocument(() => {\n" +
+                        evasionsInside.getAll() +
+                        "\n});\n");
+            }
 
             /*
             if (makeUndetectable) {

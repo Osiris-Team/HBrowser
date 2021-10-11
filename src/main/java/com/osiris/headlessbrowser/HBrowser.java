@@ -1,6 +1,10 @@
 package com.osiris.headlessbrowser;
 
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
+import com.osiris.headlessbrowser.windows.GraalWindow;
+import com.osiris.headlessbrowser.windows.PlaywrightWindow;
+import com.osiris.headlessbrowser.windows.PuppeteerWindow;
+import com.osiris.headlessbrowser.windows.WindowBuilder;
 
 import java.io.IOException;
 

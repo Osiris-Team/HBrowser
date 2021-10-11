@@ -1,7 +1,7 @@
 package com.osiris.headlessbrowser.utils;
 
 import com.osiris.headlessbrowser.HBrowser;
-import com.osiris.headlessbrowser.PuppeteerWindow;
+import com.osiris.headlessbrowser.windows.PuppeteerWindow;
 
 import java.io.*;
 
@@ -31,19 +31,19 @@ public class UtilsChrome {
                 .headless(false).makeUndetectable(true).debugOutputStream(System.out).buildPuppeteerWindow()) {
             String varNames = hWindow.executeJSAndGetResult("var variables = \"\"\n" +
                     "        for (var name in this)\n" +
-                    "        variables += name + \"\\n\";\n"+
+                    "        variables += name + \"\\n\";\n" +
                     "return variables;\n");
-            try(BufferedWriter bw = new BufferedWriter(new FileWriter(scriptFile))){
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(scriptFile))) {
                 String var = "";
-                try(BufferedReader reader = new BufferedReader(new StringReader(varNames))){
-                    while((var=reader.readLine())!=null){
-                        try{
+                try (BufferedReader reader = new BufferedReader(new StringReader(varNames))) {
+                    while ((var = reader.readLine()) != null) {
+                        try {
                             String object = hWindow.executeJSAndGetResult("" +
-                                    "if ("+var+"==null) return 'null';\n" +
-                                    "else return JSON.stringify("+var+", null, 4);");
+                                    "if (" + var + "==null) return 'null';\n" +
+                                    "else return JSON.stringify(" + var + ", null, 4);");
                             System.out.println(object);
                         } catch (Exception e) {
-                            System.err.println("Ignoring exception: "+e.getMessage());
+                            System.err.println("Ignoring exception: " + e.getMessage());
                         }
                     }
                 }

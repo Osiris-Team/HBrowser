@@ -1,7 +1,7 @@
-package com.osiris.headlessbrowser.javascript.apis.console;
+package com.osiris.headlessbrowser.graal.apis.console;
 
-import com.osiris.headlessbrowser.javascript.JS_API;
-import com.osiris.headlessbrowser.javascript.interfaces.Sendable;
+import com.osiris.headlessbrowser.graal.JS_API;
+import com.osiris.headlessbrowser.graal.interfaces.Sendable;
 import org.graalvm.polyglot.HostAccess;
 
 import java.io.OutputStream;

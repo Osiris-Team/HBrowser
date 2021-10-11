@@ -1,7 +1,7 @@
 package com.osiris.headlessbrowser.javascript;
 
-import com.osiris.headlessbrowser.GraalWindow;
 import com.osiris.headlessbrowser.HBrowser;
+import com.osiris.headlessbrowser.windows.GraalWindow;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

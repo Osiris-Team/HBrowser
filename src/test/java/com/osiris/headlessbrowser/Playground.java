@@ -1,6 +1,9 @@
 package com.osiris.headlessbrowser;
 
 import com.osiris.headlessbrowser.utils.UtilsChrome;
+import com.osiris.headlessbrowser.windows.LightWindow;
+import com.osiris.headlessbrowser.windows.PlaywrightWindow;
+import com.osiris.headlessbrowser.windows.PuppeteerWindow;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -58,9 +61,10 @@ public class Playground {
         try (PuppeteerWindow hWindow = hBrowser.openCustomWindow()
                 .headless(true).makeUndetectable(true).debugOutputStream(System.out).buildPuppeteerWindow()) {
             try {
-                hWindow.load("https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.htm");
-                Thread.sleep(15000); // So see result
+                hWindow.load("https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html");
+                //Thread.sleep(15000); // So see result
                 hWindow.makeScreenshot(new File("screenshot.png"), true);
+                System.out.println(hWindow.executeJSAndGetResult("return ''+JSON.stringify(navigator.plugins)"));
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -1,9 +1,10 @@
-package com.osiris.headlessbrowser;
+package com.osiris.headlessbrowser.js.contexts;
 
-import com.osiris.headlessbrowser.javascript.JS_API;
-import com.osiris.headlessbrowser.javascript.apis.console.JS_API_Console;
-import com.osiris.headlessbrowser.javascript.apis.dom.JS_Event_S;
-import com.osiris.headlessbrowser.javascript.exceptions.DuplicateFoundException;
+import com.osiris.headlessbrowser.exceptions.DuplicateFoundException;
+import com.osiris.headlessbrowser.graal.JS_API;
+import com.osiris.headlessbrowser.graal.apis.console.JS_API_Console;
+import com.osiris.headlessbrowser.graal.apis.dom.JS_Event_S;
+import com.osiris.headlessbrowser.windows.GraalWindow;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 

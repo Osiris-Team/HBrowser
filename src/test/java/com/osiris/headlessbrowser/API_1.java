@@ -1,6 +1,6 @@
 package com.osiris.headlessbrowser;
 
-import com.osiris.headlessbrowser.javascript.JS_API;
+import com.osiris.headlessbrowser.graal.JS_API;
 import org.graalvm.polyglot.HostAccess;
 
 public class API_1 implements JS_API {

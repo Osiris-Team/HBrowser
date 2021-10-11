@@ -1,6 +1,6 @@
-package com.osiris.headlessbrowser.javascript.apis.dom;
+package com.osiris.headlessbrowser.graal.apis.dom;
 
-import com.osiris.headlessbrowser.javascript.JS_API;
+import com.osiris.headlessbrowser.graal.JS_API;
 import org.graalvm.polyglot.HostAccess;
 
 /**
