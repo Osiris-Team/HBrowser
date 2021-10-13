@@ -15,10 +15,10 @@ class GraalContextTest {
                 .build()) {
             context.getBindings("js").putMember("javaObj", new MyClass());
             boolean valid = context.eval("js",
-                            "    javaObj.id         == 42" +
-                                    " && javaObj.text       == '42'" +
-                                    " && javaObj.arr[1]     == 42" +
-                                    " && javaObj.ret42()    == 42")
+                    "    javaObj.id         == 42" +
+                            " && javaObj.text       == '42'" +
+                            " && javaObj.arr[1]     == 42" +
+                            " && javaObj.ret42()    == 42")
                     .asBoolean();
             context.eval("js", "javaObj.print('HELLO!!!');");
             assert valid == true;
@@ -28,7 +28,7 @@ class GraalContextTest {
     @Test
     void testConsoleApi() throws IOException {
         HBrowser hBrowser = new HBrowser();
-        GraalContext graalContext = hBrowser.openCustomWindow().buildGraalJSWindow().getJavaScriptContext();
+        GraalContext graalContext = hBrowser.openCustomWindow().buildGraalWindow().getJavaScriptContext();
         graalContext.getConsole().onLog(msg -> System.out.println("JavaScript message received: " + msg));
         graalContext.eval("console.log('john stamos');");
     }
@@ -36,7 +36,7 @@ class GraalContextTest {
     @Test
     void testContextWebApis() throws IOException {
         HBrowser browser = new HBrowser();
-        GraalContext graalContext = browser.openCustomWindow().buildGraalJSWindow().getJavaScriptContext();
+        GraalContext graalContext = browser.openCustomWindow().buildGraalWindow().getJavaScriptContext();
         graalContext.eval("console.log('hi!');");
     }
 

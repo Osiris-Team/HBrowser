@@ -1,7 +1,7 @@
 package com.osiris.headlessbrowser;
 
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
-import com.osiris.headlessbrowser.windows.GraalWindow;
+import com.osiris.headlessbrowser.windows.HWindow;
 import com.osiris.headlessbrowser.windows.PlaywrightWindow;
 import com.osiris.headlessbrowser.windows.PuppeteerWindow;
 import com.osiris.headlessbrowser.windows.WindowBuilder;
@@ -17,12 +17,13 @@ public class HBrowser {
 
     /**
      * Creates and returns a new window, built with defaults. <br>
+     * Remember to close the window either by {@link #closeWindow(HWindow)} or
+     * by creating the window in a try/catch blocks method. <br>
      * By using the {@link WindowBuilder} or the {@link #openCustomWindow()} method <br>
      * you can decide between other windows/browsers. <br>
-     * Since the {@link GraalWindow} has only partial JavaScript support, due to <br>
-     * currently ongoing Web-APIs implementation, its recommended to use the {@link PuppeteerWindow} instead. <br>
-     * Its powered by the latest NodeJS-Engine with the help of Puppeteer. <br>
-     * NodeJS, Puppeteer and Chromiumg get installed into the current working directory automatically (~300mb). <br>
+     * Some windows are based on Node.js and other Node modules,
+     * which get installed into the current working directory automatically
+     * and thus required additional disk space(~300mb). <br>
      */
     public PlaywrightWindow openWindow() {
         return new WindowBuilder(this).buildPlaywrightWindow();
@@ -44,15 +45,15 @@ public class HBrowser {
     }
 
     /**
-     * Closes the provided {@link GraalWindow}. <br>
-     * A {@link GraalWindow} can automatically be closed like this:
+     * Closes the provided {@link HWindow}. <br>
+     * Note that a {@link HWindow} can automatically be closed like this:
      * <pre>
      * try(HWindow hWindow = openNewWindow()){
      *     // Do stuff here...
-     * } // Window gets automatically closed when leaving the try/catch block.
+     * } // Gets automatically closed when leaving the try/catch block.
      * </pre>
      */
-    public void closeWindow(PuppeteerWindow window) throws Exception {
+    public void closeWindow(HWindow window) throws Exception {
         window.close();
     }
 }

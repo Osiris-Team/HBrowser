@@ -23,11 +23,11 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Headless-Window.
+ * Headless-Window with Node.js/V8 as JavaScript engine wrapping the Puppeteer JS API.
  *
  * @author Osiris-Team
  */
-public class PuppeteerWindow implements AutoCloseable {
+public class PuppeteerWindow implements HWindow {
     final NodeContext jsContext;
     final OutputStream debugOutput;
     final boolean isHeadless;
@@ -42,17 +42,6 @@ public class PuppeteerWindow implements AutoCloseable {
     /**
      * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
      * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
-     *
-     * @param parentBrowser         The {@link HBrowser} this window was started from. <br><br>
-     * @param enableJavaScript      Enable/Disable JavaScript code execution for this window. <br><br>
-     * @param debugOutput           Default is null. Otherwise, writes/prints debug related information and JavaScript code console output to the debug output. <br><br>
-     * @param jsTimeout             Default is 30s. The timeout in seconds to wait before throwing a {@link NodeJsCodeException}, if the running js code didn't finish. Set to 0 to disable. <br><br>
-     * @param isHeadless            Whether to run browser in headless mode. Defaults to true unless the devtools option is true. <br><br>
-     * @param userDataDir           Path to a User Data Directory. Default is ./headless-browser/user-data (the "." represents the current working directory). <br><br>
-     * @param isDevTools            Whether to auto-open a DevTools panel for each tab. If this option is true, the headless option will be set false. <br><br>
-     * @param debuggingPort         Default is 0. Specify custom debugging port. Pass 0 to discover a random port. <br><br>
-     * @param makeUndetectable      Makes this window indistinguishable from 'real', user operated windows, by using the npm packages puppeteer-extra and puppeteer-extra-plugin-stealth. <br><br>
-     * @param additionalStartupArgs Default is null. Additional arguments to pass to the browser instance. The list of Chromium flags can be found here: https://peter.sh/experiments/chromium-command-line-switches/ <br><br>
      */
     public PuppeteerWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
                            boolean isHeadless, File userDataDir, boolean isDevTools, int debuggingPort, boolean makeUndetectable, String... additionalStartupArgs) {

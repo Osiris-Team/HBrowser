@@ -20,11 +20,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
- * Headless-Window with Node.js as JavaScript engine and Node modules replacing the regular web-apis.
+ * Headless-Window with Node.js/V8 as JavaScript engine and Node modules replacing the regular web-apis.
  *
  * @author Osiris-Team
  */
-public class LightWindow implements AutoCloseable {
+public class LightWindow implements HWindow {
     private final NodeContext jsContext;
     private final OutputStream debugOutput;
     private final HBrowser parentBrowser;
@@ -39,6 +39,10 @@ public class LightWindow implements AutoCloseable {
     private String authority;
     private String javaScriptCode;
 
+    /**
+     * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
+     * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
+     */
     public LightWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders,
                        OutputStream debugOutput, boolean isHeadless, File userDataDir, boolean isDevTools, int jsTimeout, boolean makeUndetectable) {
         this.parentBrowser = parentBrowser;

@@ -14,11 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
- * Headless-Window.
+ * Headless-Window with GraalJS as JavaScript engine.
  *
  * @author Osiris-Team
  */
-public class GraalWindow implements AutoCloseable {
+public class GraalWindow implements HWindow {
     private final GraalContext graalContext = new GraalContext(this);
     private HBrowser parentBrowser;
     private boolean enableJavaScript;
@@ -27,6 +27,10 @@ public class GraalWindow implements AutoCloseable {
     private String authority;
     private String javaScriptCode;
 
+    /**
+     * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
+     * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
+     */
     public GraalWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders) {
         this.parentBrowser = parentBrowser;
         this.enableJavaScript = enableJavaScript;

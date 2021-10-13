@@ -20,7 +20,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class PlaywrightWindow implements AutoCloseable {
+/**
+ * Headless-Window with Node.js/V8 as JavaScript engine wrapping the Playwright JS API.
+ *
+ * @author Osiris-Team
+ */
+public class PlaywrightWindow implements HWindow {
     private final NodeContext jsContext;
     private final OutputStream debugOutput;
     private final HBrowser parentBrowser;
@@ -34,16 +39,6 @@ public class PlaywrightWindow implements AutoCloseable {
     /**
      * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
      * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
-     *
-     * @param parentBrowser    The {@link HBrowser} this window was started from. <br><br>
-     * @param enableJavaScript Enable/Disable JavaScript code execution for this window. <br><br>
-     * @param debugOutput      Default is null. Otherwise, writes/prints debug related information and JavaScript code console output to the debug output. <br><br>
-     * @param jsTimeout        Default is 30s. The timeout in seconds to wait before throwing a {@link NodeJsCodeException}, if the running js code didn't finish. Set to 0 to disable. <br><br>
-     * @param isHeadless       Whether to run browser in headless mode. Defaults to true unless the devtools option is true. <br><br>
-     * @param userDataDir      Path to a User Data Directory. Default is ./headless-browser/user-data (the "." represents the current working directory). <br><br>
-     * @param isDevTools       Whether to auto-open a DevTools panel for each tab. If this option is true, the headless option will be set false. <br><br>
-     * @param makeUndetectable Makes this window indistinguishable from 'real', user operated windows, by using the npm packages playwright-extra and playwright-extra-plugin-stealth.
-     *                         Note that the playwright-extra-plugin-stealth package is currently still under development and thus not available yet!<br><br>
      */
     public PlaywrightWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
                             boolean isHeadless, File userDataDir, boolean isDevTools, boolean makeUndetectable) {

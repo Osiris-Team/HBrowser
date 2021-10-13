@@ -33,22 +33,9 @@ Note that the first run may take a bit because Node.js and its modules get insta
 
 (JS = JavaScript; Full Java = If the browser is completely written in Java or not; Downloads = If the browser is able to download files other than html/xml/pdf)
 
-### Contribute/Build
+### [Contribute/Build](CONTRIBUTE.md)
 
-#### Beginners
 
-If you have never contributed before, we recommend
-this [Beginners Article](https://www.jetbrains.com/help/idea/contribute-to-projects.html). If you are planning to make
-big changes, create an issue first, where you explain what you want to do. Thank you in advance for every contribution!
-If you don't know how to import a GitHub project, check out this
-guide: [IntelliJ IDEA Cloning Guide](https://blog.jetbrains.com/idea/2020/10/clone-a-project-from-github/)
-
-#### Build-Details
-
-- Written in [Java](https://java.com/),
-  with [JDK 8](https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html), inside
-  of [IntelliJ IDEA](https://www.jetbrains.com/idea/)
-- Built with [Maven](https://maven.apache.org/), profiles: clean package
 
 ### Links
 
@@ -56,28 +43,8 @@ guide: [IntelliJ IDEA Cloning Guide](https://blog.jetbrains.com/idea/2020/10/clo
 - https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
 
 ### Examples
-<details>
-<summary>Running Node.js independently</summary>
-<pre lang="java">
-// Installs Node.js into current working directory if needed
-NodeContext ctx = new NodeContext(); // Use another constructor for customization
-try{
-  // Easily install/update needed modules
-  ctx.npmInstall("name of node module");
-
-  // To be able to see the JavaScript code results.
-  // Otherwise you can also init NodeContext with debugOutput=System.out to achieve this.
-  ctx.onPrintLine(line -> System.out.println(line);
-  ctx.executeJavaScript("console.log('hello world!');");
-
-  // You can return JavaScript results too.
-  // Note that you must have a result variable in the provided JS Code for this to work!
-  String result = ctx.executeJavaScriptAndGetResult("var result = 'my JavaScript result!';");
-} catch(Exception e){
-  e.printStacktrace();
-}
-</pre>
-</details>
+ - [Running Node.js independently](src/test/java/examples/IndependentNodeJs.java)
+ - [Customizing browser windows](src/test/java/examples/CustomWindows.java)
 
 ### FAQ
 <details>
@@ -113,8 +80,6 @@ There are only Java browsers available that you have to buy, or they are free bu
 Thats why this project exists.
 We want to provide the latest and best technologies regarding headless browsers and make them available to Java applications.
 </details>
-
-![](src/test/java/com/osiris/headlessbrowser/Playground.java)
 
 ### Libraries
 

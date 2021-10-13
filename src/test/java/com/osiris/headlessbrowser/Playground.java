@@ -40,8 +40,8 @@ public class Playground {
         try (PuppeteerWindow hWindow = hBrowser.openCustomWindow()
                 .headless(true).makeUndetectable(true).debugOutputStream(System.out).buildPuppeteerWindow()) {
             try {
-                hWindow.load("https://infosimples.github.io/detect-headless/");
-                hWindow.makeScreenshot(new File("screenshot1.png"), true);
+                //hWindow.load("https://infosimples.github.io/detect-headless/");
+                //hWindow.makeScreenshot(new File("screenshot1.png"), true);
                 hWindow.load("https://spigotmc.org");// Cloudflare test //"https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html");
                 Thread.sleep(7000); // So see result
                 hWindow.makeScreenshot(new File("screenshot2.png"), true);

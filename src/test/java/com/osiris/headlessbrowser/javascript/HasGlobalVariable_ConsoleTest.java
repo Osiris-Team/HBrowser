@@ -11,7 +11,7 @@ class HasGlobalVariable_ConsoleTest {
 
     @Test
     void test() throws IOException {
-        GraalWindow graalWindow = new HBrowser().openCustomWindow().buildGraalJSWindow();
+        GraalWindow graalWindow = new HBrowser().openCustomWindow().buildGraalWindow();
         graalWindow.getJavaScriptContext().getConsole().onLog(msg -> Assertions.assertEquals("log", msg));
         graalWindow.getJavaScriptContext().getConsole().onDebug(msg -> Assertions.assertEquals("debug", msg));
         graalWindow.getJavaScriptContext().getConsole().onError(msg -> Assertions.assertEquals("error", msg));

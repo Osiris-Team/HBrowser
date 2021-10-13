@@ -30,7 +30,9 @@ public class NodeContext implements AutoCloseable {
     private final PrintStream debugOutput;
     private final File lastJsCodeExecutionResultFile;
     private final int timeout;
+    private final File parentNodeDir;
     private final File installationDir;
+    private final File workingDir;
     private final File nodeExeFile;
     private final File npmExeFile;
     private final File npxExeFile;
@@ -42,28 +44,28 @@ public class NodeContext implements AutoCloseable {
     }
 
     /**
-     * @param installationDir path of an empty directory (can also not exist yet) to install the latest Node.js into if needed.
-     *                        If null Node.js will get installed into ./NodeJS-Installation ("." is the current working directory).
-     * @param debugOutput     if null, debug output won't be written/printed, otherwise it gets printed/written to the provided {@link OutputStream}.
-     * @param timeout         the max time in seconds to wait for JavaScript code to finish. Set to 0 to disable.
+     * @param parentNodeDir path of an empty directory (can also not exist yet) to install the latest Node.js into if needed.
+     *                      If null Node.js will get installed into ./NodeJS-Installation ("." is the current working directory).
+     * @param debugOutput   if null, debug output won't be written/printed, otherwise it gets printed/written to the provided {@link OutputStream}.
+     * @param timeout       the max time in seconds to wait for JavaScript code to finish. Set to 0 to disable.
      */
-    public NodeContext(File installationDir, OutputStream debugOutput, int timeout) {
+    public NodeContext(File parentNodeDir, OutputStream debugOutput, int timeout) {
         this.timeout = timeout;
         if (debugOutput == null)
             this.debugOutput = new PrintStream(new TrashOutput());
         else
             this.debugOutput = new PrintStream(debugOutput);
         PrintStream out = this.debugOutput;
-        if (installationDir == null) {
-            this.installationDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
-            installationDir = this.installationDir;
+        if (parentNodeDir == null) {
+            this.parentNodeDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
+            parentNodeDir = this.parentNodeDir;
         } else
-            this.installationDir = installationDir;
+            this.parentNodeDir = parentNodeDir;
         // Download and install NodeJS into current working directory if no installation found
         try {
             determineArchAndOs();
-            if (!installationDir.exists()
-                    || Objects.requireNonNull(installationDir.listFiles()).length == 0) {
+            if (!parentNodeDir.exists()
+                    || Objects.requireNonNull(parentNodeDir.listFiles()).length == 0) {
                 String url = "https://nodejs.org/dist/latest/";
                 out.println("Installing latest NodeJS release from '" + url + "'...");
                 Document docLatest = Jsoup.connect(url).get();
@@ -82,9 +84,9 @@ public class NodeContext implements AutoCloseable {
                     throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + osType.name() + "' with ARCH '" + osArchitectureType.name() + "'.");
 
                 // Download the zip file and extract its contents
-                if (!installationDir.exists()) installationDir.mkdirs();
+                if (!parentNodeDir.exists()) parentNodeDir.mkdirs();
                 if (osType.equals(OperatingSystemType.WINDOWS)) {
-                    File downloadZip = new File(installationDir + "/download.zip");
+                    File downloadZip = new File(parentNodeDir + "/download.zip");
                     if (downloadZip.exists()) downloadZip.delete();
                     downloadZip.createNewFile();
                     DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
@@ -95,14 +97,14 @@ public class NodeContext implements AutoCloseable {
                     }
                     out.println("Download-Task > " + downloadTask.getStatus());
 
-                    out.print("Extracting NodeJS files...");
+                    out.print("Extracting Node.js files...");
                     out.flush();
                     ZipFile zipFile = new ZipFile(downloadZip);
-                    zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
+                    zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), parentNodeDir.getPath());
                     downloadZip.delete();
                     out.println(" SUCCESS!");
                 } else {
-                    File downloadFile = new File(installationDir + "/download.tar.gz");
+                    File downloadFile = new File(parentNodeDir + "/download.tar.gz");
                     if (downloadFile.exists()) downloadFile.delete();
                     downloadFile.createNewFile();
                     DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
@@ -112,31 +114,37 @@ public class NodeContext implements AutoCloseable {
                         Thread.sleep(1000);
                     }
                     out.println("Download-Task > " + downloadTask.getStatus());
-                    out.print("Extracting NodeJS files...");
+                    out.print("Extracting Node.js files...");
                     out.flush();
-                    ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
+                    ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, parentNodeDir);
                     // Result should be .../headless-browser/node-js/node<version>/...
                     downloadFile.delete();
                     out.println(" SUCCESS!");
                 }
             }
 
+            this.installationDir = this.parentNodeDir.listFiles()[0];
+            Objects.requireNonNull(installationDir);
+            this.workingDir = new File(this.parentNodeDir.getParentFile() + "/node-js-working-dir");
+            Objects.requireNonNull(workingDir);
+            if (!workingDir.exists()) workingDir.mkdirs();
+
             if (osType.equals(OperatingSystemType.WINDOWS)) {
-                nodeExeFile = new File(installationDir.listFiles()[0] + "/node.exe");
-                npmExeFile = new File(installationDir.listFiles()[0] + "/npm.cmd");
-                npxExeFile = new File(installationDir.listFiles()[0] + "/npx.cmd");
+                nodeExeFile = new File(installationDir + "/node.exe");
+                npmExeFile = new File(installationDir + "/npm.cmd");
+                npxExeFile = new File(installationDir + "/npx.cmd");
             } else { // Linux, mac and co.
-                nodeExeFile = new File(installationDir.listFiles()[0] + "/bin/node");
-                npmExeFile = new File(installationDir.listFiles()[0] + "/bin/npm");
-                npxExeFile = new File(installationDir.listFiles()[0] + "/bin/npx");
+                nodeExeFile = new File(installationDir + "/bin/node");
+                npmExeFile = new File(installationDir + "/bin/npm");
+                npxExeFile = new File(installationDir + "/bin/npx");
             }
 
             if (!nodeExeFile.exists())
-                throw new Exception("node.exe couldn't be found in " + installationDir.listFiles()[0]);
+                throw new Exception("node.exe couldn't be found in " + installationDir);
             if (!npmExeFile.exists())
-                throw new Exception("npm.cmd couldn't be found in " + installationDir.listFiles()[0]);
+                throw new Exception("npm.cmd couldn't be found in " + installationDir);
             if (!npxExeFile.exists())
-                throw new Exception("npx.cmd couldn't be found in " + installationDir.listFiles()[0]);
+                throw new Exception("npx.cmd couldn't be found in " + installationDir);
         } catch (Exception e) {
             System.err.println("Error during installation of NodeJS. Details:");
             throw new RuntimeException(e);
@@ -148,6 +156,7 @@ public class NodeContext implements AutoCloseable {
             out.flush();
             ProcessBuilder processBuilder = new ProcessBuilder(Arrays.asList(
                     nodeExeFile.getAbsolutePath(), "--interactive"));
+            processBuilder.directory(workingDir);
             // Must be inherited so that NodeJS closes when this application closes.
             // Wrong! It seems like NodeJS closes if the parent process dies, even if its Piped I/O.
             process = processBuilder.start();
@@ -536,7 +545,7 @@ public class NodeContext implements AutoCloseable {
         List<String> commands = new ArrayList<>();
         commands.add(npmExeFile.getAbsolutePath());
         commands.addAll(Arrays.asList(args));
-        Process process = new ProcessBuilder(commands).start();
+        Process process = new ProcessBuilder(commands).directory(workingDir).start();
         new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
         new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
         while (process.isAlive())
@@ -549,7 +558,7 @@ public class NodeContext implements AutoCloseable {
         List<String> commands = new ArrayList<>();
         commands.add(npxExeFile.getAbsolutePath());
         commands.addAll(Arrays.asList(args));
-        Process process = new ProcessBuilder(commands).start();
+        Process process = new ProcessBuilder(commands).directory(workingDir).start();
         new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPX] " + line));
         new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));
         while (process.isAlive())
@@ -566,8 +575,8 @@ public class NodeContext implements AutoCloseable {
         return this;
     }
 
-    public File getInstallationDir() {
-        return installationDir;
+    public File getParentNodeDir() {
+        return parentNodeDir;
     }
 
     public File getNodeExeFile() {
@@ -610,6 +619,17 @@ public class NodeContext implements AutoCloseable {
         return osType;
     }
 
+    public File getWorkingDir() {
+        return workingDir;
+    }
+
+    public File getNpmExeFile() {
+        return npmExeFile;
+    }
+
+    public File getNpxExeFile() {
+        return npxExeFile;
+    }
 
     public enum OperatingSystemArchitectureType {
         X64("x64"),

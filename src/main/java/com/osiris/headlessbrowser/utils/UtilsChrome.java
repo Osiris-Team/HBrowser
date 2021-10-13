@@ -8,6 +8,7 @@ import java.io.*;
 public class UtilsChrome {
 
     /**
+     * <h1>WORK IN PROGRESS!</h1> <br>
      * Generates the 'add_missing_objects.js' script in your current working dir. <br>
      * The script is meant to be run in the headless window/page instance. <br>
      * It will add all Json objects that are missing to that window/page <br>
