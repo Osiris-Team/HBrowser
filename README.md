@@ -27,8 +27,8 @@ Note that the first run may take a bit because Node.js and its modules get insta
 
 | Name | Latest JS | JS-Engine | Downloads | Full Java
 | :-----: | :-----: | :-----: | :-----: | :-----: |
-| [Playwright](https://github.com/microsoft/playwright) | Yes | Node.js | Yes | No |
-| [Puppeteer](https://github.com/puppeteer/puppeteer) | Yes | Node.js | No | No |
+| [Playwright](https://github.com/microsoft/playwright) | Yes | Node.js/V8 | Yes | No |
+| [Puppeteer](https://github.com/puppeteer/puppeteer) | Yes | Node.js/V8 | No | No |
 | [Graal](https://github.com/oracle/graaljs) | Yes | GraalJS | No | Yes |
 
 (JS = JavaScript; Full Java = If the browser is completely written in Java or not; Downloads = If the browser is able to download files other than html/xml/pdf)
