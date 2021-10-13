@@ -114,6 +114,8 @@ Thats why this project exists.
 We want to provide the latest and best technologies regarding headless browsers and make them available to Java applications.
 </details>
 
+@@include[Playground.java](src/test/java/com/osiris/headlessbrowser/Playground.java)
+
 ### Libraries
 
 | Name/Link | Usage | License |
