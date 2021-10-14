@@ -192,6 +192,18 @@ public class PlaywrightWindow implements HWindow {
     }
 
     /**
+     * Load html from a file.
+     */
+    public PlaywrightWindow load(File file) throws NodeJsCodeException {
+        String url = "file:///" + file.getAbsolutePath().replace("\\", "/");
+        jsContext.executeJavaScript("" +
+                "var response = await page.goto('"+url+"');\n");
+        this.url = url;
+        return this;
+    }
+
+
+    /**
      * Returns a copy of the currently loaded html document. <br>
      */
     public Document getDocument() {
@@ -446,6 +458,47 @@ public class PlaywrightWindow implements HWindow {
                 "delay: " + delay + "\n" +
                 "}\n" +
                 "await page.click(" + selector + ", options);\n");
+        return this;
+    }
+
+    /**
+     * Fills form fields. <br>
+     * Defaults used: force=false,noWaitAfter=false,strict=false,timeout=30000. <br>
+     * See {@link #fill(String, String, boolean, boolean, boolean, int)} for details. <br>
+     * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used.
+     * @param value Value to fill for the input, textarea or [contenteditable] element.
+     */
+    public PlaywrightWindow fill(String selector, String value) throws NodeJsCodeException {
+        fill(selector, value, false, false, false, 30000);
+        return this;
+    }
+
+    /**
+     * Fills form fields. <br>
+     * Note that strict is set to true which means the operation will fail if the selector returns more than one element. <br>
+     * Defaults used: force=false,noWaitAfter=false,strict=true,timeout=30000. <br>
+     * See {@link #fill(String, String, boolean, boolean, boolean, int)} for details. <br>
+     * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used.
+     * @param value Value to fill for the input, textarea or [contenteditable] element.
+     */
+    public PlaywrightWindow fillStrict(String selector, String value) throws NodeJsCodeException {
+        fill(selector, value, false, false, true, 30000);
+        return this;
+    }
+
+    /**
+     * Fills form fields.
+     * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. <br><br>
+     * @param value Value to fill for the input, textarea or [contenteditable] element. <br><br>
+     * @param force Whether to bypass the actionability checks. <br><br>
+     * @param noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. <br><br>
+     * @param strict When true, the call requires selector to resolve to a single element. If given selector resolves to more then one element, the call throws an exception. <br><br>
+     * @param timeout Maximum time in milliseconds, defaults to 30 seconds, pass 0 to disable timeout. The default value can be changed by using the browserContext.setDefaultTimeout(timeout) or page.setDefaultTimeout(timeout) methods. <br><br>
+     */
+    public PlaywrightWindow fill(String selector, String value,
+                                 boolean force, boolean noWaitAfter, boolean strict, int timeout) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.fill('"+selector+"', '"+value+"', {force: "+force
+                +",noWaitAfter:" +noWaitAfter+",strict:"+strict+",timeout:"+timeout+"});");
         return this;
     }
 
