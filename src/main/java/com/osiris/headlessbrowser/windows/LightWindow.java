@@ -40,7 +40,7 @@ public class LightWindow implements HWindow {
     private String javaScriptCode;
 
     /**
-     * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
+     * <p style="color: red;">Note that this is not the recommended way of creating the window object.</p>
      * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
      */
     public LightWindow(HBrowser parentBrowser, boolean enableJavaScript, Map<String, String> customHeaders,

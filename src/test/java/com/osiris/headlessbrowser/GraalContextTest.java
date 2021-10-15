@@ -15,10 +15,10 @@ class GraalContextTest {
                 .build()) {
             context.getBindings("js").putMember("javaObj", new MyClass());
             boolean valid = context.eval("js",
-                    "    javaObj.id         == 42" +
-                            " && javaObj.text       == '42'" +
-                            " && javaObj.arr[1]     == 42" +
-                            " && javaObj.ret42()    == 42")
+                            "    javaObj.id         == 42" +
+                                    " && javaObj.text       == '42'" +
+                                    " && javaObj.arr[1]     == 42" +
+                                    " && javaObj.ret42()    == 42")
                     .asBoolean();
             context.eval("js", "javaObj.print('HELLO!!!');");
             assert valid == true;

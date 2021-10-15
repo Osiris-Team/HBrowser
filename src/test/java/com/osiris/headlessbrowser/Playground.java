@@ -19,7 +19,7 @@ public class Playground {
             try {
                 hWindow.load("https://spigotmc.org"); // spigotmc.org
                 Thread.sleep(15000); // So see result
-                System.out.println(hWindow.getDocument().toString());
+                System.out.println(hWindow.getOuterHtml().toString());
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -40,7 +40,7 @@ public class PuppeteerWindow implements HWindow {
     String url;
 
     /**
-     * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
+     * <p style="color: red;">Note that this is not the recommended way of creating the window object.</p>
      * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
      */
     public PuppeteerWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,

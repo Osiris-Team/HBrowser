@@ -1,5 +1,6 @@
 package com.osiris.headlessbrowser.windows;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -37,7 +38,7 @@ public class PlaywrightWindow implements HWindow {
     private String url;
 
     /**
-     * <p style="color: red;">Note that this is not the recommended way of creating a NodeWindow object.</p>
+     * <p style="color: red;">Note that this is not the recommended way of creating the window object.</p>
      * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
      */
     public PlaywrightWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
@@ -56,7 +57,8 @@ public class PlaywrightWindow implements HWindow {
                     "const playwright = require('playwright');\n" +
                             "var browserCtx = null;\n" +
                             "var browser = null;\n" +
-                            "var page = null;\n", 30, false);
+                            "var page = null;\n" +
+                            "var response = null;\n", 30, false);
 
             if (userDataDir == null) {
                 userDataDir = new WindowBuilder(null).userDataDir; // Get the default value
@@ -186,7 +188,7 @@ public class PlaywrightWindow implements HWindow {
             url = "https://" + url;
 
         jsContext.executeJavaScript("" +
-                "var response = await page.goto('" + url + "');\n");
+                "response = await page.goto('" + url + "');\n");
         this.url = url;
         return this;
     }
@@ -197,16 +199,129 @@ public class PlaywrightWindow implements HWindow {
     public PlaywrightWindow load(File file) throws NodeJsCodeException {
         String url = "file:///" + file.getAbsolutePath().replace("\\", "/");
         jsContext.executeJavaScript("" +
-                "var response = await page.goto('"+url+"');\n");
+                "response = await page.goto('" + url + "');\n");
         this.url = url;
         return this;
     }
 
+    /**
+     * Returns the response headers represented in a Json object like this:
+     * <pre>
+     *     {
+     *         header_name: header_value,
+     *         ...
+     *     }
+     * </pre>
+     */
+    public JsonObject getResponseHeaders() {
+        String rawJson = jsContext.executeJSAndGetResult("" +
+                "var result = await response.allHeaders();\n" +
+                "result = JSON.stringify(result);\n");
+        return new Gson().fromJson(rawJson, JsonObject.class);
+    }
+
+    public int getStatusCode() {
+        String raw = jsContext.executeJSAndGetResult("" +
+                "var result = '' + response.status();\n");
+        return Integer.parseInt(raw);
+    }
+
+    public String getStatusText() {
+        return jsContext.executeJSAndGetResult("" +
+                "var result = response.statusText();\n");
+    }
 
     /**
-     * Returns a copy of the currently loaded html document. <br>
+     * Note that a response must have been received first for this to work. <br>
+     * Returns the request headers represented in a Json object like this:
+     * <pre>
+     *     {
+     *         header_name: header_value,
+     *         ...
+     *     }
+     * </pre>
      */
-    public Document getDocument() {
+    public JsonObject getRequestHeaders() {
+        String rawJson = jsContext.executeJSAndGetResult("" +
+                "var result = await response.request().allHeaders();\n" +
+                "result = JSON.stringify(result);\n");
+        return new Gson().fromJson(rawJson, JsonObject.class);
+    }
+
+    /**
+     * Note that a response must have been received first for this to work. <br>
+     * Request's method (GET, POST, etc.). <br>
+     */
+    public String getRequestMethod() {
+        return jsContext.executeJSAndGetResult("" +
+                "var result = response.request().method();\n");
+    }
+
+    /**
+     * Note that a response must have been received first for this to work <br>
+     * Request's post body as String, if any. <br>
+     */
+    public String getRequestPostData() {
+        return jsContext.executeJSAndGetResult("" +
+                "var result = response.request().postData();\n");
+    }
+
+
+    /**
+     * Note that this returns a copy and not the actual file, <br>
+     * which means that changes done to the real html after returning this won't be reflected in the copy. <br>
+     */
+    public Document getOuterHtml() {
+        String rawHtml = jsContext.executeJSAndGetResult("" +
+                "var result = await page.evaluate(() => document.getElementsByTagName(\"html\")[0].outerHTML);\n");
+        return Jsoup.parse(rawHtml);
+    }
+
+    /**
+     * Note that this returns a copy and not the actual file, <br>
+     * which means that changes done to the real html after returning this won't be reflected in the copy. <br>
+     */
+    public Document getInnerHtml() {
+        String rawHtml = jsContext.executeJSAndGetResult("" +
+                "var result = await page.evaluate(() => document.getElementsByTagName(\"html\")[0].innerHTML);\n");
+        return Jsoup.parse(rawHtml);
+    }
+
+    /**
+     * Note that this returns a copy and not the actual file, <br>
+     * which means that changes done to the real html after returning this won't be reflected in the copy. <br>
+     */
+    public Document getHeadOuterHtml() {
+        String rawHtml = jsContext.executeJSAndGetResult("" +
+                "var result = await page.evaluate(() => document.head.outerHTML);\n");
+        return Jsoup.parse(rawHtml);
+    }
+
+    /**
+     * Note that this returns a copy and not the actual file, <br>
+     * which means that changes done to the real html after returning this won't be reflected in the copy. <br>
+     */
+    public Document getHeadInnerHtml() {
+        String rawHtml = jsContext.executeJSAndGetResult("" +
+                "var result = await page.evaluate(() => document.head.innerHTML);\n");
+        return Jsoup.parse(rawHtml);
+    }
+
+    /**
+     * Note that this returns a copy and not the actual file, <br>
+     * which means that changes done to the real html after returning this won't be reflected in the copy. <br>
+     */
+    public Document getBodyOuterHtml() {
+        String rawHtml = jsContext.executeJSAndGetResult("" +
+                "var result = await page.evaluate(() => document.body.outerHTML);\n");
+        return Jsoup.parse(rawHtml);
+    }
+
+    /**
+     * Note that this returns a copy and not the actual file, <br>
+     * which means that changes done to the real html after returning this won't be reflected in the copy. <br>
+     */
+    public Document getBodyInnerHtml() {
         String rawHtml = jsContext.executeJSAndGetResult("" +
                 "var result = await page.evaluate(() => document.body.innerHTML);\n");
         return Jsoup.parse(rawHtml);
@@ -222,6 +337,21 @@ public class PlaywrightWindow implements HWindow {
                 jsCode +
                 "`);\n");
         return this;
+    }
+
+    /**
+     * Note that the provided code must return a string variable. Example:
+     * <pre>
+     *     var result = 'no results yet!';
+     *     //... do stuff
+     *     return result;
+     * </pre>
+     * That variable gets then returned by this method.
+     */
+    public String executeJSAndGetResult(String jsCode) throws NodeJsCodeException {
+        return jsContext.executeJSAndGetResult("var result = await page.evaluate(() => {\n" +
+                jsCode + "\n" +
+                "});\n");
     }
 
     /**
@@ -408,6 +538,36 @@ public class PlaywrightWindow implements HWindow {
         return array;
     }
 
+    public PlaywrightWindow setScreenSize(String width, String height) throws NodeJsCodeException {
+        return setScreenSize(Integer.parseInt(width), Integer.parseInt(height));
+    }
+
+    public PlaywrightWindow setScreenSize(int width, int height) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.setViewportSize({ width: " + width + ", height: " + height + " })");
+        return this;
+    }
+
+    /**
+     * See {@link #makeScreenshot(File, boolean)} for details.
+     */
+    public PlaywrightWindow makeScreenshot(String filePath, boolean captureFullPage) throws IOException, NodeJsCodeException {
+        return makeScreenshot(new File(filePath), captureFullPage);
+    }
+
+    /**
+     * Takes a screenshot of the currently loaded page and saves it to the provided file. <br>
+     *
+     * @param file            should be a .png file. If not created yet gets created. <br>
+     * @param captureFullPage should the complete page (top to bottom) be captured, or only the currently visible part?
+     */
+    public PlaywrightWindow makeScreenshot(File file, boolean captureFullPage) throws IOException, NodeJsCodeException {
+        if (file.exists()) file.delete();
+        file.createNewFile();
+        String path = file.getAbsolutePath().replace("\\", "/"); // Windows paths don't work that's why we do this
+        jsContext.executeJavaScript("await page.screenshot({ path: '" + path + "', fullPage: " + captureFullPage + " });");
+        return this;
+    }
+
     /**
      * Performs one left-click on the element found by the selector. <br>
      * See {@link #click(String, String, int, int)} for details. <br>
@@ -465,8 +625,9 @@ public class PlaywrightWindow implements HWindow {
      * Fills form fields. <br>
      * Defaults used: force=false,noWaitAfter=false,strict=false,timeout=30000. <br>
      * See {@link #fill(String, String, boolean, boolean, boolean, int)} for details. <br>
+     *
      * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used.
-     * @param value Value to fill for the input, textarea or [contenteditable] element.
+     * @param value    Value to fill for the input, textarea or [contenteditable] element.
      */
     public PlaywrightWindow fill(String selector, String value) throws NodeJsCodeException {
         fill(selector, value, false, false, false, 30000);
@@ -478,8 +639,9 @@ public class PlaywrightWindow implements HWindow {
      * Note that strict is set to true which means the operation will fail if the selector returns more than one element. <br>
      * Defaults used: force=false,noWaitAfter=false,strict=true,timeout=30000. <br>
      * See {@link #fill(String, String, boolean, boolean, boolean, int)} for details. <br>
+     *
      * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used.
-     * @param value Value to fill for the input, textarea or [contenteditable] element.
+     * @param value    Value to fill for the input, textarea or [contenteditable] element.
      */
     public PlaywrightWindow fillStrict(String selector, String value) throws NodeJsCodeException {
         fill(selector, value, false, false, true, 30000);
@@ -488,17 +650,83 @@ public class PlaywrightWindow implements HWindow {
 
     /**
      * Fills form fields.
-     * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. <br><br>
-     * @param value Value to fill for the input, textarea or [contenteditable] element. <br><br>
-     * @param force Whether to bypass the actionability checks. <br><br>
+     *
+     * @param selector    A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. <br><br>
+     * @param value       Value to fill for the input, textarea or [contenteditable] element. <br><br>
+     * @param force       Whether to bypass the actionability checks. <br><br>
      * @param noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. <br><br>
-     * @param strict When true, the call requires selector to resolve to a single element. If given selector resolves to more then one element, the call throws an exception. <br><br>
-     * @param timeout Maximum time in milliseconds, defaults to 30 seconds, pass 0 to disable timeout. The default value can be changed by using the browserContext.setDefaultTimeout(timeout) or page.setDefaultTimeout(timeout) methods. <br><br>
+     * @param strict      When true, the call requires selector to resolve to a single element. If given selector resolves to more then one element, the call throws an exception. <br><br>
+     * @param timeout     Maximum time in milliseconds, defaults to 30 seconds, pass 0 to disable timeout. The default value can be changed by using the browserContext.setDefaultTimeout(timeout) or page.setDefaultTimeout(timeout) methods. <br><br>
      */
     public PlaywrightWindow fill(String selector, String value,
                                  boolean force, boolean noWaitAfter, boolean strict, int timeout) throws NodeJsCodeException {
-        jsContext.executeJavaScript("await page.fill('"+selector+"', '"+value+"', {force: "+force
-                +",noWaitAfter:" +noWaitAfter+",strict:"+strict+",timeout:"+timeout+"});");
+        jsContext.executeJavaScript("await page.fill('" + selector + "', '" + value + "', {force: " + force
+                + ",noWaitAfter:" + noWaitAfter + ",strict:" + strict + ",timeout:" + timeout + "});");
+        return this;
+    }
+
+    /**
+     * Checks or unchecks a checkbox or radio button.
+     *
+     * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used.
+     * @param checked  Whether to check or uncheck the checkbox.
+     */
+    public PlaywrightWindow setChecked(String selector, boolean checked) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.setChecked('" + selector + "', " + checked + ");");
+        return this;
+    }
+
+    /**
+     * Types the provided text with a random 100ms-300ms delay between each type, to simulate a real user.
+     */
+    public PlaywrightWindow typeReal(String text) throws NodeJsCodeException {
+        int max = 300;
+        int min = 100;
+        type(text, new Random().nextInt(max + 1 - min) + min);
+        return this;
+    }
+
+    /**
+     * Types the provided text with a 0ms delay between each type.
+     */
+    public PlaywrightWindow type(String text) throws NodeJsCodeException {
+        type(text, 0);
+        return this;
+    }
+
+    /**
+     * Types the provided text with the provided delay in ms between each type.
+     */
+    public PlaywrightWindow type(String text, int delay) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.keyboard.type('" + text + "', {delay:" + delay + "});");
+        return this;
+    }
+
+    /**
+     * Holds down the provided key until {@link #releaseKey(String)} is called. <br>
+     * Full list of key names <a href="https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values">here</a>.
+     */
+    public PlaywrightWindow holdKey(String key) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.keyboard.down('" + key + "');");
+        return this;
+    }
+
+    /**
+     * Releases the provided key. Note that {@link #holdKey(String)} must have been called before on this key, for this to work. <br>
+     * Full list of key names <a href="https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values">here</a>.
+     */
+    public PlaywrightWindow releaseKey(String key) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.keyboard.up('" + key + "');");
+        return this;
+    }
+
+    /**
+     * Press the provided key and hold for the provided milliseconds. <br>
+     * There are better methods for typing longer texts though: {@link #type(String)} or {@link #typeReal(String)}. <br>
+     * Full list of key names <a href="https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values">here</a>.
+     */
+    public PlaywrightWindow pressKey(String key, int ms) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.keyboard.press('" + key + "', {delay:" + ms + "});");
         return this;
     }
 
