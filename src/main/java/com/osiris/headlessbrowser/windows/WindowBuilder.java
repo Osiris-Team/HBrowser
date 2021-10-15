@@ -58,22 +58,14 @@ public class WindowBuilder {
     }
 
     public GraalWindow buildGraalWindow() {
-        // TODO debugOutputStream jsTimeout
         return new GraalWindow(this.parentBrowser, this.enableJavaScript, this.customHeaders);
     }
 
-    /**
-     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, boolean, String...)}.
-     */
     public PuppeteerWindow buildPuppeteerWindow() {
-        // TODO customHeaders
         return new PuppeteerWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
                 this.isHeadless, this.userDataDir, this.isDevTools, this.debuggingPort, this.makeUndetectable, this.additionalStartupArgs);
     }
 
-    /**
-     * For details see {@link PuppeteerWindow#PuppeteerWindow(HBrowser, boolean, OutputStream, int, boolean, File, boolean, int, boolean, String...)}.
-     */
     public PlaywrightWindow buildPlaywrightWindow() {
         return new PlaywrightWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
                 this.isHeadless, this.userDataDir, this.isDevTools, this.makeUndetectable);

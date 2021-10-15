@@ -182,8 +182,12 @@ public class LightWindow implements HWindow {
     }
 
     @Override
-    public void close() throws Exception {
-        jsContext.close();
+    public void close() throws RuntimeException {
+        try{
+            jsContext.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public HBrowser getParentBrowser() {

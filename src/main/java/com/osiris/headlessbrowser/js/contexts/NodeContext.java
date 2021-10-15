@@ -288,9 +288,8 @@ public class NodeContext implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        //executeJavaScript("process.exit();", 0);
-        debugOutput.println("CLOSING " + this);
         process.destroy();
+        debugOutput.println("CLOSED " + this);
     }
 
     public synchronized NodeContext writeLine(String line) throws IOException {
