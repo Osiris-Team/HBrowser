@@ -596,8 +596,8 @@ public class PlaywrightWindow implements HWindow {
      * See {@link #click(String, String, int, int)} for details.
      */
     public PlaywrightWindow click(String selector, String type) throws NodeJsCodeException {
-        int max = 1000;
-        int min = 200;
+        int max = 200;
+        int min = 50;
         return click(selector, type, 1, new Random().nextInt(max + 1 - min) + min);
     }
 
@@ -612,12 +612,8 @@ public class PlaywrightWindow implements HWindow {
      * @param delay      the time to wait between mousedown and mouseup in milliseconds.
      */
     public PlaywrightWindow click(String selector, String type, int clickCount, int delay) throws NodeJsCodeException {
-        jsContext.executeJavaScript("var options = {\n" +
-                "button: '" + type + "',\n" +
-                "clickCount: " + clickCount + ",\n" +
-                "delay: " + delay + "\n" +
-                "}\n" +
-                "await page.click(" + selector + ", options);\n");
+        jsContext.executeJavaScript(""+
+                "await page.click('" + selector + "', {button: '"+type+"', clickCount: "+clickCount+", delay:"+delay+"});\n");
         return this;
     }
 

@@ -16,10 +16,16 @@ class PlaywrightWindowTest {
         HBrowser hBrowser = new HBrowser();
         try (PlaywrightWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).headless(false).buildPlaywrightWindow()) {
             window.load(new File(System.getProperty("user.dir") + "/test.html"));
-            formFillingTest(window);
-            window.load("example.com");
-            System.out.println(window.getResponseHeaders().toString());
+            clickTest(window);
+            Thread.sleep(30000);
+            //formFillingTest(window);
+            //window.load("example.com");
+            //System.out.println(window.getResponseHeaders().toString());
         }
+    }
+
+    private void clickTest(PlaywrightWindow window) throws NodeJsCodeException {
+        window.leftClick("a[href=\"#text\"]");
     }
 
     private void formFillingTest(PlaywrightWindow window) throws NodeJsCodeException, InterruptedException {
