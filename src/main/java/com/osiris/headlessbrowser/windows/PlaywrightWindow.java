@@ -427,7 +427,7 @@ public class PlaywrightWindow implements HWindow {
             domain = "." + url.getAuthority();
         } else {
             domain = urlOrDomain;
-            url = new URL("https//" + domain + "/");
+            url = new URL("https://" + domain + "/");
         }
         jsContext.executeJavaScript("" +
                 "var cookie = {\n" +
