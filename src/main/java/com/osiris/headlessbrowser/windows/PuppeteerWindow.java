@@ -136,7 +136,7 @@ public class PuppeteerWindow implements HWindow {
     }
 
     /**
-     * Load the contents from the provided url into the current {@link PuppeteerWindow}.
+     * Load the contents from the provided url into the current page/tab.
      *
      * @param url Examples: https://www.wikipedia.org or wikipedia.org.
      * @return the current {@link PuppeteerWindow} for chained method calls.

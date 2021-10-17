@@ -194,8 +194,11 @@ public class PlaywrightWindow implements HWindow {
         }
     }
 
+    /**
+     * Loads the contents from the provided url into the current page/tab.
+     */
     public PlaywrightWindow load(String url) throws NodeJsCodeException {
-        if (!url.startsWith("http"))
+        if (!url.startsWith("http") && !url.equals("about:blank"))
             url = "https://" + url;
 
         jsContext.executeJavaScript("" +
@@ -205,7 +208,7 @@ public class PlaywrightWindow implements HWindow {
     }
 
     /**
-     * Load html from a file.
+     * Loads the contents from the provided file into the current page/tab.
      */
     public PlaywrightWindow load(File file) throws NodeJsCodeException {
         String url = "file:///" + file.getAbsolutePath().replace("\\", "/");
@@ -213,6 +216,37 @@ public class PlaywrightWindow implements HWindow {
                 "response = await page.goto('" + url + "');\n");
         this.url = url;
         return this;
+    }
+
+    public PlaywrightWindow open() throws NodeJsCodeException {
+        return open("about:blank");
+    }
+
+    /**
+     * Opens a new page/tab and loads the contents from the provided url into it.
+     */
+    public PlaywrightWindow open(String url) throws NodeJsCodeException {
+        jsContext.executeJavaScript("" +
+                "page = await browserCtx.newPage();\n");
+        load(url);
+        return this;
+    }
+
+    /**
+     * Returns the currently active pages/tabs inside a {@link JsonArray}.
+     */
+    public JsonArray getPages(){
+        return new Gson().fromJson(jsContext.executeJSAndGetResult("" +
+                "var pages = browserCtx.pages();\n" +
+                "var result = '[';\n" +
+                "for (var i = 0; i > pages; i++){" +
+                "var p = pages[i];\n"+
+                "if (i==pages.length-1)" +
+                "  result = result + JSON.stringify(p);\n" +
+                "else" +
+                "  result = result + JSON.stringify(p)+',';\n" +
+                "}\n"+
+                "result = result + ']';\n"), JsonArray.class);
     }
 
     /**
