@@ -288,7 +288,10 @@ public class NodeContext implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        debugOutput.println("CLOSING... " + this);
         process.destroy();
+        process.waitFor();
+        process.destroyForcibly();
         debugOutput.println("CLOSED " + this);
     }
 

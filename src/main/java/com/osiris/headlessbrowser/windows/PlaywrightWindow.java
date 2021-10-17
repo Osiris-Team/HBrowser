@@ -9,13 +9,15 @@ import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.js.contexts.NodeContext;
 import com.osiris.headlessbrowser.js.raw.EvasionsInside;
+import com.osiris.headlessbrowser.utils.TrashOutput;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.*;
 import java.net.HttpCookie;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.FileSystemLoopException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ import java.util.Random;
 public class PlaywrightWindow implements HWindow {
     private final NodeContext jsContext;
     private final OutputStream debugOutput;
+    private final PrintStream out;
     private final HBrowser parentBrowser;
     private final boolean isHeadless;
     private final File userDataDir;
@@ -36,18 +39,22 @@ public class PlaywrightWindow implements HWindow {
     private final File downloadTempDir;
     private boolean enableJavaScript;
     private String url;
+    private boolean temporaryUserDataDir;
 
     /**
      * <p style="color: red;">Note that this is not the recommended way of creating the window object.</p>
      * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
      */
     public PlaywrightWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
-                            boolean isHeadless, File userDataDir, boolean isDevTools, boolean makeUndetectable) {
+                            boolean isHeadless, File userDataDir, boolean isDevTools, boolean makeUndetectable, boolean temporaryUserDataDir) {
         this.parentBrowser = parentBrowser;
+        if (debugOutput==null)
+            debugOutput = new TrashOutput();
         this.debugOutput = debugOutput;
+        this.out = new PrintStream(debugOutput);
         this.isHeadless = isHeadless;
-        this.userDataDir = userDataDir;
         this.isDevTools = isDevTools;
+        this.temporaryUserDataDir = temporaryUserDataDir;
         try {
             this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
             jsContext.npmInstall("playwright");
@@ -63,10 +70,14 @@ public class PlaywrightWindow implements HWindow {
             if (userDataDir == null) {
                 userDataDir = new WindowBuilder(null).userDataDir; // Get the default value
             }
+            if (temporaryUserDataDir){
+                userDataDir = new File(parentBrowser.getMainDirectory()+"/user-data-"+Integer.toHexString(hashCode()));
+            }
             if (userDataDir.isFile())
                 throw new Exception("userDataDir must be a directory and cannot be a file (" + userDataDir.getAbsolutePath() + ")!");
             if (!userDataDir.exists()) userDataDir.mkdirs();
 
+            this.userDataDir = userDataDir;
             // To be able to download files:
             downloadTempDir = new File(userDataDir + "/downloads-temp");
             if (!downloadTempDir.exists()) downloadTempDir.mkdirs();
@@ -408,7 +419,7 @@ public class PlaywrightWindow implements HWindow {
     }
 
     /**
-     * See {@link #setCookie(String, String, String, boolean, boolean)} for details.
+     * See {@link #setCookie(String, String, String, String, String, boolean, boolean)} for details.
      */
     public PlaywrightWindow setCookie(HttpCookie cookie) throws MalformedURLException, NodeJsCodeException {
         return setCookie(cookie.getName(), cookie.getValue(), null,  cookie.getDomain(), cookie.getPath(), cookie.isHttpOnly(), cookie.getSecure());
@@ -766,15 +777,53 @@ public class PlaywrightWindow implements HWindow {
         return url;
     }
 
+    public boolean isTemporaryUserDataDir() {
+        return temporaryUserDataDir;
+    }
+
     @Override
     public void close() throws RuntimeException {
         // Running js: browser.close() here causes a weird exception: https://github.com/isaacs/rimraf/issues/221
         // Since it's not mandatory we just don't do it.
         try{
             jsContext.close();
+            if (temporaryUserDataDir){
+                out.println("Deleting: "+userDataDir);
+                forceDeleteDirectory(userDataDir);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void forceDeleteDirectory(File file) throws IOException {
+        if (!file.exists()) {
+            out.println("Couldn't find: "+file);
+            return;
+        }
+
+        if (!file.isDirectory()){
+            waitUntilDeleted(file);
+            return;
+        }
+
+        // Delete all sub-directories and wait until all of them are actually deleted
+        File[] files = file.listFiles();
+        while(files!=null && files.length>0){
+            for (File f :
+                    files) {
+                forceDeleteDirectory(f);
+            }
+            files = file.listFiles(); // Update the existing files array
+        }
+        waitUntilDeleted(file); // Empty dir
+    }
+
+    private void waitUntilDeleted(File file) throws FileSystemLoopException {
+        for (int i = 0; i < 100000; i++) {
+            if (file.delete()) return;
+        }
+        throw new FileSystemLoopException("Failed to delete file after trying 100000 times: "+file);
     }
 
 }

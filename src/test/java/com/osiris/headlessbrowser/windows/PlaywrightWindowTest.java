@@ -9,17 +9,18 @@ import java.io.File;
 class PlaywrightWindowTest {
 
     @Test
-    void settingCookiesTest() throws Exception {
+    public void settingCookiesTest() throws Exception {
         HBrowser hBrowser = new HBrowser();
-        try (PlaywrightWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).headless(false).buildPlaywrightWindow()) {
+        try (PlaywrightWindow window = hBrowser.openCustomWindow().temporaryUserDataDir(true).debugOutputStream(System.out).headless(false).buildPlaywrightWindow()) {
             window.setCookie("hello", "there", "https://example.com/bigboig69", null, null,false,true);
             window.load("example.com");
             window.printCookiesAsJsonArray();
+            Thread.sleep(2000);
         }
     }
 
     @Test
-    private void clickTest() throws Exception {
+    public void clickTest() throws Exception {
         HBrowser hBrowser = new HBrowser();
         try (PlaywrightWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).headless(false).buildPlaywrightWindow()) {
             window.load(new File(System.getProperty("user.dir") + "/test.html"));
@@ -28,7 +29,7 @@ class PlaywrightWindowTest {
     }
 
     @Test
-    private void formFillingTest() throws NodeJsCodeException {
+    public void formFillingTest() throws NodeJsCodeException, InterruptedException {
         HBrowser hBrowser = new HBrowser();
         try (PlaywrightWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).headless(false).buildPlaywrightWindow()) {
             window.load(new File(System.getProperty("user.dir") + "/test.html"));

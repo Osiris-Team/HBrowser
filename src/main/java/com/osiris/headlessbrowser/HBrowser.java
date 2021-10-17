@@ -5,6 +5,7 @@ import com.osiris.headlessbrowser.windows.HWindow;
 import com.osiris.headlessbrowser.windows.PlaywrightWindow;
 import com.osiris.headlessbrowser.windows.WindowBuilder;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -13,6 +14,7 @@ import java.io.IOException;
  * @author Osiris-Team
  */
 public class HBrowser {
+    private File mainDirectory = new File(System.getProperty("user.dir")+"/headless-browser");
 
     /**
      * Creates and returns a new window, built with defaults. <br>
@@ -54,5 +56,14 @@ public class HBrowser {
      */
     public void closeWindow(HWindow window) throws Exception {
         window.close();
+    }
+
+    public File getMainDirectory() {
+        return mainDirectory;
+    }
+
+    public HBrowser setMainDirectory(File mainDirectory) {
+        this.mainDirectory = mainDirectory;
+        return this;
     }
 }

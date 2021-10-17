@@ -21,7 +21,7 @@ public class WindowBuilder {
      */
     public Map<String, String> customHeaders = null;
     /**
-     * Default is null. Otherwise, writes/prints debug related information and JavaScript code console output to the debug output.
+     * Default is null. Otherwise, writes/prints debug related information and JavaScript code console output to the provided {@link OutputStream}.
      */
     public OutputStream debugOutputStream = null;
     /**
@@ -35,7 +35,7 @@ public class WindowBuilder {
     /**
      * Path to a User Data Directory. Default is ./headless-browser/user-data (the "." represents the current working directory).
      */
-    public File userDataDir = new File(System.getProperty("user.dir") + "/headless-browser/user-data");
+    public File userDataDir;
     /**
      * Whether to auto-open a DevTools panel for each tab. If this option is true, the headless option will be set false.
      */
@@ -52,9 +52,18 @@ public class WindowBuilder {
      * Makes this window indistinguishable from 'real', user operated windows, by using the code from puppeteer/playwright-extra and puppeteer-extra-plugin-stealth.
      */
     public boolean makeUndetectable = false;
+    /**
+     * If true, a new, unique, temporary directory will be created. <br>
+     * The value of {@link #userDataDir} will be overwritten. <br>
+     * Example: ./headless-browser/user-data-89213<br>
+     * As you can see, the directory name will contain the {@link HWindow} objects unique {@link #hashCode()} as {@link Integer#toHexString(int)}. <br>
+     * The directory will get deleted on {@link HWindow#close()}. <br>
+     */
+    public boolean temporaryUserDataDir = false;
 
     public WindowBuilder(HBrowser parentBrowser) {
         this.parentBrowser = parentBrowser;
+        this.userDataDir = new File(parentBrowser.getMainDirectory() + "/user-data");
     }
 
     public GraalWindow buildGraalWindow() {
@@ -68,7 +77,7 @@ public class WindowBuilder {
 
     public PlaywrightWindow buildPlaywrightWindow() {
         return new PlaywrightWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
-                this.isHeadless, this.userDataDir, this.isDevTools, this.makeUndetectable);
+                this.isHeadless, this.userDataDir, this.isDevTools, this.makeUndetectable, this.temporaryUserDataDir);
     }
 
     public LightWindow buildLightWindow() {
@@ -153,6 +162,14 @@ public class WindowBuilder {
      */
     public WindowBuilder additionalStartupArgs(String... val) {
         this.additionalStartupArgs = val;
+        return this;
+    }
+
+    /**
+     * For details see {@link #temporaryUserDataDir}.
+     */
+    public WindowBuilder temporaryUserDataDir(boolean val) {
+        this.temporaryUserDataDir = val;
         return this;
     }
 
