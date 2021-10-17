@@ -218,6 +218,9 @@ public class PlaywrightWindow implements HWindow {
         return this;
     }
 
+    /**
+     * Opens a new 'about:blank' page/tab.
+     */
     public PlaywrightWindow open() throws NodeJsCodeException {
         return open("about:blank");
     }
