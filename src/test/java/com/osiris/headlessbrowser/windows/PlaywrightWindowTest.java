@@ -9,6 +9,16 @@ import java.io.File;
 class PlaywrightWindowTest {
 
     @Test
+    void testOpen() throws NodeJsCodeException {
+        HBrowser hBrowser = new HBrowser();
+        try (PlaywrightWindow window = hBrowser.openCustomWindow().temporaryUserDataDir(true).debugOutputStream(System.out).headless(false).buildPlaywrightWindow()) {
+            for (int i = 0; i < 30; i++) {
+                window.newTab();
+            }
+        }
+    }
+
+    @Test
     public void settingCookiesTest() throws Exception {
         HBrowser hBrowser = new HBrowser();
         try (PlaywrightWindow window = hBrowser.openCustomWindow().temporaryUserDataDir(true).debugOutputStream(System.out).headless(false).buildPlaywrightWindow()) {

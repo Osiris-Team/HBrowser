@@ -16,7 +16,6 @@ import org.jsoup.nodes.Document;
 import java.io.*;
 import java.net.HttpCookie;
 import java.net.MalformedURLException;
-import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.FileSystemLoopException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -221,14 +220,14 @@ public class PlaywrightWindow implements HWindow {
     /**
      * Opens a new 'about:blank' page/tab.
      */
-    public PlaywrightWindow open() throws NodeJsCodeException {
-        return open("about:blank");
+    public PlaywrightWindow newTab() throws NodeJsCodeException {
+        return newTab("about:blank");
     }
 
     /**
      * Opens a new page/tab and loads the contents from the provided url into it.
      */
-    public PlaywrightWindow open(String url) throws NodeJsCodeException {
+    public PlaywrightWindow newTab(String url) throws NodeJsCodeException {
         jsContext.executeJavaScript("" +
                 "page = await browserCtx.newPage();\n");
         load(url);
