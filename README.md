@@ -54,8 +54,8 @@ Creating a new browser completely in Java is ongoing work (with GraalJs).
 Implementing all the web apis for me alone would take years,
 thats why I implemented Playwright into Java to have something usable right now.
 
-If you want to contribute to the full Java browser take a look at the [GraalWindow](src/main/java/com/osiris/headlessbrowser/windows/GraalWindow) class,
-the [GraalContext](src/main/java/com/osiris/headlessbrowser/js/contexts/GraalContext) class and [how to implement a js web apis](how-to-implement-a-js-web-api.md).
+If you want to contribute to the full Java browser take a look at the [GraalWindow](src/main/java/com/osiris/headlessbrowser/windows/GraalWindow.java) class,
+the [GraalContext](src/main/java/com/osiris/headlessbrowser/js/contexts/GraalContext.java) class and [how to implement a js web apis](how-to-implement-a-js-web-api.md).
     
 If you are usure why to contribute to the full Java browser, read the next section below.
 </p>
