@@ -9,7 +9,7 @@
 3. Inside that new package create a new class named something like `JS_API_MyApiName` and implement the `JS_API`
    interface.
 4. Read
-   the [JS_API_Example](src/main/java/com/osiris/headlessbrowser/javascript/JS_API_Example.java)
+   the [JS_API_Example](src/main/java/com/osiris/headlessbrowser/graal/JS_API_Example.java)
    class for further details.
 5. Register/Load your JS Web-API into
    the [GraalContext](src/main/java/com/osiris/headlessbrowser/js/contexts/GraalContext.java)
