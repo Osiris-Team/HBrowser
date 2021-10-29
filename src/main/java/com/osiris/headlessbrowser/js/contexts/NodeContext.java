@@ -6,6 +6,7 @@ import com.osiris.headlessbrowser.utils.AsyncInputStream;
 import com.osiris.headlessbrowser.utils.DownloadTask;
 import com.osiris.headlessbrowser.utils.TrashOutput;
 import net.lingala.zip4j.ZipFile;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -217,7 +218,7 @@ public class NodeContext implements AutoCloseable {
                 return false;
             // Mac has another name: darwin instead of mac
             if (StringUtils.containsIgnoreCase(fileName, "darwin")
-                    && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || StringUtils.containsIgnoreCase(fileName, osArchitectureType.altName)))
+                    && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames)))
                 return true;
         } else if (osType.equals(OperatingSystemType.WINDOWS)) {
             // Must be a zip file
@@ -225,14 +226,23 @@ public class NodeContext implements AutoCloseable {
                 return false;
             // Mac has another name: win instead of windows
             if (StringUtils.containsIgnoreCase(fileName, "win")
-                    && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || StringUtils.containsIgnoreCase(fileName, osArchitectureType.altName)))
+                    && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames)))
                 return true;
         } else {
             if (!fileName.contains(".tar.gz"))
                 return false;
         }
         return StringUtils.containsIgnoreCase(fileName, osType.name)
-                && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || StringUtils.containsIgnoreCase(fileName, osArchitectureType.altName));
+                && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames));
+    }
+
+    private boolean containsIgnoreCase(String query, String[] array){
+        for (String s :
+                array) {
+            if (s.equalsIgnoreCase(query))
+                return true;
+        }
+        return false;
     }
 
     private void determineArchAndOs() {
@@ -634,29 +644,29 @@ public class NodeContext implements AutoCloseable {
     }
 
     public enum OperatingSystemArchitectureType {
-        X64("x64"),
-        X86("x86"),
-        X32("x32"),
-        PPC64("ppc64"),
-        PPC64LE("ppc64le"),
+        X64("x64", "64"),
+        X86("x86", "86"),
+        X32("x32", "32"),
+        PPC64("ppc64", "x64", "64"),
+        PPC64LE("ppc64le", "x64", "64"),
         S390X("s390x"),
-        AARCH64("aarch64"),
+        AARCH64("aarch64", "x64", "64"),
         ARM("arm"),
         SPARCV9("sparcv9"),
-        RISCV64("riscv64"),
+        RISCV64("riscv64", "x64", "64"),
         // x64 with alternative names:
-        AMD64("x64"),
-        X86_64("x64"),
+        AMD64("x64", "64"),
+        X86_64("x64", "64"),
         // x32 with alternative names:
-        I386("x32");
+        I386("x32", "32");
 
         /**
-         * Alternative name.
+         * Alternative names.
          */
-        private final String altName;
+        private final String[] altNames;
 
-        OperatingSystemArchitectureType(String altName) {
-            this.altName = altName;
+        OperatingSystemArchitectureType(String... altNames) {
+            this.altNames = altNames;
         }
     }
 
