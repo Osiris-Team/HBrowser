@@ -48,16 +48,20 @@ Note that the first run may take a bit because Node.js and its modules get insta
 
 ### FAQ
 <details>
-<summary>What about GraalJS and a full Java browser?</summary>
+<summary>What about the full Java browser?</summary>
+<p>
 Creating a new browser completely in Java is ongoing work (with GraalJs).
-Since this is something that looks like it could take year, I
-implemented the Node.js engine to be completely usable in Java and some 
-'Browser Drivers' like Puppeteer and Playwright, which run on Node.js,
-to have something usable right now.
-Read more about this in "Why contribute?".
+Implementing all the web apis for me alone would take years,
+thats why I implemented Playwright into Java to have something usable right now.
+
+If you want to contribute to the full Java browser take a look at the [GraalWindow](src/main/java/com/osiris/headlessbrowser/windows/GraalWindow.java) class,
+the [GraalContext](src/main/java/com/osiris/headlessbrowser/js/contexts/GraalContext.java) class and [how to implement a js web apis](how-to-implement-a-js-web-api.md).
+    
+If you are usure why to contribute to the full Java browser, read the next section below.
+</p>
 </details>
 <details>
-<summary>Why contribute?</summary>
+<summary>Why contribute to the full Java browser?</summary>
 I worked with multiple different browsers like JCEF, Selenium, JWebdriver, HtmlUnit and maybe some more I don't remember
 now, but all have one thing in common. They have some kind of caveat.
 
