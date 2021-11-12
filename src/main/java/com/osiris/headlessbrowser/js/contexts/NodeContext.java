@@ -220,7 +220,8 @@ public class NodeContext implements AutoCloseable {
             if (StringUtils.containsIgnoreCase(fileName, "darwin")
                     && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames)))
                 return true;
-        } else if (osType.equals(OperatingSystemType.WINDOWS)) {
+        }
+        else if (osType.equals(OperatingSystemType.WINDOWS)) {
             // Must be a zip file
             if (!fileName.contains(".zip"))
                 return false;
@@ -228,7 +229,8 @@ public class NodeContext implements AutoCloseable {
             if (StringUtils.containsIgnoreCase(fileName, "win")
                     && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames)))
                 return true;
-        } else {
+        }
+        else {
             if (!fileName.contains(".tar.gz"))
                 return false;
         }
@@ -236,10 +238,10 @@ public class NodeContext implements AutoCloseable {
                 && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames));
     }
 
-    private boolean containsIgnoreCase(String query, String[] array){
-        for (String s :
-                array) {
-            if (s.equalsIgnoreCase(query))
+    private boolean containsIgnoreCase(String fileName, String[] altNames){
+        for (String altName :
+                altNames) {
+            if (StringUtils.containsIgnoreCase(fileName, altName))
                 return true;
         }
         return false;
