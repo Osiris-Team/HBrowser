@@ -35,13 +35,6 @@ Note that the first run may take a bit because Node.js and its modules get insta
 
 ### [Contribute/Build](CONTRIBUTE.md)
 
-
-
-### Links
-
-- https://spec.whatwg.org/ | Details about JS Web-APIs
-- https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
-
 ### Examples
  - [Running Node.js independently](src/test/java/examples/IndependentNodeJs.java)
  - [Customizing browser windows](src/test/java/examples/CustomWindows.java)
@@ -94,3 +87,8 @@ We want to provide the latest and best technologies regarding headless browsers 
 | [Node.js](https://github.com/nodejs/node) | Enables executing JavaScript code | [License](https://github.com/nodejs/node/blob/master/LICENSE) |
 | [GraalJS](https://github.com/oracle/graaljs) | Enables executing JavaScript code from Java | [License](https://github.com/oracle/graaljs/blob/master/LICENSE) |
 | [Jsoup](https://github.com/jhy/jsoup)      | Used to load pages and modify their HTML code      |   [License](https://github.com/jhy/jsoup/blob/master/LICENSE) |
+
+### Links
+
+- https://spec.whatwg.org/ | Details about JS Web-APIs
+- https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
