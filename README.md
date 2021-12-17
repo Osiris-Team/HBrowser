@@ -18,10 +18,10 @@ Note that the first run may take a bit because Node.js and its modules get insta
 - Make sure to watch this repository to get notified of future updates.
 
 ### Features
-- Multiple browsers to choose from (Playwright, Puppeteer etc.)
-- Implemented GraalJS and Node.js engines
-- Jsoup for easy HTML handling
-- Supported platforms are all from Java and all from Node.js
+ - Multiple browsers to choose from (Playwright, Puppeteer etc.)
+ - Implemented GraalJS and Node.js engines
+ - Jsoup for easy HTML handling
+ - Supported platforms are all from Java and all from Node.js
 
 ### Browsers
 
@@ -29,15 +29,11 @@ Note that the first run may take a bit because Node.js and its modules get insta
 | :-----: | :-----: | :-----: | :-----: | :-----: |
 | [Playwright](https://github.com/microsoft/playwright) | Yes | Node.js/V8 | Yes | No |
 | [Puppeteer](https://github.com/puppeteer/puppeteer) | Yes | Node.js/V8 | No | No |
+| [Graal](https://github.com/oracle/graaljs) | Yes | GraalJS | No | Yes |
 
 (JS = JavaScript; Full Java = If the browser is completely written in Java or not; Downloads = If the browser is able to download files other than html/xml/pdf)
 
 ### [Contribute/Build](CONTRIBUTE.md)
-
-### Links
-- A browser complelty written in Java: [JG-Browser](https://github.com/Osiris-Team/JG-Browser)
-- https://spec.whatwg.org/ | Details about JS Web-APIs
-- https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
 
 ### Examples
  - [Running Node.js independently](src/test/java/examples/IndependentNodeJs.java)
@@ -89,4 +85,10 @@ We want to provide the latest and best technologies regarding headless browsers 
 | [Playwright](https://github.com/microsoft/playwright) | Emulates different types of browsers | [License](https://github.com/microsoft/playwright/blob/master/LICENSE) |
 | [Puppeteer](https://github.com/puppeteer/puppeteer) | Emulates different types of browsers  | [License](https://github.com/puppeteer/puppeteer/blob/main/LICENSE) |
 | [Node.js](https://github.com/nodejs/node) | Enables executing JavaScript code | [License](https://github.com/nodejs/node/blob/master/LICENSE) |
+| [GraalJS](https://github.com/oracle/graaljs) | Enables executing JavaScript code from Java | [License](https://github.com/oracle/graaljs/blob/master/LICENSE) |
 | [Jsoup](https://github.com/jhy/jsoup)      | Used to load pages and modify their HTML code      |   [License](https://github.com/jhy/jsoup/blob/master/LICENSE) |
+
+### Links
+
+- https://spec.whatwg.org/ | Details about JS Web-APIs
+- https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
