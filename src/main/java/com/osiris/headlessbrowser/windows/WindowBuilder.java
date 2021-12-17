@@ -66,10 +66,6 @@ public class WindowBuilder {
         this.userDataDir = new File(parentBrowser.getMainDirectory() + "/user-data");
     }
 
-    public GraalWindow buildGraalWindow() {
-        return new GraalWindow(this.parentBrowser, this.enableJavaScript, this.customHeaders);
-    }
-
     public PuppeteerWindow buildPuppeteerWindow() {
         return new PuppeteerWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
                 this.isHeadless, this.userDataDir, this.isDevTools, this.debuggingPort, this.makeUndetectable, this.additionalStartupArgs);

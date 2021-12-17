@@ -4,7 +4,6 @@ package com.osiris.headlessbrowser.windows;
 import com.osiris.headlessbrowser.HBrowser;
 import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
-import com.osiris.headlessbrowser.js.contexts.GraalContext;
 import com.osiris.headlessbrowser.js.contexts.NodeContext;
 import com.osiris.headlessbrowser.utils.HtmlView;
 import org.jsoup.Jsoup;
@@ -170,7 +169,7 @@ public class LightWindow implements HWindow {
 
     /**
      * Executes the provided JavaScript code in the current context. <br>
-     * See {@link GraalContext} for details. <br>
+     * See {@link NodeContext} for details. <br>
      */
     public LightWindow executeJS(String jsCode) throws NodeJsCodeException {
         jsContext.executeJavaScript(jsCode);

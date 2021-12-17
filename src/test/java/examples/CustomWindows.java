@@ -1,7 +1,6 @@
 package examples;
 
 import com.osiris.headlessbrowser.HBrowser;
-import com.osiris.headlessbrowser.windows.GraalWindow;
 import com.osiris.headlessbrowser.windows.LightWindow;
 import com.osiris.headlessbrowser.windows.PlaywrightWindow;
 import com.osiris.headlessbrowser.windows.PuppeteerWindow;
@@ -24,7 +23,7 @@ public class CustomWindows {
         }
 
         // There are multiple types of windows you can build.
-        // Remember that its important to close the windows, that's why we use the try/catch block,
+        // Remember that it's important to close the windows, that's why we use the try/catch block,
         // which will auto-close the window when we leave the block.
         try (PlaywrightWindow playwrightWindow = hBrowser.openCustomWindow().buildPlaywrightWindow()) {
             // ...
@@ -39,12 +38,6 @@ public class CustomWindows {
         }
 
         try (LightWindow lightWindow = hBrowser.openCustomWindow().buildLightWindow()) {
-            // ...
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try (GraalWindow playwrightWindow = hBrowser.openCustomWindow().buildGraalWindow()) {
             // ...
         } catch (Exception e) {
             e.printStackTrace();
