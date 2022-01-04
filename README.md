@@ -14,7 +14,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
 ### Installation
 
 - Java 8 or higher required.
-- [Click here for maven/gradle/sbt/leinigen instructions.](https://jitpack.io/#Osiris-Team/Headless-Browser/LATEST)
+- [Click here for maven/gradle/sbt/leinigen instructions.](https://jitpack.io/#Osiris-Team/HBrowser/LATEST)
 - Make sure to watch this repository to get notified of future updates.
 
 ### Features
