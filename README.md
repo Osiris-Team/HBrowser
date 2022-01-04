@@ -1,4 +1,4 @@
-# Headless-Browser
+# HBrowser
 
 A new, headless browser for Java.
 
