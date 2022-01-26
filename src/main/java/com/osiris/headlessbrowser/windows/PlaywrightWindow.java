@@ -54,8 +54,8 @@ public class PlaywrightWindow implements HWindow {
         this.isHeadless = isHeadless;
         this.isDevTools = isDevTools;
         this.temporaryUserDataDir = temporaryUserDataDir;
+        this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
         try {
-            this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
             jsContext.npmInstall("playwright");
 
             // Define global variables/constants

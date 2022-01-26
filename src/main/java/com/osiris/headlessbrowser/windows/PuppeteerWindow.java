@@ -52,9 +52,8 @@ public class PuppeteerWindow implements HWindow {
         this.isDevTools = isDevTools;
         this.debuggingPort = debuggingPort;
         this.additionalStartupArgs = additionalStartupArgs;
+        this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
         try {
-            this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
-
             // Define global variables/constants
             if (makeUndetectable) {
                 /* // Doesnt work

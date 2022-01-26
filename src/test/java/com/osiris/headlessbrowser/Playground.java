@@ -15,7 +15,7 @@ public class Playground {
     void testPlaywright() {
         HBrowser hBrowser = new HBrowser();
         try (PlaywrightWindow hWindow = hBrowser.openCustomWindow()
-                .headless(true).makeUndetectable(true).debugOutputStream(System.out).buildPlaywrightWindow()) {
+                .headless(true).makeUndetectable(false).debugOutputStream(System.out).buildPlaywrightWindow()) {
             try {
                 hWindow.load("https://spigotmc.org"); // spigotmc.org
                 Thread.sleep(15000); // So see result
