@@ -10,7 +10,7 @@ try(PlaywrightWindow window = hBrowser.openWindow()){
 }
 ```
 All examples [here](src/test/java/examples).
-Note that the first run may take a bit because Node.js and its modules get installed into your current working dir.
+Note that the first run may take a bit because Node.js (if not installed) and its modules get installed into your current working dir.
 
 ### Installation
 

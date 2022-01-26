@@ -6,7 +6,6 @@ import com.osiris.headlessbrowser.utils.AsyncInputStream;
 import com.osiris.headlessbrowser.utils.DownloadTask;
 import com.osiris.headlessbrowser.utils.TrashOutput;
 import net.lingala.zip4j.ZipFile;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,29 +15,26 @@ import org.rauschig.jarchivelib.ArchiverFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class NodeContext implements AutoCloseable {
-    private final Process process;
-    private final AsyncInputStream processInput;
-    private final AsyncInputStream processErrorInput;
-    private final OutputStream processOutput;
-    private final PrintStream debugOutput;
-    private final File lastJsCodeExecutionResultFile;
-    private final int timeout;
-    private final File parentNodeDir;
-    private final File installationDir;
-    private final File workingDir;
-    private final File nodeExeFile;
-    private final File npmExeFile;
-    private final File npxExeFile;
-    private OperatingSystemArchitectureType osArchitectureType = null;
-    private OperatingSystemType osType;
+    public final Process process;
+    public final AsyncInputStream processInput;
+    public final AsyncInputStream processErrorInput;
+    public final OutputStream processOutput;
+    public final PrintStream debugOutput;
+    public final File lastJsCodeExecutionResultFile;
+    public final int timeout;
+    public final File parentNodeDir;
+    public final File installationDir;
+    public final File workingDir;
+    public final String nodeExePath;
+    public final String npmExePath;
+    public final String npxExePath;
+    public OperatingSystemArchitectureType osArchitectureType = null;
+    public OperatingSystemType osType;
 
     public NodeContext() {
         this(null, null, 30);
@@ -46,7 +42,8 @@ public class NodeContext implements AutoCloseable {
 
     /**
      * @param parentNodeDir path of an empty directory (can also not exist yet) to install the latest Node.js into if needed.
-     *                      If null Node.js will get installed into ./NodeJS-Installation ("." is the current working directory).
+     *                      If null we check for an existing system-wide installation of Node.js and use that,
+     *                      otherwise we install the latest version into ./NodeJS-Installation ("." is the current working directory).
      * @param debugOutput   if null, debug output won't be written/printed, otherwise it gets printed/written to the provided {@link OutputStream}.
      * @param timeout       the max time in seconds to wait for JavaScript code to finish. Set to 0 to disable.
      */
@@ -57,97 +54,106 @@ public class NodeContext implements AutoCloseable {
         else
             this.debugOutput = new PrintStream(debugOutput);
         PrintStream out = this.debugOutput;
-        if (parentNodeDir == null) {
-            this.parentNodeDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
-            parentNodeDir = this.parentNodeDir;
-        } else
-            this.parentNodeDir = parentNodeDir;
+        // TODO add check for already installed nodejs installation
+        if (parentNodeDir == null) parentNodeDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
+        this.parentNodeDir = parentNodeDir;
+        this.workingDir = new File(this.parentNodeDir.getParentFile() + "/node-js-working-dir");
+        Objects.requireNonNull(workingDir);
+        if (!workingDir.exists()) workingDir.mkdirs();
+        this.installationDir = this.parentNodeDir.listFiles()[0];
+        Objects.requireNonNull(installationDir);
         // Download and install NodeJS into current working directory if no installation found
         try {
             determineArchAndOs();
-            if (!parentNodeDir.exists()
-                    || Objects.requireNonNull(parentNodeDir.listFiles()).length == 0) {
-                String url = "https://nodejs.org/dist/latest/";
-                out.println("Installing latest NodeJS release from '" + url + "'...");
-                Document docLatest = Jsoup.connect(url).get();
+            if (isNodeJsSystemWideInstalled()){
+                nodeExePath = "node";
+                npmExePath = "npm";
+                npxExePath = "npx";
+            } else {
+                if (!parentNodeDir.exists()
+                        || Objects.requireNonNull(parentNodeDir.listFiles()).length == 0){ // Do install if needed
+                    String url = "https://nodejs.org/dist/latest/";
+                    out.println("Installing latest NodeJS release from '" + url + "'...");
+                    Document docLatest = Jsoup.connect(url).get();
 
-                String downloadUrl = null;
-                for (Element e :
-                        docLatest.getElementsByTag("a")) {
-                    String attr = e.attr("href");
-                    if (isCorrectFileForOs(attr.replace(url, ""))) {
-                        downloadUrl = url + attr;
-                        break;
+                    String downloadUrl = null;
+                    for (Element e :
+                            docLatest.getElementsByTag("a")) {
+                        String attr = e.attr("href");
+                        if (isCorrectFileForOs(attr.replace(url, ""))) {
+                            downloadUrl = url + attr;
+                            break;
+                        }
+                    }
+
+                    if (downloadUrl == null)
+                        throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + osType.name() + "' with ARCH '" + osArchitectureType.name() + "'.");
+
+                    // Download the zip file and extract its contents
+                    if (!parentNodeDir.exists()) parentNodeDir.mkdirs();
+                    if (osType.equals(OperatingSystemType.WINDOWS)) {
+                        File downloadZip = new File(parentNodeDir + "/download.zip");
+                        if (downloadZip.exists()) downloadZip.delete();
+                        downloadZip.createNewFile();
+                        DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
+                        downloadTask.start();
+                        while (!downloadTask.isFinished()) {
+                            out.println("Download-Task > " + downloadTask.getStatus());
+                            Thread.sleep(1000);
+                        }
+                        out.println("Download-Task > " + downloadTask.getStatus());
+
+                        out.print("Extracting Node.js files...");
+                        out.flush();
+                        ZipFile zipFile = new ZipFile(downloadZip);
+                        zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), parentNodeDir.getPath());
+                        downloadZip.delete();
+                        out.println(" SUCCESS!");
+                    } else {
+                        File downloadFile = new File(parentNodeDir + "/download.tar.gz");
+                        if (downloadFile.exists()) downloadFile.delete();
+                        downloadFile.createNewFile();
+                        DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
+                        downloadTask.start();
+                        while (!downloadTask.isFinished()) {
+                            out.println("Download-Task > " + downloadTask.getStatus());
+                            Thread.sleep(1000);
+                        }
+                        out.println("Download-Task > " + downloadTask.getStatus());
+                        out.print("Extracting Node.js files...");
+                        out.flush();
+                        ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, parentNodeDir);
+                        // Result should be .../headless-browser/node-js/node<version>/...
+                        downloadFile.delete();
+                        out.println(" SUCCESS!");
                     }
                 }
 
-                if (downloadUrl == null)
-                    throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + osType.name() + "' with ARCH '" + osArchitectureType.name() + "'.");
-
-                // Download the zip file and extract its contents
-                if (!parentNodeDir.exists()) parentNodeDir.mkdirs();
+                File nodeExeFile, npmExeFile, npxExeFile;
                 if (osType.equals(OperatingSystemType.WINDOWS)) {
-                    File downloadZip = new File(parentNodeDir + "/download.zip");
-                    if (downloadZip.exists()) downloadZip.delete();
-                    downloadZip.createNewFile();
-                    DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
-                    downloadTask.start();
-                    while (!downloadTask.isFinished()) {
-                        out.println("Download-Task > " + downloadTask.getStatus());
-                        Thread.sleep(1000);
-                    }
-                    out.println("Download-Task > " + downloadTask.getStatus());
-
-                    out.print("Extracting Node.js files...");
-                    out.flush();
-                    ZipFile zipFile = new ZipFile(downloadZip);
-                    zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), parentNodeDir.getPath());
-                    downloadZip.delete();
-                    out.println(" SUCCESS!");
-                } else {
-                    File downloadFile = new File(parentNodeDir + "/download.tar.gz");
-                    if (downloadFile.exists()) downloadFile.delete();
-                    downloadFile.createNewFile();
-                    DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
-                    downloadTask.start();
-                    while (!downloadTask.isFinished()) {
-                        out.println("Download-Task > " + downloadTask.getStatus());
-                        Thread.sleep(1000);
-                    }
-                    out.println("Download-Task > " + downloadTask.getStatus());
-                    out.print("Extracting Node.js files...");
-                    out.flush();
-                    ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, parentNodeDir);
-                    // Result should be .../headless-browser/node-js/node<version>/...
-                    downloadFile.delete();
-                    out.println(" SUCCESS!");
+                    nodeExeFile = new File(installationDir + "/node.exe");
+                    npmExeFile = new File(installationDir + "/npm.cmd");
+                    npxExeFile = new File(installationDir + "/npx.cmd");
+                } else { // Linux, mac and co.
+                    nodeExeFile = new File(installationDir + "/bin/node");
+                    npmExeFile = new File(installationDir + "/bin/npm");
+                    npxExeFile = new File(installationDir + "/bin/npx");
                 }
+
+                if (!nodeExeFile.exists())
+                    throw new FileNotFoundException(nodeExeFile.getAbsolutePath());
+                if (!npmExeFile.exists())
+                    throw new FileNotFoundException(npmExeFile.getAbsolutePath());
+                if (!npxExeFile.exists())
+                    throw new FileNotFoundException(npxExeFile.getAbsolutePath());
+
+                nodeExePath = nodeExeFile.getAbsolutePath();
+                npmExePath = npmExeFile.getAbsolutePath();
+                npxExePath = npxExeFile.getAbsolutePath();
             }
-
-            this.installationDir = this.parentNodeDir.listFiles()[0];
-            Objects.requireNonNull(installationDir);
-            this.workingDir = new File(this.parentNodeDir.getParentFile() + "/node-js-working-dir");
-            Objects.requireNonNull(workingDir);
-            if (!workingDir.exists()) workingDir.mkdirs();
-
-            if (osType.equals(OperatingSystemType.WINDOWS)) {
-                nodeExeFile = new File(installationDir + "/node.exe");
-                npmExeFile = new File(installationDir + "/npm.cmd");
-                npxExeFile = new File(installationDir + "/npx.cmd");
-            } else { // Linux, mac and co.
-                nodeExeFile = new File(installationDir + "/bin/node");
-                npmExeFile = new File(installationDir + "/bin/npm");
-                npxExeFile = new File(installationDir + "/bin/npx");
-            }
-
-            if (!nodeExeFile.exists())
-                throw new Exception("node.exe couldn't be found in " + installationDir);
-            if (!npmExeFile.exists())
-                throw new Exception("npm.cmd couldn't be found in " + installationDir);
-            if (!npxExeFile.exists())
-                throw new Exception("npx.cmd couldn't be found in " + installationDir);
+        } catch (RuntimeException e){
+            throw e;
         } catch (Exception e) {
-            System.err.println("Error during installation of NodeJS. Details:");
             throw new RuntimeException(e);
         }
 
@@ -156,7 +162,7 @@ public class NodeContext implements AutoCloseable {
             out.print("Initialising NodeJS...");
             out.flush();
             ProcessBuilder processBuilder = new ProcessBuilder(Arrays.asList(
-                    nodeExeFile.getAbsolutePath(), "--interactive"));
+                    nodeExePath, "--interactive"));
             processBuilder.directory(workingDir);
             // Must be inherited so that NodeJS closes when this application closes.
             // Wrong! It seems like NodeJS closes if the parent process dies, even if its Piped I/O.
@@ -171,7 +177,7 @@ public class NodeContext implements AutoCloseable {
             processErrorInput = new AsyncInputStream(process.getErrorStream());
             processOutput = process.getOutputStream();
             out.println(" SUCCESS!");
-            out.println("Node-JS was started from: " + nodeExeFile);
+            out.println("Node-JS was started from: " + nodeExePath);
 
             Thread t = new Thread(() -> {
                 // Keeps the java application running until NodeJS closes
@@ -189,7 +195,7 @@ public class NodeContext implements AutoCloseable {
                     "  return new Promise(resolve => setTimeout(resolve, ms));\n" +
                     "}");
 
-            lastJsCodeExecutionResultFile = new File(nodeExeFile.getParentFile() + "/JavaScriptCodeResult.txt");
+            lastJsCodeExecutionResultFile = new File(workingDir + "/JavaScriptCodeResult.txt");
             if (!lastJsCodeExecutionResultFile.exists()) lastJsCodeExecutionResultFile.createNewFile();
             String resultFilePath = lastJsCodeExecutionResultFile.getAbsolutePath().replace("\\", "/"); // To avoid issues with indows file path formats
             executeJavaScript("function writeToJava(result) {\n" +
@@ -202,6 +208,30 @@ public class NodeContext implements AutoCloseable {
             System.err.println("Error during start of NodeJS! Details:");
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean isNodeJsSystemWideInstalled() throws IOException, InterruptedException {
+        debugOutput.println("Is Node.js system-wide installed?");
+        boolean isInstalled = false;
+        try{
+            List<String> commands = new ArrayList<>();
+            commands.add("node");
+            Process process = new ProcessBuilder(commands).directory(workingDir).start();
+            new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NODE] " + line));
+            new AsyncInputStream(process.getErrorStream()).listeners.add(line -> debugOutput.println("[NODE-ERROR] " + line));
+            if (!process.isAlive())
+                throw new Exception("Failed to run command: "+commands+" Exit-Code: "+process.exitValue());
+            else
+                process.destroy();
+            isInstalled = true;
+        } catch (Exception e) {
+            debugOutput.println(e.getMessage());
+        }
+        if (isInstalled)
+            debugOutput.println("Node.js is system-wide installed.");
+        else
+            debugOutput.println("Node.js is not system-wide installed.");
+        return false;
     }
 
     /**
@@ -362,7 +392,7 @@ public class NodeContext implements AutoCloseable {
             // Writing stuff directly to the process output/NodeJs REPL console somehow is very error-prone.
             // That's why instead we create a temp file with the js code in it and load it using the .load command.
             long msStart = System.currentTimeMillis();
-            tmpJs = new File(nodeExeFile.getParentFile() + "/temp" + msStart + ".js");
+            tmpJs = new File(workingDir + "/temp" + msStart + ".js");
             if (!tmpJs.exists()) tmpJs.createNewFile();
 
             if (wrapInTryCatch) {
@@ -557,12 +587,12 @@ public class NodeContext implements AutoCloseable {
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
         Objects.requireNonNull(args);
         List<String> commands = new ArrayList<>();
-        commands.add(npmExeFile.getAbsolutePath());
+        commands.add(npmExePath);
         commands.addAll(Arrays.asList(args));
         Process process = new ProcessBuilder(commands).directory(workingDir).start();
         new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
         new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
-        while (process.isAlive())
+        while (process.isAlive()) // Wait until the process exits
             Thread.sleep(500);
         return process;
     }
@@ -570,12 +600,12 @@ public class NodeContext implements AutoCloseable {
     public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
         Objects.requireNonNull(args);
         List<String> commands = new ArrayList<>();
-        commands.add(npxExeFile.getAbsolutePath());
+        commands.add(npxExePath);
         commands.addAll(Arrays.asList(args));
         Process process = new ProcessBuilder(commands).directory(workingDir).start();
         new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPX] " + line));
         new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));
-        while (process.isAlive())
+        while (process.isAlive()) // Wait until the process exits
             Thread.sleep(500);
         return process;
     }
@@ -591,10 +621,6 @@ public class NodeContext implements AutoCloseable {
 
     public File getParentNodeDir() {
         return parentNodeDir;
-    }
-
-    public File getNodeExeFile() {
-        return nodeExeFile;
     }
 
     public Process getProcess() {
@@ -635,14 +661,6 @@ public class NodeContext implements AutoCloseable {
 
     public File getWorkingDir() {
         return workingDir;
-    }
-
-    public File getNpmExeFile() {
-        return npmExeFile;
-    }
-
-    public File getNpxExeFile() {
-        return npxExeFile;
     }
 
     public enum OperatingSystemArchitectureType {
