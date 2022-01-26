@@ -9,6 +9,7 @@ try(PlaywrightWindow window = hBrowser.openWindow()){
    // ...   
 }
 ```
+All examples [here](src/test/java/examples).
 Note that the first run may take a bit because Node.js and its modules get installed into your current working dir.
 
 ### Installation
@@ -35,10 +36,6 @@ and more of its features were ported to Java.
 (JS = JavaScript; Downloads = If the browser is able to download files other than html/xml/pdf;)
 
 ### [Contribute/Build](CONTRIBUTE.md)
-
-### Examples
- - [Running Node.js independently](src/test/java/examples/IndependentNodeJs.java)
- - [Customizing browser windows](src/test/java/examples/CustomWindows.java)
 
 ### Libraries
 
