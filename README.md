@@ -24,8 +24,8 @@ Note that the first run may take a bit because Node.js and its modules get insta
  - Jsoup for easy HTML handling
  - Supported platforms are all from Java and all from Node.js
 
-### Browsers
-Playwright is the default and recommended browser to use, since it supports downloads
+### Drivers
+Playwright is the default and recommended browser drvier to use, since it supports downloads
 and more of its features were ported to Java.
 
 | Name | Version| JS-Engine | Downloads |
