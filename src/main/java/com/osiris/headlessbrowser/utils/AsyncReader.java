@@ -4,18 +4,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-public class AsyncInputStream {
-    private final InputStream inputStream;
-    private final Thread thread;
+public class AsyncReader {
+    public final InputStream inputStream;
+    public final Thread thread;
     public List<Consumer<String>> listeners = new CopyOnWriteArrayList<>();
 
-    public AsyncInputStream(InputStream inputStream) {
+    @SafeVarargs
+    public AsyncReader(InputStream inputStream, Consumer<String>... listeners) {
         this.inputStream = inputStream;
-
+        if (listeners != null && listeners.length != 0) this.listeners.addAll(Arrays.asList(listeners));
         Object o = this;
         thread = new Thread(() -> {
             String line = "";
@@ -27,7 +29,7 @@ public class AsyncInputStream {
                     }
                 }
             } catch (IOException e) {
-                System.err.println("Error in thread for object '" + o + "' Details:");
+                System.out.println("Error in thread for object '" + o + "' Details:");
                 e.printStackTrace();
             }
         });

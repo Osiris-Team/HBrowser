@@ -38,7 +38,7 @@ public class PlaywrightWindow implements HWindow {
     private final File downloadTempDir;
     private boolean enableJavaScript;
     private String url;
-    private boolean temporaryUserDataDir;
+    private final boolean temporaryUserDataDir;
 
     /**
      * <p style="color: red;">Note that this is not the recommended way of creating the window object.</p>
@@ -47,7 +47,7 @@ public class PlaywrightWindow implements HWindow {
     public PlaywrightWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
                             boolean isHeadless, File userDataDir, boolean isDevTools, boolean makeUndetectable, boolean temporaryUserDataDir) {
         this.parentBrowser = parentBrowser;
-        if (debugOutput==null)
+        if (debugOutput == null)
             debugOutput = new TrashOutput();
         this.debugOutput = debugOutput;
         this.out = new PrintStream(debugOutput);
@@ -69,8 +69,8 @@ public class PlaywrightWindow implements HWindow {
             if (userDataDir == null) {
                 userDataDir = new WindowBuilder(null).userDataDir; // Get the default value
             }
-            if (temporaryUserDataDir){
-                userDataDir = new File(parentBrowser.getMainDirectory()+"/user-data-"+Integer.toHexString(hashCode()));
+            if (temporaryUserDataDir) {
+                userDataDir = new File(parentBrowser.getMainDirectory() + "/user-data-" + Integer.toHexString(hashCode()));
             }
             if (userDataDir.isFile())
                 throw new Exception("userDataDir must be a directory and cannot be a file (" + userDataDir.getAbsolutePath() + ")!");
@@ -237,17 +237,17 @@ public class PlaywrightWindow implements HWindow {
     /**
      * Returns the currently active pages/tabs inside a {@link JsonArray}.
      */
-    public JsonArray getPages(){
+    public JsonArray getPages() {
         return new Gson().fromJson(jsContext.executeJSAndGetResult("" +
                 "var pages = browserCtx.pages();\n" +
                 "var result = '[';\n" +
                 "for (var i = 0; i > pages; i++){" +
-                "var p = pages[i];\n"+
+                "var p = pages[i];\n" +
                 "if (i==pages.length-1)" +
                 "  result = result + JSON.stringify(p);\n" +
                 "else" +
                 "  result = result + JSON.stringify(p)+',';\n" +
-                "}\n"+
+                "}\n" +
                 "result = result + ']';\n"), JsonArray.class);
     }
 
@@ -458,37 +458,38 @@ public class PlaywrightWindow implements HWindow {
      * See {@link #setCookie(String, String, String, String, String, boolean, boolean)} for details.
      */
     public PlaywrightWindow setCookie(HttpCookie cookie) throws MalformedURLException, NodeJsCodeException {
-        return setCookie(cookie.getName(), cookie.getValue(), null,  cookie.getDomain(), cookie.getPath(), cookie.isHttpOnly(), cookie.getSecure());
+        return setCookie(cookie.getName(), cookie.getValue(), null, cookie.getDomain(), cookie.getPath(), cookie.isHttpOnly(), cookie.getSecure());
     }
 
     /**
      * Note that this also works before loading a page. <br>
      * If the url is provided there is no need for providing the domain and path. <br>
      * If the domain and path are provided, there is no need to provide an url <br>
-     * @param url If null, at least provide a domain. <br> Url example: https://example.com or http://example.com <br><br>
+     *
+     * @param url    If null, at least provide a domain. <br> Url example: https://example.com or http://example.com <br><br>
      * @param domain If null you must provide an url. <br> Domain example: example.com or .example.com <br><br>
-     * @param path If null or empty the path is set to "/". The path of an url is the part after its domain. <br> For the url https://example.com/my/path
-     *             the path would be /my/path.  <br><br>
+     * @param path   If null or empty the path is set to "/". The path of an url is the part after its domain. <br> For the url https://example.com/my/path
+     *               the path would be /my/path.  <br><br>
      */
     public PlaywrightWindow setCookie(String name, String value, String url, String domain, String path, boolean isHttpOnly, boolean isSecure) throws MalformedURLException, NodeJsCodeException {
         StringBuilder jsCode = new StringBuilder("await browserCtx.addCookies([{" +
                 "  name: '" + name + "'," +
                 "  value: '" + value + "',");
-        if (url==null && domain==null)
+        if (url == null && domain == null)
             throw new MalformedURLException("Since the provided url is null, you must provide at least a domain, which is not done!");
 
-        if (url!=null){
-            jsCode.append("  url: '"+url+"',");
-        }else{
+        if (url != null) {
+            jsCode.append("  url: '" + url + "',");
+        } else {
             if (!domain.startsWith("."))
-                domain = "."+domain;
-            if (path==null || path.trim().isEmpty())
+                domain = "." + domain;
+            if (path == null || path.trim().isEmpty())
                 path = "/";
-            jsCode.append("  domain: '"+domain+"',  path: '"+path+"',");
+            jsCode.append("  domain: '" + domain + "',  path: '" + path + "',");
         }
 
         jsCode.append("  httpOnly: " + isHttpOnly + "," +
-                "  secure: " + isSecure +"}]);\n");
+                "  secure: " + isSecure + "}]);\n");
 
         jsContext.executeJavaScript(jsCode.toString());
         return this;
@@ -663,8 +664,8 @@ public class PlaywrightWindow implements HWindow {
      * @param delay      the time to wait between mousedown and mouseup in milliseconds.
      */
     public PlaywrightWindow click(String selector, String type, int clickCount, int delay) throws NodeJsCodeException {
-        jsContext.executeJavaScript(""+
-                "await page.click('" + selector + "', {button: '"+type+"', clickCount: "+clickCount+", delay:"+delay+"});\n");
+        jsContext.executeJavaScript("" +
+                "await page.click('" + selector + "', {button: '" + type + "', clickCount: " + clickCount + ", delay:" + delay + "});\n");
         return this;
     }
 
@@ -821,10 +822,10 @@ public class PlaywrightWindow implements HWindow {
     public void close() throws RuntimeException {
         // Running js: browser.close() here causes a weird exception: https://github.com/isaacs/rimraf/issues/221
         // Since it's not mandatory we just don't do it.
-        try{
+        try {
             jsContext.close();
-            if (temporaryUserDataDir){
-                out.println("Deleting: "+userDataDir);
+            if (temporaryUserDataDir) {
+                out.println("Deleting: " + userDataDir);
                 forceDeleteDirectory(userDataDir);
             }
         } catch (Exception e) {
@@ -834,18 +835,18 @@ public class PlaywrightWindow implements HWindow {
 
     private void forceDeleteDirectory(File file) throws IOException {
         if (!file.exists()) {
-            out.println("Couldn't find: "+file);
+            out.println("Couldn't find: " + file);
             return;
         }
 
-        if (!file.isDirectory()){
+        if (!file.isDirectory()) {
             waitUntilDeleted(file);
             return;
         }
 
         // Delete all sub-directories and wait until all of them are actually deleted
         File[] files = file.listFiles();
-        while(files!=null && files.length>0){
+        while (files != null && files.length > 0) {
             for (File f :
                     files) {
                 forceDeleteDirectory(f);
@@ -859,7 +860,7 @@ public class PlaywrightWindow implements HWindow {
         for (int i = 0; i < 100000; i++) {
             if (file.delete()) return;
         }
-        throw new FileSystemLoopException("Failed to delete file after trying 100000 times: "+file);
+        throw new FileSystemLoopException("Failed to delete file after trying 100000 times: " + file);
     }
 
 }

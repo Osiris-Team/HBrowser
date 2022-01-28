@@ -2,11 +2,14 @@ package com.osiris.headlessbrowser.js.contexts;
 
 import com.osiris.betterthread.BetterThreadManager;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
-import com.osiris.headlessbrowser.utils.AsyncInputStream;
+import com.osiris.headlessbrowser.utils.AsyncReader;
 import com.osiris.headlessbrowser.utils.DownloadTask;
 import com.osiris.headlessbrowser.utils.TrashOutput;
+import com.osiris.headlessbrowser.utils.VirtualInputStream;
 import net.lingala.zip4j.ZipFile;
 import org.apache.commons.lang3.StringUtils;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -15,14 +18,17 @@ import org.rauschig.jarchivelib.ArchiverFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class NodeContext implements AutoCloseable {
     public final Process process;
-    public final AsyncInputStream processInput;
-    public final AsyncInputStream processErrorInput;
+    public final AsyncReader processInput;
+    public final AsyncReader processErrorInput;
     public final OutputStream processOutput;
     public final PrintStream debugOutput;
     public final File lastJsCodeExecutionResultFile;
@@ -54,24 +60,24 @@ public class NodeContext implements AutoCloseable {
         else
             this.debugOutput = new PrintStream(debugOutput);
         PrintStream out = this.debugOutput;
-        // TODO add check for already installed nodejs installation
-        if (parentNodeDir == null) parentNodeDir = new File(System.getProperty("user.dir") + "/NodeJS-Installation");
+        if (parentNodeDir == null) parentNodeDir = new File(System.getProperty("user.dir") + "/node-js");
         this.parentNodeDir = parentNodeDir;
+        Objects.requireNonNull(this.parentNodeDir);
+        if (!parentNodeDir.exists()) parentNodeDir.mkdirs();
         this.workingDir = new File(this.parentNodeDir.getParentFile() + "/node-js-working-dir");
         Objects.requireNonNull(workingDir);
         if (!workingDir.exists()) workingDir.mkdirs();
-        this.installationDir = this.parentNodeDir.listFiles()[0];
+        this.installationDir = new File(this.parentNodeDir + "/node-js-installation");
         Objects.requireNonNull(installationDir);
         // Download and install NodeJS into current working directory if no installation found
         try {
             determineArchAndOs();
-            if (isNodeJsSystemWideInstalled()){
+            if (isNodeJsSystemWideInstalled()) {
                 nodeExePath = "node";
                 npmExePath = "npm";
                 npxExePath = "npx";
             } else {
-                if (!parentNodeDir.exists()
-                        || Objects.requireNonNull(parentNodeDir.listFiles()).length == 0){ // Do install if needed
+                if (installationDir.listFiles() == null || installationDir.listFiles().length == 0) { // Do install if needed
                     String url = "https://nodejs.org/dist/latest/";
                     out.println("Installing latest NodeJS release from '" + url + "'...");
                     Document docLatest = Jsoup.connect(url).get();
@@ -90,9 +96,8 @@ public class NodeContext implements AutoCloseable {
                         throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + osType.name() + "' with ARCH '" + osArchitectureType.name() + "'.");
 
                     // Download the zip file and extract its contents
-                    if (!parentNodeDir.exists()) parentNodeDir.mkdirs();
                     if (osType.equals(OperatingSystemType.WINDOWS)) {
-                        File downloadZip = new File(parentNodeDir + "/download.zip");
+                        File downloadZip = new File(installationDir + "/download.zip");
                         if (downloadZip.exists()) downloadZip.delete();
                         downloadZip.createNewFile();
                         DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
@@ -106,11 +111,11 @@ public class NodeContext implements AutoCloseable {
                         out.print("Extracting Node.js files...");
                         out.flush();
                         ZipFile zipFile = new ZipFile(downloadZip);
-                        zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), parentNodeDir.getPath());
+                        zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
                         downloadZip.delete();
                         out.println(" SUCCESS!");
                     } else {
-                        File downloadFile = new File(parentNodeDir + "/download.tar.gz");
+                        File downloadFile = new File(installationDir + "/download.tar.gz");
                         if (downloadFile.exists()) downloadFile.delete();
                         downloadFile.createNewFile();
                         DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
@@ -122,7 +127,7 @@ public class NodeContext implements AutoCloseable {
                         out.println("Download-Task > " + downloadTask.getStatus());
                         out.print("Extracting Node.js files...");
                         out.flush();
-                        ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, parentNodeDir);
+                        ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
                         // Result should be .../headless-browser/node-js/node<version>/...
                         downloadFile.delete();
                         out.println(" SUCCESS!");
@@ -151,7 +156,7 @@ public class NodeContext implements AutoCloseable {
                 npmExePath = npmExeFile.getAbsolutePath();
                 npxExePath = npxExeFile.getAbsolutePath();
             }
-        } catch (RuntimeException e){
+        } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -172,9 +177,9 @@ public class NodeContext implements AutoCloseable {
             // Somehow the I/O from the node.exe cannot be read?
             // Tried multiple things without success.
             // Update: Node.exe must be started with this flag to get correct I/O: --interactive
-            processInput = new AsyncInputStream(process.getInputStream());
-            processInput.listeners.add(line -> out.println("[" + getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "|LOG] " + line));
-            processErrorInput = new AsyncInputStream(process.getErrorStream());
+            processInput = new AsyncReader(process.getInputStream(),
+                    line -> out.println("[" + getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "|LOG] " + line));
+            processErrorInput = new AsyncReader(process.getErrorStream());
             processOutput = process.getOutputStream();
             out.println(" SUCCESS!");
             out.println("Node-JS was started from: " + nodeExePath);
@@ -210,17 +215,28 @@ public class NodeContext implements AutoCloseable {
         }
     }
 
+    public static void main(String[] args) throws IOException, InterruptedException {
+        new AsyncReader(new ByteArrayInputStream("a\nb".getBytes(StandardCharsets.UTF_8)),
+                l -> System.out.println(l)
+        );
+        VirtualInputStream in = new VirtualInputStream();
+        new AsyncReader(in, line -> System.out.println(line));
+        in.addLine("a");
+        in.addLine("b");
+    }
+
     private boolean isNodeJsSystemWideInstalled() throws IOException, InterruptedException {
-        debugOutput.println("Is Node.js system-wide installed?");
         boolean isInstalled = false;
-        try{
+        try {
             List<String> commands = new ArrayList<>();
             commands.add("node");
             Process process = new ProcessBuilder(commands).directory(workingDir).start();
-            new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NODE] " + line));
-            new AsyncInputStream(process.getErrorStream()).listeners.add(line -> debugOutput.println("[NODE-ERROR] " + line));
+            new AsyncReader(process.getInputStream(),
+                    line -> debugOutput.println("[NODE] " + line));
+            new AsyncReader(process.getErrorStream(),
+                    line -> debugOutput.println("[NODE-ERROR] " + line));
             if (!process.isAlive())
-                throw new Exception("Failed to run command: "+commands+" Exit-Code: "+process.exitValue());
+                throw new Exception("Failed to run command: " + commands + " Exit-Code: " + process.exitValue());
             else
                 process.destroy();
             isInstalled = true;
@@ -231,7 +247,7 @@ public class NodeContext implements AutoCloseable {
             debugOutput.println("Node.js is system-wide installed.");
         else
             debugOutput.println("Node.js is not system-wide installed.");
-        return false;
+        return isInstalled;
     }
 
     /**
@@ -250,8 +266,7 @@ public class NodeContext implements AutoCloseable {
             if (StringUtils.containsIgnoreCase(fileName, "darwin")
                     && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames)))
                 return true;
-        }
-        else if (osType.equals(OperatingSystemType.WINDOWS)) {
+        } else if (osType.equals(OperatingSystemType.WINDOWS)) {
             // Must be a zip file
             if (!fileName.contains(".zip"))
                 return false;
@@ -259,8 +274,7 @@ public class NodeContext implements AutoCloseable {
             if (StringUtils.containsIgnoreCase(fileName, "win")
                     && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames)))
                 return true;
-        }
-        else {
+        } else {
             if (!fileName.contains(".tar.gz"))
                 return false;
         }
@@ -268,7 +282,7 @@ public class NodeContext implements AutoCloseable {
                 && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames));
     }
 
-    private boolean containsIgnoreCase(String fileName, String[] altNames){
+    private boolean containsIgnoreCase(String fileName, String[] altNames) {
         for (String altName :
                 altNames) {
             if (StringUtils.containsIgnoreCase(fileName, altName))
@@ -585,26 +599,50 @@ public class NodeContext implements AutoCloseable {
      * @throws InterruptedException
      */
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
+        // TODO Since the npm command doesnt work as regular Process, we need to create a virtual terminal
         Objects.requireNonNull(args);
+        String finished = "FINISHED-" + System.currentTimeMillis();
         List<String> commands = new ArrayList<>();
         commands.add(npmExePath);
         commands.addAll(Arrays.asList(args));
-        Process process = new ProcessBuilder(commands).directory(workingDir).start();
-        new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
-        new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
-        while (process.isAlive()) // Wait until the process exits
+        PipedOutputStream out = new PipedOutputStream();
+        PipedInputStream in = new PipedInputStream(out);
+        AsyncReader asyncIn = new AsyncReader(in);
+        asyncIn.listeners.add(line -> debugOutput.println("[NPM] " + line));
+        AtomicBoolean isFinished = new AtomicBoolean(false);
+        asyncIn.listeners.add(line -> {
+            if (line.equals(finished)) isFinished.set(true);
+        });
+        PrintWriter pOut = new PrintWriter(out);
+        Terminal terminal = TerminalBuilder.builder()
+                .streams(in, out)
+                .system(false) // to make this a virtual terminal
+                .build();
+        pOut.println("cd " + workingDir);
+        if (args.length != 0) {
+            for (String arg :
+                    args) {
+                pOut.print(arg + " ");
+            }
+            pOut.println();
+        }
+        pOut.println(finished);
+        while (!isFinished.get()) // Wait until the process exits
             Thread.sleep(500);
         return process;
     }
 
     public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
+        // TODO Since the npx command doesnt work as regular Process, we need to create a virtual terminal
         Objects.requireNonNull(args);
         List<String> commands = new ArrayList<>();
         commands.add(npxExePath);
         commands.addAll(Arrays.asList(args));
         Process process = new ProcessBuilder(commands).directory(workingDir).start();
-        new AsyncInputStream(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPX] " + line));
-        new AsyncInputStream(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));
+        new AsyncReader(process.getInputStream(),
+                line -> debugOutput.println("[NPX] " + line));
+        new AsyncReader(process.getErrorStream(),
+                line -> System.err.println("[NPX-ERROR] " + line));
         while (process.isAlive()) // Wait until the process exits
             Thread.sleep(500);
         return process;
@@ -627,7 +665,7 @@ public class NodeContext implements AutoCloseable {
         return process;
     }
 
-    public AsyncInputStream getProcessInput() {
+    public AsyncReader getProcessInput() {
         return processInput;
     }
 
@@ -639,7 +677,7 @@ public class NodeContext implements AutoCloseable {
         return debugOutput;
     }
 
-    public AsyncInputStream getProcessErrorInput() {
+    public AsyncReader getProcessErrorInput() {
         return processErrorInput;
     }
 

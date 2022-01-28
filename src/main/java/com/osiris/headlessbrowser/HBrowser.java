@@ -14,7 +14,7 @@ import java.io.IOException;
  * @author Osiris-Team
  */
 public class HBrowser {
-    private File mainDirectory = new File(System.getProperty("user.dir")+"/headless-browser");
+    private File mainDirectory = new File(System.getProperty("user.dir") + "/headless-browser");
 
     /**
      * Creates and returns a new window, built with defaults. <br>

@@ -182,7 +182,7 @@ public class LightWindow implements HWindow {
 
     @Override
     public void close() throws RuntimeException {
-        try{
+        try {
             jsContext.close();
         } catch (Exception e) {
             throw new RuntimeException(e);

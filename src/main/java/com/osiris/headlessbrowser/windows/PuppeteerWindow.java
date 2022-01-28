@@ -127,7 +127,7 @@ public class PuppeteerWindow implements HWindow {
     public void close() throws RuntimeException {
         // Running js: browser.close() here causes a weird exception: https://github.com/isaacs/rimraf/issues/221
         // Since it's not mandatory we just don't do it.
-        try{
+        try {
             jsContext.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
