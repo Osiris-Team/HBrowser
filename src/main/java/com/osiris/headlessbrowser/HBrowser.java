@@ -14,6 +14,7 @@ import java.io.IOException;
  * @author Osiris-Team
  */
 public class HBrowser {
+
     private File mainDirectory = new File(System.getProperty("user.dir") + "/headless-browser");
 
     /**
@@ -66,4 +67,6 @@ public class HBrowser {
         this.mainDirectory = mainDirectory;
         return this;
     }
+
+
 }

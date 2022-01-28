@@ -3,6 +3,9 @@ package com.osiris.headlessbrowser.utils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * This is a {@link InputStream} which means
@@ -11,6 +14,8 @@ import java.nio.charset.StandardCharsets;
  * Useful when you need a fake user input stream for example. <br>
  */
 public class VirtualInputStream extends InputStream {
+
+    public List<VirtualInputStream> copies = new CopyOnWriteArrayList<>();
 
     /**
      * An array of bytes that was provided
@@ -67,6 +72,16 @@ public class VirtualInputStream extends InputStream {
         this.count = buf.length;
     }
 
+    /**
+     * Duplicates the current {@link VirtualInputStream} and returns it. <br>
+     * Aka it creates a copy of itself. Useful if you want to read one stream from multiple readers. <br>
+     */
+    public VirtualInputStream copy() {
+        VirtualInputStream copy = new VirtualInputStream();
+        copies.add(copy);
+        return copy;
+    }
+
     public void addLine(String line) {
         synchronized (this) {
             line = line + "\n";
@@ -85,6 +100,35 @@ public class VirtualInputStream extends InputStream {
             }
             this.buf = newBuf;
             this.count = newBuf.length;
+            for (VirtualInputStream copy :
+                    copies) {
+                copy.addLine(line);
+            }
+        }
+    }
+
+    public void addBytes(byte[] bytes) {
+        Objects.requireNonNull(bytes);
+        Objects.requireNonNull(buf);
+        synchronized (this) {
+            int newLength = buf.length + bytes.length;
+            byte[] newBuf = new byte[newLength];
+            for (int i = 0; i < buf.length; i++) {
+                newBuf[i] = buf[i];
+            }
+            int a = 0;
+            int startIndex = 0;
+            if (buf.length > 0) startIndex = buf.length;
+            for (int i = startIndex; i < newLength; i++) {
+                newBuf[i] = bytes[a];
+                a++;
+            }
+            this.buf = newBuf;
+            this.count = newBuf.length;
+            for (VirtualInputStream copy :
+                    copies) {
+                copy.addBytes(bytes);
+            }
         }
     }
 
@@ -250,5 +294,4 @@ public class VirtualInputStream extends InputStream {
      */
     public void close() throws IOException {
     }
-
 }

@@ -36,9 +36,9 @@ public class PlaywrightWindow implements HWindow {
     private final File userDataDir;
     private final boolean isDevTools;
     private final File downloadTempDir;
+    private final boolean temporaryUserDataDir;
     private boolean enableJavaScript;
     private String url;
-    private final boolean temporaryUserDataDir;
 
     /**
      * <p style="color: red;">Note that this is not the recommended way of creating the window object.</p>

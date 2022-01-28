@@ -24,7 +24,7 @@ public class AsyncReader {
             try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
                 while ((line = br.readLine()) != null) {
                     for (Consumer<String> listener :
-                            listeners) {
+                            this.listeners) {
                         listener.accept(line);
                     }
                 }

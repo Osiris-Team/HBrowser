@@ -4,12 +4,10 @@ import com.osiris.betterthread.BetterThreadManager;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.utils.AsyncReader;
 import com.osiris.headlessbrowser.utils.DownloadTask;
+import com.osiris.headlessbrowser.utils.OS;
 import com.osiris.headlessbrowser.utils.TrashOutput;
-import com.osiris.headlessbrowser.utils.VirtualInputStream;
 import net.lingala.zip4j.ZipFile;
 import org.apache.commons.lang3.StringUtils;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -18,12 +16,16 @@ import org.rauschig.jarchivelib.ArchiverFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import static com.osiris.headlessbrowser.utils.OS.ARCH;
+import static com.osiris.headlessbrowser.utils.OS.TYPE;
 
 public class NodeContext implements AutoCloseable {
     public final Process process;
@@ -34,13 +36,11 @@ public class NodeContext implements AutoCloseable {
     public final File lastJsCodeExecutionResultFile;
     public final int timeout;
     public final File parentNodeDir;
-    public final File installationDir;
     public final File workingDir;
     public final String nodeExePath;
     public final String npmExePath;
     public final String npxExePath;
-    public OperatingSystemArchitectureType osArchitectureType = null;
-    public OperatingSystemType osType;
+    public File installationDir;
 
     public NodeContext() {
         this(null, null, 30);
@@ -64,98 +64,94 @@ public class NodeContext implements AutoCloseable {
         this.parentNodeDir = parentNodeDir;
         Objects.requireNonNull(this.parentNodeDir);
         if (!parentNodeDir.exists()) parentNodeDir.mkdirs();
-        this.workingDir = new File(this.parentNodeDir.getParentFile() + "/node-js-working-dir");
+        this.workingDir = new File(this.parentNodeDir + "/node-js-working-dir");
         Objects.requireNonNull(workingDir);
         if (!workingDir.exists()) workingDir.mkdirs();
         this.installationDir = new File(this.parentNodeDir + "/node-js-installation");
         Objects.requireNonNull(installationDir);
+        if (!this.installationDir.exists()) this.installationDir.mkdirs();
         // Download and install NodeJS into current working directory if no installation found
         try {
-            determineArchAndOs();
-            if (isNodeJsSystemWideInstalled()) {
-                nodeExePath = "node";
-                npmExePath = "npm";
-                npxExePath = "npx";
-            } else {
-                if (installationDir.listFiles() == null || installationDir.listFiles().length == 0) { // Do install if needed
-                    String url = "https://nodejs.org/dist/latest/";
-                    out.println("Installing latest NodeJS release from '" + url + "'...");
-                    Document docLatest = Jsoup.connect(url).get();
+            if (installationDir.listFiles() == null || this.installationDir.listFiles().length == 0) { // Do install if needed
+                String url = "https://nodejs.org/dist/latest/";
+                out.println("Installing latest NodeJS release from '" + url + "'...");
+                Document docLatest = Jsoup.connect(url).get();
 
-                    String downloadUrl = null;
-                    for (Element e :
-                            docLatest.getElementsByTag("a")) {
-                        String attr = e.attr("href");
-                        if (isCorrectFileForOs(attr.replace(url, ""))) {
-                            downloadUrl = url + attr;
-                            break;
-                        }
-                    }
-
-                    if (downloadUrl == null)
-                        throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + osType.name() + "' with ARCH '" + osArchitectureType.name() + "'.");
-
-                    // Download the zip file and extract its contents
-                    if (osType.equals(OperatingSystemType.WINDOWS)) {
-                        File downloadZip = new File(installationDir + "/download.zip");
-                        if (downloadZip.exists()) downloadZip.delete();
-                        downloadZip.createNewFile();
-                        DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
-                        downloadTask.start();
-                        while (!downloadTask.isFinished()) {
-                            out.println("Download-Task > " + downloadTask.getStatus());
-                            Thread.sleep(1000);
-                        }
-                        out.println("Download-Task > " + downloadTask.getStatus());
-
-                        out.print("Extracting Node.js files...");
-                        out.flush();
-                        ZipFile zipFile = new ZipFile(downloadZip);
-                        zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
-                        downloadZip.delete();
-                        out.println(" SUCCESS!");
-                    } else {
-                        File downloadFile = new File(installationDir + "/download.tar.gz");
-                        if (downloadFile.exists()) downloadFile.delete();
-                        downloadFile.createNewFile();
-                        DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
-                        downloadTask.start();
-                        while (!downloadTask.isFinished()) {
-                            out.println("Download-Task > " + downloadTask.getStatus());
-                            Thread.sleep(1000);
-                        }
-                        out.println("Download-Task > " + downloadTask.getStatus());
-                        out.print("Extracting Node.js files...");
-                        out.flush();
-                        ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
-                        // Result should be .../headless-browser/node-js/node<version>/...
-                        downloadFile.delete();
-                        out.println(" SUCCESS!");
+                String downloadUrl = null;
+                for (Element e :
+                        docLatest.getElementsByTag("a")) {
+                    String attr = e.attr("href");
+                    if (isCorrectFileForOs(attr.replace(url, ""))) {
+                        downloadUrl = url + attr;
+                        break;
                     }
                 }
 
-                File nodeExeFile, npmExeFile, npxExeFile;
-                if (osType.equals(OperatingSystemType.WINDOWS)) {
-                    nodeExeFile = new File(installationDir + "/node.exe");
-                    npmExeFile = new File(installationDir + "/npm.cmd");
-                    npxExeFile = new File(installationDir + "/npx.cmd");
-                } else { // Linux, mac and co.
-                    nodeExeFile = new File(installationDir + "/bin/node");
-                    npmExeFile = new File(installationDir + "/bin/npm");
-                    npxExeFile = new File(installationDir + "/bin/npx");
+                if (downloadUrl == null)
+                    throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + OS.TYPE.name + "' with ARCH '" + ARCH.name() + "'.");
+
+                // Download the zip file and extract its contents
+                if (TYPE.equals(OS.Type.WINDOWS)) {
+                    File downloadZip = new File(installationDir + "/download.zip");
+                    if (downloadZip.exists()) downloadZip.delete();
+                    downloadZip.createNewFile();
+                    DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
+                    downloadTask.start();
+                    while (!downloadTask.isFinished()) {
+                        out.println("Download-Task > " + downloadTask.getStatus());
+                        Thread.sleep(1000);
+                    }
+                    out.println("Download-Task > " + downloadTask.getStatus());
+
+                    out.print("Extracting Node.js files...");
+                    out.flush();
+                    ZipFile zipFile = new ZipFile(downloadZip);
+                    zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
+                    downloadZip.delete();
+                    out.println(" SUCCESS!");
+                } else {
+                    File downloadFile = new File(installationDir + "/download.tar.gz");
+                    if (downloadFile.exists()) downloadFile.delete();
+                    downloadFile.createNewFile();
+                    DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
+                    downloadTask.start();
+                    while (!downloadTask.isFinished()) {
+                        out.println("Download-Task > " + downloadTask.getStatus());
+                        Thread.sleep(1000);
+                    }
+                    out.println("Download-Task > " + downloadTask.getStatus());
+                    out.print("Extracting Node.js files...");
+                    out.flush();
+                    ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
+                    // Result should be .../headless-browser/node-js/node<version>/...
+                    downloadFile.delete();
+                    out.println(" SUCCESS!");
                 }
-
-                if (!nodeExeFile.exists())
-                    throw new FileNotFoundException(nodeExeFile.getAbsolutePath());
-                if (!npmExeFile.exists())
-                    throw new FileNotFoundException(npmExeFile.getAbsolutePath());
-                if (!npxExeFile.exists())
-                    throw new FileNotFoundException(npxExeFile.getAbsolutePath());
-
-                nodeExePath = nodeExeFile.getAbsolutePath();
-                npmExePath = npmExeFile.getAbsolutePath();
-                npxExePath = npxExeFile.getAbsolutePath();
             }
+            this.installationDir = new File(installationDir + "/" + installationDir.listFiles()[0].getName());
+
+            File nodeExeFile, npmExeFile, npxExeFile;
+            if (TYPE.equals(OS.Type.WINDOWS)) {
+                nodeExeFile = new File(installationDir + "/node.exe");
+                npmExeFile = new File(installationDir + "/npm.cmd");
+                npxExeFile = new File(installationDir + "/npx.cmd");
+            } else { // Linux, mac and co.
+                nodeExeFile = new File(installationDir + "/bin/node");
+                npmExeFile = new File(installationDir + "/bin/npm");
+                npxExeFile = new File(installationDir + "/bin/npx");
+            }
+
+            if (!nodeExeFile.exists())
+                throw new FileNotFoundException(nodeExeFile.getAbsolutePath());
+            if (!npmExeFile.exists())
+                throw new FileNotFoundException(npmExeFile.getAbsolutePath());
+            if (!npxExeFile.exists())
+                throw new FileNotFoundException(npxExeFile.getAbsolutePath());
+
+            nodeExePath = nodeExeFile.getAbsolutePath();
+            npmExePath = npmExeFile.getAbsolutePath();
+            npxExePath = npxExeFile.getAbsolutePath();
+
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -178,7 +174,7 @@ public class NodeContext implements AutoCloseable {
             // Tried multiple things without success.
             // Update: Node.exe must be started with this flag to get correct I/O: --interactive
             processInput = new AsyncReader(process.getInputStream(),
-                    line -> out.println("[" + getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "|LOG] " + line));
+                    line -> out.println("[" + Instant.now().toString() + " " + getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "|LOG] " + line));
             processErrorInput = new AsyncReader(process.getErrorStream());
             processOutput = process.getOutputStream();
             out.println(" SUCCESS!");
@@ -215,41 +211,6 @@ public class NodeContext implements AutoCloseable {
         }
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        new AsyncReader(new ByteArrayInputStream("a\nb".getBytes(StandardCharsets.UTF_8)),
-                l -> System.out.println(l)
-        );
-        VirtualInputStream in = new VirtualInputStream();
-        new AsyncReader(in, line -> System.out.println(line));
-        in.addLine("a");
-        in.addLine("b");
-    }
-
-    private boolean isNodeJsSystemWideInstalled() throws IOException, InterruptedException {
-        boolean isInstalled = false;
-        try {
-            List<String> commands = new ArrayList<>();
-            commands.add("node");
-            Process process = new ProcessBuilder(commands).directory(workingDir).start();
-            new AsyncReader(process.getInputStream(),
-                    line -> debugOutput.println("[NODE] " + line));
-            new AsyncReader(process.getErrorStream(),
-                    line -> debugOutput.println("[NODE-ERROR] " + line));
-            if (!process.isAlive())
-                throw new Exception("Failed to run command: " + commands + " Exit-Code: " + process.exitValue());
-            else
-                process.destroy();
-            isInstalled = true;
-        } catch (Exception e) {
-            debugOutput.println(e.getMessage());
-        }
-        if (isInstalled)
-            debugOutput.println("Node.js is system-wide installed.");
-        else
-            debugOutput.println("Node.js is not system-wide installed.");
-        return isInstalled;
-    }
-
     /**
      * Note that {@link #determineArchAndOs()} must have been called before executing this method. <br>
      *
@@ -259,27 +220,27 @@ public class NodeContext implements AutoCloseable {
     private boolean isCorrectFileForOs(String fileName) {
         if (!fileName.contains("."))
             return false; // cannot be a directory
-        if (osType.equals(OperatingSystemType.MAC)) {
+        if (TYPE.equals(OS.Type.MAC)) {
             if (!fileName.contains(".tar.gz"))
                 return false;
             // Mac has another name: darwin instead of mac
             if (StringUtils.containsIgnoreCase(fileName, "darwin")
-                    && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames)))
+                    && (StringUtils.containsIgnoreCase(fileName, ARCH.name()) || containsIgnoreCase(fileName, ARCH.altNames)))
                 return true;
-        } else if (osType.equals(OperatingSystemType.WINDOWS)) {
+        } else if (TYPE.equals(OS.Type.WINDOWS)) {
             // Must be a zip file
             if (!fileName.contains(".zip"))
                 return false;
             // Mac has another name: win instead of windows
             if (StringUtils.containsIgnoreCase(fileName, "win")
-                    && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames)))
+                    && (StringUtils.containsIgnoreCase(fileName, ARCH.name()) || containsIgnoreCase(fileName, ARCH.altNames)))
                 return true;
         } else {
             if (!fileName.contains(".tar.gz"))
                 return false;
         }
-        return StringUtils.containsIgnoreCase(fileName, osType.name)
-                && (StringUtils.containsIgnoreCase(fileName, osArchitectureType.name()) || containsIgnoreCase(fileName, osArchitectureType.altNames));
+        return StringUtils.containsIgnoreCase(fileName, TYPE.name)
+                && (StringUtils.containsIgnoreCase(fileName, ARCH.name()) || containsIgnoreCase(fileName, ARCH.altNames));
     }
 
     private boolean containsIgnoreCase(String fileName, String[] altNames) {
@@ -289,57 +250,6 @@ public class NodeContext implements AutoCloseable {
                 return true;
         }
         return false;
-    }
-
-    private void determineArchAndOs() {
-        // First set the details we need
-        // Start by setting the operating systems architecture type
-        String actualOsArchitecture = System.getProperty("os.arch").toLowerCase();
-        for (OperatingSystemArchitectureType type :
-                OperatingSystemArchitectureType.values()) {
-            if (actualOsArchitecture.equals(type.toString().toLowerCase())) // Not comparing the actual names because the enum has more stuff matching one name
-                osArchitectureType = type;
-        }
-        if (osArchitectureType == null) {
-            // Do another check.
-            // On windows it can be harder to detect the right architecture that's why we do the stuff below:
-            // Source: https://stackoverflow.com/questions/4748673/how-can-i-check-the-bitness-of-my-os-using-java-j2se-not-os-arch/5940770#5940770
-            String arch = System.getenv("PROCESSOR_ARCHITECTURE");
-            String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
-            boolean is64 = arch != null && arch.endsWith("64")
-                    || wow64Arch != null && wow64Arch.endsWith("64"); // Otherwise its 32bit
-            if (is64)
-                osArchitectureType = OperatingSystemArchitectureType.X64;
-            else
-                osArchitectureType = OperatingSystemArchitectureType.X32;
-            debugOutput.println("The current operating systems architecture '" + actualOsArchitecture +
-                    "' was not found in the architectures list '" + Arrays.toString(OperatingSystemArchitectureType.values()) + "'." +
-                    " Defaulting to '" + osArchitectureType + "'.");
-        }
-        debugOutput.println("Determined '" + osArchitectureType.name() + "' as operating systems architecture.");
-
-        // Set the operating systems type
-
-        String actualOsType = System.getProperty("os.name").toLowerCase();
-        if (actualOsType.contains("alpine"))
-            osType = OperatingSystemType.ALPINE_LINUX;
-        if (actualOsType.contains("win"))
-            osType = OperatingSystemType.WINDOWS;
-        else if (actualOsType.contains("mac"))
-            osType = OperatingSystemType.MAC;
-        else if (actualOsType.contains("aix"))
-            osType = OperatingSystemType.AIX;
-        else if (actualOsType.contains("nix")
-                || actualOsType.contains("nux"))
-            osType = OperatingSystemType.LINUX;
-        else if (actualOsType.contains("sunos"))
-            osType = OperatingSystemType.SOLARIS;
-        else {
-            osType = OperatingSystemType.LINUX;
-            debugOutput.println("The current operating system '" + actualOsType + "' was not found in the supported operating systems list." +
-                    " Defaulting to '" + OperatingSystemType.LINUX.name() + "'.");
-        }
-        debugOutput.println("Determined '" + osType.name() + "' as operating system.");
     }
 
     @Override
@@ -426,7 +336,7 @@ public class NodeContext implements AutoCloseable {
             }
 
             if (jsCode.contains("\n")) {
-                debugOutput.println("Executing following JS-Code: ");
+                debugOutput.println("Executing following JS-Code(" + msStart + "): ");
                 debugOutput.println("JS-CODE START >");
                 String singleLine = null;
                 try (BufferedReader br = new BufferedReader(new StringReader(jsCode))) {
@@ -436,7 +346,7 @@ public class NodeContext implements AutoCloseable {
                 }
                 debugOutput.println("JS-CODE END <");
             } else {
-                debugOutput.println("Executing following JS-Code: " + jsCode);
+                debugOutput.println("Executing following JS-Code(" + msStart + "): " + jsCode);
             }
 
             AtomicBoolean wasExecuted = new AtomicBoolean();
@@ -599,52 +509,59 @@ public class NodeContext implements AutoCloseable {
      * @throws InterruptedException
      */
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
-        // TODO Since the npm command doesnt work as regular Process, we need to create a virtual terminal
-        Objects.requireNonNull(args);
-        String finished = "FINISHED-" + System.currentTimeMillis();
         List<String> commands = new ArrayList<>();
         commands.add(npmExePath);
-        commands.addAll(Arrays.asList(args));
-        PipedOutputStream out = new PipedOutputStream();
-        PipedInputStream in = new PipedInputStream(out);
-        AsyncReader asyncIn = new AsyncReader(in);
-        asyncIn.listeners.add(line -> debugOutput.println("[NPM] " + line));
-        AtomicBoolean isFinished = new AtomicBoolean(false);
-        asyncIn.listeners.add(line -> {
-            if (line.equals(finished)) isFinished.set(true);
-        });
-        PrintWriter pOut = new PrintWriter(out);
-        Terminal terminal = TerminalBuilder.builder()
-                .streams(in, out)
-                .system(false) // to make this a virtual terminal
-                .build();
-        pOut.println("cd " + workingDir);
-        if (args.length != 0) {
-            for (String arg :
-                    args) {
-                pOut.print(arg + " ");
-            }
-            pOut.println();
-        }
-        pOut.println(finished);
-        while (!isFinished.get()) // Wait until the process exits
+        if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
+        Process process = new ProcessBuilder(commands).directory(workingDir).start();
+        new AsyncReader(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
+        new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
+        while (process.isAlive())
             Thread.sleep(500);
         return process;
     }
 
     public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
-        // TODO Since the npx command doesnt work as regular Process, we need to create a virtual terminal
-        Objects.requireNonNull(args);
         List<String> commands = new ArrayList<>();
         commands.add(npxExePath);
-        commands.addAll(Arrays.asList(args));
+        if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
         Process process = new ProcessBuilder(commands).directory(workingDir).start();
-        new AsyncReader(process.getInputStream(),
-                line -> debugOutput.println("[NPX] " + line));
-        new AsyncReader(process.getErrorStream(),
-                line -> System.err.println("[NPX-ERROR] " + line));
-        while (process.isAlive()) // Wait until the process exits
+        new AsyncReader(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPX] " + line));
+        new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));
+        while (process.isAlive())
             Thread.sleep(500);
+        return process;
+    }
+
+    public Process executeInNewTerminal(File workingDir, Consumer<String> onLineReceived,
+                                        Consumer<String> onErrorLineReceived, String... commands) throws IOException {
+        Process p;
+        if (OS.isWindows()) {
+            try {  // Try powershell first, use cmd as fallback
+                p = new ProcessBuilder("powershell").directory(workingDir).start();
+                if (!p.isAlive()) throw new Exception();
+            } catch (Exception e) {
+                p = new ProcessBuilder("cmd").directory(workingDir).start();
+            }
+        } else { // Unix based system, like Linux, Mac etc...
+            try {  // Try bash first, use sh as fallback
+                p = new ProcessBuilder("/bin/bash").directory(workingDir).start();
+                if (!p.isAlive()) throw new Exception();
+            } catch (Exception e) {
+                p = new ProcessBuilder("/bin/sh").directory(workingDir).start();
+            }
+        }
+        Process process = p;
+        InputStream in = process.getInputStream();
+        InputStream inErr = process.getErrorStream();
+        OutputStream out = process.getOutputStream();
+        new AsyncReader(in, onLineReceived);
+        new AsyncReader(inErr, onErrorLineReceived);
+        if (commands != null && commands.length != 0)
+            for (String command :
+                    commands) {
+                out.write((command + "\n").getBytes(StandardCharsets.UTF_8));
+                out.flush();
+            }
         return process;
     }
 
@@ -689,57 +606,5 @@ public class NodeContext implements AutoCloseable {
         return timeout;
     }
 
-    public OperatingSystemArchitectureType getOsArchitectureType() {
-        return osArchitectureType;
-    }
 
-    public OperatingSystemType getOsType() {
-        return osType;
-    }
-
-    public File getWorkingDir() {
-        return workingDir;
-    }
-
-    public enum OperatingSystemArchitectureType {
-        X64("x64", "64"),
-        X86("x86", "86"),
-        X32("x32", "32"),
-        PPC64("ppc64", "x64", "64"),
-        PPC64LE("ppc64le", "x64", "64"),
-        S390X("s390x"),
-        AARCH64("aarch64", "x64", "64"),
-        ARM("arm"),
-        SPARCV9("sparcv9"),
-        RISCV64("riscv64", "x64", "64"),
-        // x64 with alternative names:
-        AMD64("x64", "64"),
-        X86_64("x64", "64"),
-        // x32 with alternative names:
-        I386("x32", "32");
-
-        /**
-         * Alternative names.
-         */
-        private final String[] altNames;
-
-        OperatingSystemArchitectureType(String... altNames) {
-            this.altNames = altNames;
-        }
-    }
-
-    public enum OperatingSystemType {
-        LINUX("linux"),
-        WINDOWS("windows"),
-        MAC("mac"),
-        SOLARIS("solaris"),
-        AIX("aix"),
-        ALPINE_LINUX("alpine-linux");
-
-        private final String name;
-
-        OperatingSystemType(String name) {
-            this.name = name;
-        }
-    }
 }
