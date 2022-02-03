@@ -35,6 +35,8 @@ and more of its features were ported to Java.
 
 (JS = JavaScript; Downloads = If the browser is able to download files other than html/xml/pdf;)
 
+Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser completely written in Java
+
 ### [Contribute/Build](CONTRIBUTE.md)
 
 ### Libraries
@@ -47,6 +49,5 @@ and more of its features were ported to Java.
 | [Jsoup](https://github.com/jhy/jsoup)      | Used to load pages and modify their HTML code      |   [License](https://github.com/jhy/jsoup/blob/master/LICENSE) |
 
 ### Links
-- Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser completely written in Java
 - https://spec.whatwg.org/ | Details about JS Web-APIs
 - https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
