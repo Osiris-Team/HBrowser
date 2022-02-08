@@ -725,6 +725,15 @@ public class PlaywrightWindow implements HWindow {
     }
 
     /**
+     * Select combobox value. <br>
+     * See {@link #selectOption(String, String)} for details. <br>
+     */
+    public PlaywrightWindow selectOption(String selector, String value) throws NodeJsCodeException {
+        jsContext.executeJavaScript("await page.selectOption('" + selector + "', '" + value + "');");
+        return this;
+    }
+
+    /**
      * Types the provided text with a random 100ms-300ms delay between each type, to simulate a real user.
      */
     public PlaywrightWindow typeReal(String text) throws NodeJsCodeException {
