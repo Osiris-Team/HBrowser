@@ -725,8 +725,16 @@ public class PlaywrightWindow implements HWindow {
     }
 
     /**
-     * Select combobox value. <br>
-     * See {@link #selectOption(String, String)} for details. <br>
+     * This method waits for an element matching selector, waits for actionability checks, <br>
+     * waits until all specified options are present in the select element and selects these options. <br>
+     * If the target element is not a select element, this method throws an error. <br>
+     * However, if the element is inside the label element that has an associated control, the control will be used instead. <br>
+     *
+     * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used.
+     * @param value    Options to select. If the select element has the multiple attribute, all matching options are selected,
+     *                 otherwise only the first option matching one of the passed options is selected.
+     *                 String values are equivalent to {value:'string'}.
+     *                 Option is considered matching if all specified properties match
      */
     public PlaywrightWindow selectOption(String selector, String value) throws NodeJsCodeException {
         jsContext.executeJavaScript("await page.selectOption('" + selector + "', '" + value + "');");
