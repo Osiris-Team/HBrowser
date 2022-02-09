@@ -27,6 +27,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
 ### Drivers
 Playwright is the default and recommended browser driver to use, since it supports downloads
 and more of its features were ported to Java.
+Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser completely written in Java
 
 | Name | Version| JS-Engine | Downloads |
 | :-----: | :-----: | :-----: | :-----:
@@ -34,8 +35,6 @@ and more of its features were ported to Java.
 | [Puppeteer](https://github.com/puppeteer/puppeteer) | Latest  | Node.js/V8 | No | No |
 
 (JS = JavaScript; Downloads = If the browser is able to download files other than html/xml/pdf;)
-
-Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser completely written in Java
 
 ### [Contribute/Build](CONTRIBUTE.md)
 
