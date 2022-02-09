@@ -1,6 +1,6 @@
 # HBrowser
 
-A new, headless browser for Java.
+Another headless browser for Java with Puppeteer and Playwright implemented.
 
 ```java
 HBrowser hBrowser = new HBrowser();
