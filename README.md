@@ -27,7 +27,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
 ### Drivers
 Playwright is the default and recommended browser driver to use, since it supports downloads
 and more of its features were ported to Java.
-Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser completely written in Java
+Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser completely written in Java.
 
 | Name | Version| JS-Engine | Downloads |
 | :-----: | :-----: | :-----: | :-----:
