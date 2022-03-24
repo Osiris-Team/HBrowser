@@ -1,6 +1,8 @@
 # HBrowser
 
 Another headless browser for Java with Puppeteer and Playwright implemented.
+Add this to your project with [Maven/Gradle/Sbt/Leinigen](https://jitpack.io/#Osiris-Team/HBrowser/LATEST)
+(Java 8 or higher required).
 
 ```java
 HBrowser hBrowser = new HBrowser();
@@ -12,17 +14,10 @@ try(PlaywrightWindow window = hBrowser.openWindow()){
 All examples [here](src/test/java/examples).
 Note that the first run may take a bit because Node.js and its modules get installed into your current working dir under `./headless-browser`.
 
-### Installation
-
-- Java 8 or higher required.
-- [Click here for maven/gradle/sbt/leinigen instructions.](https://jitpack.io/#Osiris-Team/HBrowser/LATEST)
-- Make sure to watch this repository to get notified of future updates.
-
 ### Features
- - Multiple browsers to choose from (Playwright, Puppeteer etc.)
- - Implemented Node.js
- - Jsoup for easy HTML handling
- - Supported platforms are all from Java and all from Node.js
+ - High-Level methods for downloading files, working with cookies, retrieving HTML and simulating real user input. 
+ - Easy access to Node.js from within Java.
+ - HTML handling via Jsoup and JSON with Gson.
 
 ### Drivers
 Playwright is the default and recommended browser driver to use, since it supports downloads
