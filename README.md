@@ -41,7 +41,3 @@ Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser c
 | [Puppeteer](https://github.com/puppeteer/puppeteer) | Emulates different types of browsers  | [License](https://github.com/puppeteer/puppeteer/blob/main/LICENSE) |
 | [Node.js](https://github.com/nodejs/node) | Enables executing JavaScript code | [License](https://github.com/nodejs/node/blob/master/LICENSE) |
 | [Jsoup](https://github.com/jhy/jsoup)      | Used to load pages and modify their HTML code      |   [License](https://github.com/jhy/jsoup/blob/master/LICENSE) |
-
-### Links
-- https://spec.whatwg.org/ | Details about JS Web-APIs
-- https://www.w3.org/TR/?tag=webapi | Details about JS Web-APIs
