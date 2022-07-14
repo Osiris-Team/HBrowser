@@ -20,8 +20,21 @@ Note that the first run may take a bit because Node.js and its modules get insta
    - ...working with cookies.
    - ...retrieving HTML.
    - ...simulating real user input. 
- - Integrated headless detection evasions: `browser.openCustomWindow().makeUndetectable(true)`.
- - Easy access to Node.js from within Java: `new NodeContext().executeJavaScript("console.log('Hello!');");`.
+ - Integrated headless detection evasions:
+ ```java
+        HBrowser hBrowser = new HBrowser();
+        try (PuppeteerWindow hWindow = hBrowser.openCustomWindow()
+                .headless(true).makeUndetectable(true).buildPlaywrightWindow()) {
+            hWindow.load("https://infosimples.github.io/detect-headless/");
+            hWindow.makeScreenshot(new File("screenshot.png"), true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+ ```
+ - Easy access to Node.js from within Java:
+ ```java
+ new NodeContext().executeJavaScript("console.log('Hello!');");
+ ```
  - HTML handling via Jsoup and JSON with Gson.
 
 ### Drivers
