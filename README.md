@@ -22,14 +22,14 @@ Note that the first run may take a bit because Node.js and its modules get insta
    - ...simulating real user input. 
  - Integrated headless detection evasions:
  ```java
-        HBrowser hBrowser = new HBrowser();
-        try (PuppeteerWindow hWindow = hBrowser.openCustomWindow()
-                .headless(true).makeUndetectable(true).buildPlaywrightWindow()) {
-            hWindow.load("https://infosimples.github.io/detect-headless/");
-            hWindow.makeScreenshot(new File("screenshot.png"), true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+HBrowser hBrowser = new HBrowser();
+try (PuppeteerWindow hWindow = hBrowser.openCustomWindow()
+     .headless(true).makeUndetectable(true).buildPlaywrightWindow())
+{
+    hWindow.load("https://infosimples.github.io/detect-headless/");
+    hWindow.makeScreenshot(new File("screenshot.png"), true);
+} 
+catch (Exception e) {e.printStackTrace();}
  ```
  - Easy access to Node.js from within Java:
  ```java
