@@ -23,7 +23,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
  - Integrated headless detection evasions:
  ```java
 HBrowser hBrowser = new HBrowser();
-try (PuppeteerWindow hWindow = hBrowser.openCustomWindow()
+try (PlaywrightWindow hWindow = hBrowser.openCustomWindow()
      .headless(true).makeUndetectable(true).buildPlaywrightWindow())
 {
     hWindow.load("https://infosimples.github.io/detect-headless/");
