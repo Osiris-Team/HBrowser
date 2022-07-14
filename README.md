@@ -5,8 +5,8 @@ Add this to your project with [Maven/Gradle/Sbt/Leinigen](https://jitpack.io/#Os
 (Java 8 or higher required).
 
 ```java
-HBrowser hBrowser = new HBrowser();
-try(PlaywrightWindow window = hBrowser.openWindow()){
+HBrowser browser = new HBrowser();
+try(PlaywrightWindow window = browser.openWindow()){
     window.load("https://example.com");
    // ...   
 }
