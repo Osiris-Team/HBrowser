@@ -15,7 +15,12 @@ All examples [here](src/test/java/examples).
 Note that the first run may take a bit because Node.js and its modules get installed into your current working dir under `./headless-browser`.
 
 ### Features
- - High-Level methods for downloading files, working with cookies, retrieving HTML and simulating real user input. 
+ - High-Level methods for...
+   - ...downloading files.
+   - ...working with cookies.
+   - ...retrieving HTML.
+   - ...simulating real user input. 
+ - Integrated headless detection evasions `browser.openCustomWindow().makeUndetectable(true)`.
  - Easy access to Node.js from within Java.
  - HTML handling via Jsoup and JSON with Gson.
 
