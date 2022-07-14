@@ -1,4 +1,4 @@
-# HBrowser
+# HBrowser [![](https://jitpack.io/v/Osiris-Team/HBrowser.svg)](https://jitpack.io/#Osiris-Team/HBrowser)
 
 Another headless browser for Java with Puppeteer and Playwright implemented.
 Add this to your project with [Maven/Gradle/Sbt/Leinigen](https://jitpack.io/#Osiris-Team/HBrowser/LATEST)
