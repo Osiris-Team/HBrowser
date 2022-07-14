@@ -15,7 +15,7 @@ All examples [here](src/test/java/examples).
 Note that the first run may take a bit because Node.js and its modules get installed into your current working dir under `./headless-browser`.
 
 ### Features
- - High-Level methods for...
+ - *High-Level methods for...*
    - downloading files.
    - working with cookies.
    - retrieving HTML.
