@@ -58,12 +58,12 @@ public class PlaywrightWindow implements HWindow {
             jsContext.npmInstall("playwright");
 
             // Define global variables/constants
-            if(makeUndetectable) {
+            if (makeUndetectable) {
                 jsContext.npmInstall("playwright-extra");
                 jsContext.npmInstall("puppeteer-extra-plugin-stealth");
             }
             jsContext.executeJavaScript(
-                    "const { chromium } = require('"+(makeUndetectable ? "playwright-extra" : "playwright")+"');\n" +
+                    "const { chromium } = require('" + (makeUndetectable ? "playwright-extra" : "playwright") + "');\n" +
                             (makeUndetectable ? "const stealth = require('puppeteer-extra-plugin-stealth')()\n" +
                                     "chromium.use(stealth);\n" : "") +
                             "var browserCtx = null;\n" +

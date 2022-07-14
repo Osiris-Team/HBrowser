@@ -70,12 +70,12 @@ public class PuppeteerWindow implements HWindow {
 
             }
             jsContext.npmInstall("puppeteer");
-            if(makeUndetectable) {
+            if (makeUndetectable) {
                 jsContext.npmInstall("puppeteer-extra");
                 jsContext.npmInstall("puppeteer-extra-plugin-stealth");
             }
             jsContext.executeJavaScript(
-                    "const puppeteer = require('"+(makeUndetectable ? "puppeteer-extra" : "puppeteer")+"');\n" +
+                    "const puppeteer = require('" + (makeUndetectable ? "puppeteer-extra" : "puppeteer") + "');\n" +
                             (makeUndetectable ? "const stealth = require('puppeteer-extra-plugin-stealth')()\n" +
                                     "puppeteer.use(stealth);\n" : "") +
                             "var browser = null;\n" +

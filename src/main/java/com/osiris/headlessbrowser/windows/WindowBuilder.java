@@ -52,9 +52,9 @@ public class WindowBuilder {
      * Makes this window indistinguishable from 'real', user operated windows,
      * by installing additional software: <br>
      * {@link PlaywrightWindow} -> <a href="https://github.com/berstend/puppeteer-extra/tree/master/packages/playwright-extra">
-     *           playwright-extra</a> <br>
+     * playwright-extra</a> <br>
      * {@link PuppeteerWindow} ->  <a href="https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth">
-     *     puppeteer-extra-plugin-stealth</a> <br>
+     * puppeteer-extra-plugin-stealth</a> <br>
      * Other windows are not supported. <br<
      */
     public boolean makeUndetectable = false;

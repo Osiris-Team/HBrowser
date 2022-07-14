@@ -22,7 +22,7 @@ class PlaywrightWindowTest {
     public void settingCookiesTest() throws Exception {
         HBrowser hBrowser = new HBrowser();
         try (PlaywrightWindow window = hBrowser.openCustomWindow().temporaryUserDataDir(true).debugOutputStream(System.out).headless(false).buildPlaywrightWindow()) {
-            window.setCookie("hello", "there", "https://example.com/bigboig69", null, null,false,true);
+            window.setCookie("hello", "there", "https://example.com/bigboig69", null, null, false, true);
             window.load("example.com");
             window.printCookiesAsJsonArray();
             Thread.sleep(2000);

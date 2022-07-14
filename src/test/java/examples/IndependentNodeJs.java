@@ -6,11 +6,11 @@ import org.junit.jupiter.api.Test;
 public class IndependentNodeJs {
 
     @Test
-    void test() throws Exception{
+    void test() throws Exception {
 
 
         // Installs Node.js into current working directory if needed
-        try (NodeContext ctx = new NodeContext()){ // Use another constructor for customization
+        try (NodeContext ctx = new NodeContext()) { // Use another constructor for customization
 
             // Easily install/update needed modules
             ctx.npmInstall("async"); // name of Node module

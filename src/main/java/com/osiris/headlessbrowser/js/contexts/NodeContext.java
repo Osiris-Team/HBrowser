@@ -40,11 +40,10 @@ public class NodeContext implements AutoCloseable {
 
     public final File parentNodeDir;
     public final File workingDir;
-    public File installationDir;
-
     public final File nodeExe;
     public final File npmExe;
     public final File npxExe;
+    public File installationDir;
 
 
     public NodeContext() {
@@ -167,15 +166,15 @@ public class NodeContext implements AutoCloseable {
     }
 
     private void updatePath(ProcessBuilder processBuilder, File exeFile) {
-        if(exeFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
+        if (exeFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
         String pathSeparator = OSUtils.IS_WINDOWS ? ";" : ":";
-        if(processBuilder.environment().get("PATH") != null){
+        if (processBuilder.environment().get("PATH") != null) {
             processBuilder.environment().put("PATH",
                     exeFile.getParent() + pathSeparator + processBuilder.environment().get("PATH"));
-        } else if(processBuilder.environment().get("Path") != null){
+        } else if (processBuilder.environment().get("Path") != null) {
             processBuilder.environment().put("Path",
                     exeFile.getParent() + pathSeparator + processBuilder.environment().get("Path"));
-        } else{
+        } else {
             processBuilder.environment().put("PATH",
                     exeFile.getParent() + pathSeparator);
         }
@@ -183,10 +182,11 @@ public class NodeContext implements AutoCloseable {
 
     /**
      * Deletes the old installation and installs the latest Node.js release if needed (not installed yet).
+     *
      * @param force if true force-installs the latest release.
      */
     public void install(boolean force) throws IOException, InterruptedException {
-        if(!force){
+        if (!force) {
             // Don't install if already done.
             if (installationDir.listFiles() != null && this.installationDir.listFiles().length != 0) {
                 return;
@@ -548,9 +548,9 @@ public class NodeContext implements AutoCloseable {
      */
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
         List<String> commands = new ArrayList<>();
-        commands.add(""+npmExe);
+        commands.add("" + npmExe);
         if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
-        debugOutput.println("Execute: "+commands.toString());
+        debugOutput.println("Execute: " + commands);
         ProcessBuilder builder = new ProcessBuilder(commands);
         updatePath(builder, npmExe);
         Process process = builder.directory(workingDir).start();
@@ -563,9 +563,9 @@ public class NodeContext implements AutoCloseable {
 
     public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
         List<String> commands = new ArrayList<>();
-        commands.add(""+npxExe);
+        commands.add("" + npxExe);
         if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
-        debugOutput.println("Execute: "+commands.toString());
+        debugOutput.println("Execute: " + commands);
         ProcessBuilder builder = new ProcessBuilder(commands);
         updatePath(builder, npxExe);
         Process process = builder.directory(workingDir).start();

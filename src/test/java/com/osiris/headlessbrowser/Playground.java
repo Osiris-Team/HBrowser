@@ -47,8 +47,7 @@ public class Playground {
     void makeUndetectablePlaywright() throws NodeJsCodeException, IOException {
         HBrowser hBrowser = new HBrowser();
         try (PlaywrightWindow hWindow = hBrowser.openCustomWindow()
-                .headless(true).makeUndetectable(true).debugOutputStream(System.out).buildPlaywrightWindow())
-        {
+                .headless(true).makeUndetectable(true).debugOutputStream(System.out).buildPlaywrightWindow()) {
             hWindow.load("https://infosimples.github.io/detect-headless/");
             hWindow.makeScreenshot(new File("screenshot.png"), true);
         }
