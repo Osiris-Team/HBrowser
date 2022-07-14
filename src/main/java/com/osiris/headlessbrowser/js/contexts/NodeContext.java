@@ -129,9 +129,6 @@ public class NodeContext implements AutoCloseable {
                 processBuilder.environment().put("PATH",
                         nodeExe.getParent() + pathSeparator);
             }
-            processBuilder.environment().forEach((key, val) -> {
-                System.err.println(key+"="+val);
-            });
             processBuilder.directory(workingDir);
             // Must be inherited so that NodeJS closes when this application closes.
             // Wrong! It seems like NodeJS closes if the parent process dies, even if its Piped I/O.
@@ -180,10 +177,8 @@ public class NodeContext implements AutoCloseable {
     }
 
     /**
-     * Installs the latest node release if needed. <br>
-     * @param force if true deletes the old installation and installs the latest release.
-     * @throws IOException
-     * @throws InterruptedException
+     * Deletes the old installation and installs the latest Node.js release if needed (not installed yet).
+     * @param force if true force-installs the latest release.
      */
     public void install(boolean force) throws IOException, InterruptedException {
         if(!force){

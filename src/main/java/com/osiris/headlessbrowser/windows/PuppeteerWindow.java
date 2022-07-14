@@ -8,8 +8,6 @@ import com.osiris.headlessbrowser.HBrowser;
 import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.js.contexts.NodeContext;
-import com.osiris.headlessbrowser.js.raw.EvasionsInside;
-import com.osiris.headlessbrowser.js.raw.EvasionsOutside;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -72,8 +70,14 @@ public class PuppeteerWindow implements HWindow {
 
             }
             jsContext.npmInstall("puppeteer");
+            if(makeUndetectable) {
+                jsContext.npmInstall("puppeteer-extra");
+                jsContext.npmInstall("puppeteer-extra-plugin-stealth");
+            }
             jsContext.executeJavaScript(
-                    "const puppeteer = require('puppeteer');\n" +
+                    "const puppeteer = require('"+(makeUndetectable ? "puppeteer-extra" : "puppeteer")+"');\n" +
+                            (makeUndetectable ? "const stealth = require('puppeteer-extra-plugin-stealth')()\n" +
+                                    "puppeteer.use(stealth);\n" : "") +
                             "var browser = null;\n" +
                             "var page = null;\n" +
                             "var downloadFile = null;\n", 30, false);
@@ -109,15 +113,6 @@ public class PuppeteerWindow implements HWindow {
             jsContext.executeJavaScript(jsInitCode.toString(), 30, false);
             setEnableJavaScript(enableJavaScript);
 
-
-            if (makeUndetectable) {
-                jsContext.executeJavaScript(new EvasionsOutside().getAll());
-                EvasionsInside evasionsInside = new EvasionsInside();
-                jsContext.executeJavaScript("" +
-                        "await page.evaluateOnNewDocument(() => {\n" +
-                        evasionsInside.getAll() +
-                        "\n});\n");
-            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
