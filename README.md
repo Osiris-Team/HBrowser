@@ -20,8 +20,8 @@ Note that the first run may take a bit because Node.js and its modules get insta
    - ...working with cookies.
    - ...retrieving HTML.
    - ...simulating real user input. 
- - Integrated headless detection evasions `browser.openCustomWindow().makeUndetectable(true)`.
- - Easy access to Node.js from within Java.
+ - Integrated headless detection evasions: `browser.openCustomWindow().makeUndetectable(true)`.
+ - Easy access to Node.js from within Java: `new NodeContext().executeJavaScript("console.log('Hello!');");`.
  - HTML handling via Jsoup and JSON with Gson.
 
 ### Drivers
