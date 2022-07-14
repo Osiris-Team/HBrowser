@@ -1,13 +1,15 @@
 package com.osiris.headlessbrowser.js.contexts;
 
-import com.osiris.betterthread.BetterThreadManager;
+import com.osiris.betterthread.BThreadManager;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.utils.AsyncReader;
 import com.osiris.headlessbrowser.utils.DownloadTask;
 import com.osiris.headlessbrowser.utils.OS;
 import com.osiris.headlessbrowser.utils.TrashOutput;
 import net.lingala.zip4j.ZipFile;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jline.utils.OSUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,12 +37,15 @@ public class NodeContext implements AutoCloseable {
     public final PrintStream debugOutput;
     public final File lastJsCodeExecutionResultFile;
     public final int timeout;
+
     public final File parentNodeDir;
     public final File workingDir;
-    public final String nodeExePath;
+    public File installationDir;
+
+    public final File nodeExe;
     public final String npmExePath;
     public final String npxExePath;
-    public File installationDir;
+
 
     public NodeContext() {
         this(null, null, 30);
@@ -70,64 +75,12 @@ public class NodeContext implements AutoCloseable {
         this.installationDir = new File(this.parentNodeDir + "/node-js-installation");
         Objects.requireNonNull(installationDir);
         if (!this.installationDir.exists()) this.installationDir.mkdirs();
-        // Download and install NodeJS into current working directory if no installation found
+
         try {
-            if (installationDir.listFiles() == null || this.installationDir.listFiles().length == 0) { // Do install if needed
-                String url = "https://nodejs.org/dist/latest/";
-                out.println("Installing latest NodeJS release from '" + url + "'...");
-                Document docLatest = Jsoup.connect(url).get();
-
-                String downloadUrl = null;
-                for (Element e :
-                        docLatest.getElementsByTag("a")) {
-                    String attr = e.attr("href");
-                    if (isCorrectFileForOs(attr.replace(url, ""))) {
-                        downloadUrl = url + attr;
-                        break;
-                    }
-                }
-
-                if (downloadUrl == null)
-                    throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + OS.TYPE.name + "' with ARCH '" + ARCH.name() + "'.");
-
-                // Download the zip file and extract its contents
-                if (TYPE.equals(OS.Type.WINDOWS)) {
-                    File downloadZip = new File(installationDir + "/download.zip");
-                    if (downloadZip.exists()) downloadZip.delete();
-                    downloadZip.createNewFile();
-                    DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadZip, "zip");
-                    downloadTask.start();
-                    while (!downloadTask.isFinished()) {
-                        out.println("Download-Task > " + downloadTask.getStatus());
-                        Thread.sleep(1000);
-                    }
-                    out.println("Download-Task > " + downloadTask.getStatus());
-
-                    out.print("Extracting Node.js files...");
-                    out.flush();
-                    ZipFile zipFile = new ZipFile(downloadZip);
-                    zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
-                    downloadZip.delete();
-                    out.println(" SUCCESS!");
-                } else {
-                    File downloadFile = new File(installationDir + "/download.tar.gz");
-                    if (downloadFile.exists()) downloadFile.delete();
-                    downloadFile.createNewFile();
-                    DownloadTask downloadTask = new DownloadTask("Download", new BetterThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
-                    downloadTask.start();
-                    while (!downloadTask.isFinished()) {
-                        out.println("Download-Task > " + downloadTask.getStatus());
-                        Thread.sleep(1000);
-                    }
-                    out.println("Download-Task > " + downloadTask.getStatus());
-                    out.print("Extracting Node.js files...");
-                    out.flush();
-                    ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
-                    // Result should be .../headless-browser/node-js/node<version>/...
-                    downloadFile.delete();
-                    out.println(" SUCCESS!");
-                }
-            }
+            // Download and install NodeJS into current working directory if no installation found
+            install(false);
+            // Currently, installationDir is here --------------------> but we need this -->
+            // Example directory structure after install: path/node-js/node-js-installation/node-v18.6.0-win-x64
             this.installationDir = new File(installationDir + "/" + installationDir.listFiles()[0].getName());
 
             File nodeExeFile, npmExeFile, npxExeFile;
@@ -148,7 +101,7 @@ public class NodeContext implements AutoCloseable {
             if (!npxExeFile.exists())
                 throw new FileNotFoundException(npxExeFile.getAbsolutePath());
 
-            nodeExePath = nodeExeFile.getAbsolutePath();
+            nodeExe = nodeExeFile;
             npmExePath = npmExeFile.getAbsolutePath();
             npxExePath = npxExeFile.getAbsolutePath();
 
@@ -163,7 +116,22 @@ public class NodeContext implements AutoCloseable {
             out.print("Initialising NodeJS...");
             out.flush();
             ProcessBuilder processBuilder = new ProcessBuilder(Arrays.asList(
-                    nodeExePath, "--interactive"));
+                    nodeExe.getAbsolutePath(), "--interactive"));
+            // Prepend node installation path to fix: https://github.com/npm/rfcs/issues/531 and https://github.com/Osiris-Team/HBrowser/issues/6
+            String pathSeparator = OSUtils.IS_WINDOWS ? ";" : ":";
+            if(processBuilder.environment().get("PATH") != null){
+                processBuilder.environment().put("PATH",
+                        nodeExe.getParent() + pathSeparator + processBuilder.environment().get("PATH"));
+            } else if(processBuilder.environment().get("Path") != null){
+                processBuilder.environment().put("Path",
+                        nodeExe.getParent() + pathSeparator + processBuilder.environment().get("Path"));
+            } else{
+                processBuilder.environment().put("PATH",
+                        nodeExe.getParent() + pathSeparator);
+            }
+            processBuilder.environment().forEach((key, val) -> {
+                System.err.println(key+"="+val);
+            });
             processBuilder.directory(workingDir);
             // Must be inherited so that NodeJS closes when this application closes.
             // Wrong! It seems like NodeJS closes if the parent process dies, even if its Piped I/O.
@@ -178,7 +146,7 @@ public class NodeContext implements AutoCloseable {
             processErrorInput = new AsyncReader(process.getErrorStream());
             processOutput = process.getOutputStream();
             out.println(" SUCCESS!");
-            out.println("Node-JS was started from: " + nodeExePath);
+            out.println("Node-JS was started from: " + nodeExe);
 
             Thread t = new Thread(() -> {
                 // Keeps the java application running until NodeJS closes
@@ -208,6 +176,78 @@ public class NodeContext implements AutoCloseable {
         } catch (Exception e) {
             System.err.println("Error during start of NodeJS! Details:");
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Installs the latest node release if needed. <br>
+     * @param force if true deletes the old installation and installs the latest release.
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void install(boolean force) throws IOException, InterruptedException {
+        if(!force){
+            // Don't install if already done.
+            if (installationDir.listFiles() != null && this.installationDir.listFiles().length != 0) {
+                return;
+            }
+        }
+
+        FileUtils.deleteDirectory(installationDir);
+        installationDir.mkdirs();
+        String url = "https://nodejs.org/dist/latest/";
+        debugOutput.println("Installing latest NodeJS release from '" + url + "'...");
+        Document docLatest = Jsoup.connect(url).get();
+
+        String downloadUrl = null;
+        for (Element e :
+                docLatest.getElementsByTag("a")) {
+            String attr = e.attr("href");
+            if (isCorrectFileForOs(attr.replace(url, ""))) {
+                downloadUrl = url + attr;
+                break;
+            }
+        }
+
+        if (downloadUrl == null)
+            throw new FileNotFoundException("Failed to find latest NodeJS download url at '" + url + "' for OS '" + OS.TYPE.name + "' with ARCH '" + ARCH.name() + "'.");
+
+        // Download the zip file and extract its contents
+        if (TYPE.equals(OS.Type.WINDOWS)) {
+            File downloadZip = new File(installationDir + "/download.zip");
+            if (downloadZip.exists()) downloadZip.delete();
+            downloadZip.createNewFile();
+            DownloadTask downloadTask = new DownloadTask("Download", new BThreadManager(), downloadUrl, downloadZip, "zip");
+            downloadTask.start();
+            while (!downloadTask.isFinished()) {
+                debugOutput.println("Download-Task > " + downloadTask.getStatus());
+                Thread.sleep(1000);
+            }
+            debugOutput.println("Download-Task > " + downloadTask.getStatus());
+
+            debugOutput.print("Extracting Node.js files...");
+            debugOutput.flush();
+            ZipFile zipFile = new ZipFile(downloadZip);
+            zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
+            downloadZip.delete();
+            debugOutput.println(" SUCCESS!");
+        } else {
+            File downloadFile = new File(installationDir + "/download.tar.gz");
+            if (downloadFile.exists()) downloadFile.delete();
+            downloadFile.createNewFile();
+            DownloadTask downloadTask = new DownloadTask("Download", new BThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
+            downloadTask.start();
+            while (!downloadTask.isFinished()) {
+                debugOutput.println("Download-Task > " + downloadTask.getStatus());
+                Thread.sleep(1000);
+            }
+            debugOutput.println("Download-Task > " + downloadTask.getStatus());
+            debugOutput.print("Extracting Node.js files...");
+            debugOutput.flush();
+            ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
+            // Result should be .../headless-browser/node-js/node<version>/...
+            downloadFile.delete();
+            debugOutput.println(" SUCCESS!");
         }
     }
 
@@ -512,6 +552,7 @@ public class NodeContext implements AutoCloseable {
         List<String> commands = new ArrayList<>();
         commands.add(npmExePath);
         if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
+        debugOutput.println("Execute: "+commands.toString());
         Process process = new ProcessBuilder(commands).directory(workingDir).start();
         new AsyncReader(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
         new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
@@ -524,6 +565,7 @@ public class NodeContext implements AutoCloseable {
         List<String> commands = new ArrayList<>();
         commands.add(npxExePath);
         if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
+        debugOutput.println("Execute: "+commands.toString());
         Process process = new ProcessBuilder(commands).directory(workingDir).start();
         new AsyncReader(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPX] " + line));
         new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));

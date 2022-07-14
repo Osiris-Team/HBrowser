@@ -1,7 +1,7 @@
 package com.osiris.headlessbrowser.utils;
 
-import com.osiris.betterthread.BetterThread;
-import com.osiris.betterthread.BetterThreadManager;
+import com.osiris.betterthread.BThread;
+import com.osiris.betterthread.BThreadManager;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -14,7 +14,7 @@ import java.io.FileOutputStream;
 import java.net.URL;
 import java.util.Arrays;
 
-public class DownloadTask extends BetterThread {
+public class DownloadTask extends BThread {
     private String url;
     private File dest;
     private String[] allowedSubContentTypes;
@@ -28,18 +28,18 @@ public class DownloadTask extends BetterThread {
      * @param url     the download-url.
      * @param dest    the downloads final destination.
      */
-    public DownloadTask(String name, BetterThreadManager manager, String url, File dest) {
+    public DownloadTask(String name, BThreadManager manager, String url, File dest) {
         this(name, manager, url, dest, (String[]) null);
     }
 
-    public DownloadTask(String name, BetterThreadManager manager, String url, File dest, String... allowedSubContentTypes) {
+    public DownloadTask(String name, BThreadManager manager, String url, File dest, String... allowedSubContentTypes) {
         this(name, manager);
         this.url = url;
         this.dest = dest;
         this.allowedSubContentTypes = allowedSubContentTypes;
     }
 
-    private DownloadTask(String name, BetterThreadManager manager) {
+    private DownloadTask(String name, BThreadManager manager) {
         super(name, manager);
     }
 
