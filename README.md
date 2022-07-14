@@ -15,12 +15,12 @@ All examples [here](src/test/java/examples).
 Note that the first run may take a bit because Node.js and its modules get installed into your current working dir under `./headless-browser`.
 
 ### Features
- - *High-Level methods for...*
+ - **High-Level methods for...**
    - downloading files.
    - working with cookies.
    - retrieving HTML.
    - simulating real user input. 
- - Integrated headless detection evasions:
+ - **Integrated headless detection evasions:**
  ```java
 HBrowser b = new HBrowser();
 try (PlaywrightWindow w = b.openCustomWindow()
@@ -31,11 +31,11 @@ try (PlaywrightWindow w = b.openCustomWindow()
 } 
 catch (Exception e) {e.printStackTrace();}
  ```
- - Easy access to Node.js from within Java:
+ - **Easy access to Node.js from within Java:**
  ```java
  new NodeContext().executeJavaScript("console.log('Hello!');");
  ```
- - HTML handling via Jsoup and JSON with Gson.
+ - **HTML handling via Jsoup and JSON with Gson.**
 
 ### Drivers
 Playwright is the default and recommended browser driver to use, since it supports downloads
