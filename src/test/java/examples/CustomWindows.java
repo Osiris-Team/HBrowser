@@ -18,8 +18,6 @@ public class CustomWindows {
                 .debugOutputStream(System.out).headless(true).jsTimeout(5) // etc.
                 .buildPlaywrightWindow()) {
             // ...
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         // There are multiple types of windows you can build.
@@ -27,20 +25,14 @@ public class CustomWindows {
         // which will auto-close the window when we leave the block.
         try (PlaywrightWindow playwrightWindow = hBrowser.openCustomWindow().buildPlaywrightWindow()) {
             // ...
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         try (PuppeteerWindow puppeteerWindow = hBrowser.openCustomWindow().buildPuppeteerWindow()) {
             // ...
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         try (LightWindow lightWindow = hBrowser.openCustomWindow().buildLightWindow()) {
             // ...
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
 

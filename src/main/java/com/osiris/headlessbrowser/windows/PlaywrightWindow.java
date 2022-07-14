@@ -63,9 +63,9 @@ public class PlaywrightWindow implements HWindow {
                 jsContext.npmInstall("puppeteer-extra-plugin-stealth");
             }
             jsContext.executeJavaScript(
-                    "const playwright = require('"+(makeUndetectable ? "playwright-extra" : "playwright")+"');\n" +
+                    "const { chromium } = require('"+(makeUndetectable ? "playwright-extra" : "playwright")+"');\n" +
                             (makeUndetectable ? "const stealth = require('puppeteer-extra-plugin-stealth')()\n" +
-                                    "playwright.use(stealth);\n" : "") +
+                                    "chromium.use(stealth);\n" : "") +
                             "var browserCtx = null;\n" +
                             "var browser = null;\n" +
                             "var page = null;\n" +
@@ -87,7 +87,7 @@ public class PlaywrightWindow implements HWindow {
             if (!downloadTempDir.exists()) downloadTempDir.mkdirs();
 
             jsContext.executeJavaScript(
-                    "browserCtx = await playwright['chromium'].launchPersistentContext('" + userDataDir.getAbsolutePath().replace("\\", "/") + "', {\n" +
+                    "browserCtx = await chromium.launchPersistentContext('" + userDataDir.getAbsolutePath().replace("\\", "/") + "', {\n" +
                             "  acceptDownloads: true,\n" +
                             "  headless : " + isHeadless + ",\n" +
                             "  javaScriptEnabled: " + enableJavaScript + ",\n" +

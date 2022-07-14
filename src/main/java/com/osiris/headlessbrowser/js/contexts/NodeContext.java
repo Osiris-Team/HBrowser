@@ -43,8 +43,8 @@ public class NodeContext implements AutoCloseable {
     public File installationDir;
 
     public final File nodeExe;
-    public final String npmExePath;
-    public final String npxExePath;
+    public final File npmExe;
+    public final File npxExe;
 
 
     public NodeContext() {
@@ -102,8 +102,8 @@ public class NodeContext implements AutoCloseable {
                 throw new FileNotFoundException(npxExeFile.getAbsolutePath());
 
             nodeExe = nodeExeFile;
-            npmExePath = npmExeFile.getAbsolutePath();
-            npxExePath = npxExeFile.getAbsolutePath();
+            npmExe = npmExeFile;
+            npxExe = npxExeFile;
 
         } catch (RuntimeException e) {
             throw e;
@@ -118,17 +118,7 @@ public class NodeContext implements AutoCloseable {
             ProcessBuilder processBuilder = new ProcessBuilder(Arrays.asList(
                     nodeExe.getAbsolutePath(), "--interactive"));
             // Prepend node installation path to fix: https://github.com/npm/rfcs/issues/531 and https://github.com/Osiris-Team/HBrowser/issues/6
-            String pathSeparator = OSUtils.IS_WINDOWS ? ";" : ":";
-            if(processBuilder.environment().get("PATH") != null){
-                processBuilder.environment().put("PATH",
-                        nodeExe.getParent() + pathSeparator + processBuilder.environment().get("PATH"));
-            } else if(processBuilder.environment().get("Path") != null){
-                processBuilder.environment().put("Path",
-                        nodeExe.getParent() + pathSeparator + processBuilder.environment().get("Path"));
-            } else{
-                processBuilder.environment().put("PATH",
-                        nodeExe.getParent() + pathSeparator);
-            }
+            updatePath(processBuilder, nodeExe);
             processBuilder.directory(workingDir);
             // Must be inherited so that NodeJS closes when this application closes.
             // Wrong! It seems like NodeJS closes if the parent process dies, even if its Piped I/O.
@@ -173,6 +163,21 @@ public class NodeContext implements AutoCloseable {
         } catch (Exception e) {
             System.err.println("Error during start of NodeJS! Details:");
             throw new RuntimeException(e);
+        }
+    }
+
+    private void updatePath(ProcessBuilder processBuilder, File exeFile) {
+        if(exeFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
+        String pathSeparator = OSUtils.IS_WINDOWS ? ";" : ":";
+        if(processBuilder.environment().get("PATH") != null){
+            processBuilder.environment().put("PATH",
+                    exeFile.getParent() + pathSeparator + processBuilder.environment().get("PATH"));
+        } else if(processBuilder.environment().get("Path") != null){
+            processBuilder.environment().put("Path",
+                    exeFile.getParent() + pathSeparator + processBuilder.environment().get("Path"));
+        } else{
+            processBuilder.environment().put("PATH",
+                    exeFile.getParent() + pathSeparator);
         }
     }
 
@@ -247,8 +252,6 @@ public class NodeContext implements AutoCloseable {
     }
 
     /**
-     * Note that {@link #determineArchAndOs()} must have been called before executing this method. <br>
-     *
      * @param fileName example: node-v16.10.0-darwin-arm64.tar.gz
      * @return true if the provided file name contains details matching the current system.
      */
@@ -545,10 +548,12 @@ public class NodeContext implements AutoCloseable {
      */
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
         List<String> commands = new ArrayList<>();
-        commands.add(npmExePath);
+        commands.add(""+npmExe);
         if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
         debugOutput.println("Execute: "+commands.toString());
-        Process process = new ProcessBuilder(commands).directory(workingDir).start();
+        ProcessBuilder builder = new ProcessBuilder(commands);
+        updatePath(builder, npmExe);
+        Process process = builder.directory(workingDir).start();
         new AsyncReader(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
         new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
         while (process.isAlive())
@@ -558,10 +563,12 @@ public class NodeContext implements AutoCloseable {
 
     public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
         List<String> commands = new ArrayList<>();
-        commands.add(npxExePath);
+        commands.add(""+npxExe);
         if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
         debugOutput.println("Execute: "+commands.toString());
-        Process process = new ProcessBuilder(commands).directory(workingDir).start();
+        ProcessBuilder builder = new ProcessBuilder(commands);
+        updatePath(builder, npxExe);
+        Process process = builder.directory(workingDir).start();
         new AsyncReader(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPX] " + line));
         new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));
         while (process.isAlive())

@@ -6,12 +6,12 @@ import org.junit.jupiter.api.Test;
 public class IndependentNodeJs {
 
     @Test
-    void test() {
+    void test() throws Exception{
 
 
         // Installs Node.js into current working directory if needed
-        NodeContext ctx = new NodeContext(); // Use another constructor for customization
-        try {
+        try (NodeContext ctx = new NodeContext()){ // Use another constructor for customization
+
             // Easily install/update needed modules
             ctx.npmInstall("async"); // name of Node module
 
@@ -23,10 +23,7 @@ public class IndependentNodeJs {
             // You can return JavaScript results too.
             // Note that you must have a result variable in the provided JS Code for this to work!
             String result = ctx.executeJSAndGetResult("var result = 'my JavaScript result!';");
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
 
     }
 }
