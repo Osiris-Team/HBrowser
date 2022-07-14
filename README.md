@@ -20,7 +20,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
    - working with cookies.
    - retrieving HTML.
    - simulating real user input. 
- - **Integrated headless detection evasions:**
+ - **Integrated evasions for headless detection:**
  ```java
 HBrowser b = new HBrowser();
 try (PlaywrightWindow w = b.openCustomWindow()
