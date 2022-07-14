@@ -16,10 +16,10 @@ Note that the first run may take a bit because Node.js and its modules get insta
 
 ### Features
  - High-Level methods for...
-   - ...downloading files.
-   - ...working with cookies.
-   - ...retrieving HTML.
-   - ...simulating real user input. 
+   - downloading files.
+   - working with cookies.
+   - retrieving HTML.
+   - simulating real user input. 
  - Integrated headless detection evasions:
  ```java
 HBrowser hBrowser = new HBrowser();
