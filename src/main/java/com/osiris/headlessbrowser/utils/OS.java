@@ -80,21 +80,21 @@ public class OS {
     }
 
     public enum Arch {
-        X64("x64", "64"),
-        X86("x86", "86"),
-        X32("x32", "32"),
-        PPC64("ppc64", "x64", "64"),
-        PPC64LE("ppc64le", "x64", "64"),
+        X64("x64"),
+        X86("x86"),
+        X32("x32"),
+        PPC64("ppc64"),
+        PPC64LE("ppc64le"),
         S390X("s390x"),
-        AARCH64("aarch64", "x64", "64"),
+        AARCH64("aarch64"),
         ARM("arm"),
         SPARCV9("sparcv9"),
-        RISCV64("riscv64", "x64", "64"),
+        RISCV64("riscv64"),
         // x64 with alternative names:
-        AMD64("x64", "64"),
-        X86_64("x64", "64"),
+        AMD64("amd64", "x86_64", "x64_86", "x64", "x86"),
+        X86_64("x86_64", "x64_86", "x64", "x86"),
         // x32 with alternative names:
-        I386("x32", "32");
+        I386("i386", "x32");
 
         /**
          * Alternative names.
