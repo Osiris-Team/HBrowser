@@ -1,6 +1,6 @@
 # HBrowser [![](https://jitpack.io/v/Osiris-Team/HBrowser.svg)](https://jitpack.io/#Osiris-Team/HBrowser)
 
-Puppeteer/Playwright in Java with focus on ease of use and high-level methods.
+Headless/full Java browser with support for downloading files, working with cookies, retrieving HTML and simulating real user input. Possible via Node.js with Puppeteer and/or Playwright. Main focus on ease of use and high-level methods.
 Add this to your project with [Maven/Gradle/Sbt/Leinigen](https://jitpack.io/#Osiris-Team/HBrowser/LATEST)
 (Java 8 or higher required).
 
