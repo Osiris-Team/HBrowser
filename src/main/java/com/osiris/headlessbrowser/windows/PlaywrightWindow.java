@@ -107,9 +107,38 @@ public class PlaywrightWindow implements HWindow {
     }
 
     /**
-     * Loads the contents from the provided url into the current page/tab.
+     * Loads the contents from the provided url into the current page/tab. <br>
+     * Method only returns when 'documentloaded' event was triggered.
      */
     public PlaywrightWindow load(String url) throws NodeJsCodeException {
+        if (!url.startsWith("http") && !url.equals("about:blank"))
+            url = "https://" + url;
+
+        jsContext.executeJavaScript("" +
+                "response = await page.goto('" + url + "', wait_until=\"domcontentloaded\");\n");
+        this.url = url;
+        return this;
+    }
+
+    /**
+     * Loads the contents from the provided file into the current page/tab. <br>
+     * Method only returns when 'documentloaded' event was triggered.
+     */
+    public PlaywrightWindow load(File file) throws NodeJsCodeException {
+        String url = "file:///" + file.getAbsolutePath().replace("\\", "/");
+        jsContext.executeJavaScript("" +
+                "response = await page.goto('" + url + "', wait_until=\"domcontentloaded\");\n");
+        this.url = url;
+        return this;
+    }
+
+    /**
+     * Loads the contents from the provided url into the current page/tab. <br>
+     * Directly returns and does NOT wait for 'documentloaded' event to be triggered. <br>
+     * If you try to access HTML elements or run JavaScript directly after this method it probably won't work,
+     * so only use this method if you know what you are doing.
+     */
+    public PlaywrightWindow unsafeLoad(String url) throws NodeJsCodeException {
         if (!url.startsWith("http") && !url.equals("about:blank"))
             url = "https://" + url;
 
@@ -120,9 +149,12 @@ public class PlaywrightWindow implements HWindow {
     }
 
     /**
-     * Loads the contents from the provided file into the current page/tab.
+     * Loads the contents from the provided file into the current page/tab. <br>
+     * Directly returns and does NOT wait for 'documentloaded' event to be triggered. <br>
+     * If you try to access HTML elements or run JavaScript directly after this method it probably won't work,
+     * so only use this method if you know what you are doing.
      */
-    public PlaywrightWindow load(File file) throws NodeJsCodeException {
+    public PlaywrightWindow unsafeLoad(File file) throws NodeJsCodeException {
         String url = "file:///" + file.getAbsolutePath().replace("\\", "/");
         jsContext.executeJavaScript("" +
                 "response = await page.goto('" + url + "');\n");
@@ -752,7 +784,10 @@ public class PlaywrightWindow implements HWindow {
     public void close() throws RuntimeException {
         // Running js: browser.close() here causes a weird exception: https://github.com/isaacs/rimraf/issues/221
         // Since it's not mandatory we just don't do it.
+        out.println("---------------");
+        out.println("Closing "+this);
         try {
+            jsContext.executeJavaScript("await browserCtx.close();");
             jsContext.close();
             if (temporaryUserDataDir) {
                 out.println("Deleting: " + userDataDir);
@@ -761,6 +796,8 @@ public class PlaywrightWindow implements HWindow {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        out.println("Successfully closed "+this);
+        out.println("---------------");
     }
 
     private void forceDeleteDirectory(File file) throws IOException {
