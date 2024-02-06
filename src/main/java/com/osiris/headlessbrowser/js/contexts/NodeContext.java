@@ -1,11 +1,9 @@
 package com.osiris.headlessbrowser.js.contexts;
 
+import com.osiris.autoplug.core.UtilsFiles;
 import com.osiris.betterthread.BThreadManager;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
-import com.osiris.headlessbrowser.utils.AsyncReader;
-import com.osiris.headlessbrowser.utils.DownloadTask;
-import com.osiris.headlessbrowser.utils.OS;
-import com.osiris.headlessbrowser.utils.TrashOutput;
+import com.osiris.headlessbrowser.utils.*;
 import net.lingala.zip4j.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +16,7 @@ import org.rauschig.jarchivelib.ArchiverFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,9 +77,6 @@ public class NodeContext implements AutoCloseable {
         try {
             // Download and install NodeJS into current working directory if no installation found
             install(false);
-            // Currently, installationDir is here --------------------> but we need this -->
-            // Example directory structure after install: path/node-js/node-js-installation/node-v18.6.0-win-x64
-            this.installationDir = new File(installationDir + "/" + installationDir.listFiles()[0].getName());
 
             File nodeExeFile, npmExeFile, npxExeFile;
             if (TYPE.equals(OS.Type.WINDOWS)) {
@@ -185,18 +181,20 @@ public class NodeContext implements AutoCloseable {
      *
      * @param force if true force-installs the latest release.
      */
-    public void install(boolean force) throws IOException, InterruptedException {
+    public void install(boolean force) throws Exception {
         if (!force) {
             // Don't install if already done.
-            if (installationDir.listFiles() != null && this.installationDir.listFiles().length != 0) {
+            if (installationDir.listFiles() != null && installationDir.listFiles().length != 0) {
                 return;
             }
         }
 
-        FileUtils.deleteDirectory(installationDir);
+        close(); // If this node context is still running
+        if(installationDir.exists()) FileUtils.deleteDirectory(installationDir);
         installationDir.mkdirs();
         String url = "https://nodejs.org/dist/latest/";
         debugOutput.println("Installing latest NodeJS release from '" + url + "'...");
+        debugOutput.println("This devices' details: "+TYPE.name+" "+ ARCH.name()+" ("+ Utils.toString(ARCH.altNames)+")");
         Document docLatest = Jsoup.connect(url).get();
 
         String downloadUrl = null;
@@ -249,6 +247,13 @@ public class NodeContext implements AutoCloseable {
             downloadFile.delete();
             debugOutput.println(" SUCCESS!");
         }
+
+        if(installationDir.listFiles().length == 1){
+            File f = installationDir.listFiles()[0];
+            if(f.isDirectory()){
+                Utils.moveDirectoryContent(f, f.getParentFile());
+            }
+        }
     }
 
     /**
@@ -292,6 +297,7 @@ public class NodeContext implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        if(process == null) return;
         debugOutput.println("CLOSING... " + this);
         process.destroy();
         process.waitFor();

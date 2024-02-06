@@ -56,6 +56,8 @@ public class PlaywrightWindow implements HWindow {
         this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
         try {
             jsContext.npmInstall("playwright");
+            jsContext.executeNpxWithArgs("playwright", "install");
+            // TODO this installs all browsers (firefox and webkit), but we only need chrome
 
             // Define global variables/constants
             if (makeUndetectable) {
@@ -127,7 +129,10 @@ public class PlaywrightWindow implements HWindow {
     public PlaywrightWindow load(File file) throws NodeJsCodeException {
         String url = "file:///" + file.getAbsolutePath().replace("\\", "/");
         jsContext.executeJavaScript("" +
-                "response = await page.goto('" + url + "', wait_until=\"domcontentloaded\");\n");
+                "response = await page.goto('" + url + "', wait_until=\"networkidle\");\n");
+        // 06.02.2024, it seems that domcontentloaded gets not executed for files???,
+        // thus we do networkidle instead as the next best thing
+        // https://playwright.dev/docs/api/class-page#page-goto
         this.url = url;
         return this;
     }
