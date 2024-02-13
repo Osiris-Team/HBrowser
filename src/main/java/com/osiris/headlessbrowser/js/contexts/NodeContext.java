@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import static com.osiris.headlessbrowser.utils.OS.ARCH;
@@ -38,6 +39,7 @@ public class NodeContext implements AutoCloseable {
     public final int timeout;
 
     public final File parentNodeDir;
+    public static final AtomicLong jsFileId = new AtomicLong();
     public final File workingDir;
     public final File nodeExe;
     public final File npmExe;
@@ -359,14 +361,15 @@ public class NodeContext implements AutoCloseable {
         try {
             // Writing stuff directly to the process output/NodeJs REPL console somehow is very error-prone.
             // That's why instead we create a temp file with the js code in it and load it using the .load command.
+            long jsId = jsFileId.incrementAndGet();
             long msStart = System.currentTimeMillis();
-            tmpJs = new File(workingDir + "/temp" + msStart + ".js");
+            tmpJs = new File(workingDir + "/temp" + jsId + ".js");
             if (!tmpJs.exists()) tmpJs.createNewFile();
 
             if (wrapInTryCatch) {
                 jsCode = "try{\n" + // Just to make sure that errors get definitively caught
                         jsCode + "\n" +
-                        "console.log('Execution of JS-Code(" + msStart + ") finished!');\n" +
+                        "console.log('Execution of JS-Code(" + jsId + ") finished!');\n" +
                         "} catch (e){\n" +
                         "  console.error('CAUGHT JS-EXCEPTION: ' + e.name + '\\n'" +
                         "                 + 'MESSAGE: ' + e.message + '\\n'" +
@@ -376,11 +379,11 @@ public class NodeContext implements AutoCloseable {
                 ;
             } else {
                 jsCode = jsCode + "\n" +
-                        "console.log('Execution of JS-Code(" + msStart + ") finished!');\n";
+                        "console.log('Execution of JS-Code(" + jsId + ") finished!');\n";
             }
 
             if (jsCode.contains("\n")) {
-                debugOutput.println("Executing following JS-Code(" + msStart + "): ");
+                debugOutput.println("Executing following JS-Code(" + jsId + "): ");
                 debugOutput.println("JS-CODE START >");
                 String singleLine = null;
                 try (BufferedReader br = new BufferedReader(new StringReader(jsCode))) {
@@ -390,13 +393,13 @@ public class NodeContext implements AutoCloseable {
                 }
                 debugOutput.println("JS-CODE END <");
             } else {
-                debugOutput.println("Executing following JS-Code(" + msStart + "): " + jsCode);
+                debugOutput.println("Executing following JS-Code(" + jsId + "): " + jsCode);
             }
 
             AtomicBoolean wasExecuted = new AtomicBoolean();
             List<String> errors = new ArrayList<>(2);
             Consumer<String> consoleLogListener = line -> {
-                if (line.contains("" + msStart)) wasExecuted.set(true);
+                if (line.contains("JS-Code(" + jsId + ") finished!")) wasExecuted.set(true);
             };
             processInput.listeners.add(consoleLogListener);
 
