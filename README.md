@@ -19,11 +19,17 @@ Note that the first run may take a bit because Node.js and its modules get insta
    - working with cookies.
    - retrieving HTML.
    - simulating real user input. 
- - **Integrated evasions for headless detection:**
+ - **Integrated evasions for headless detection: `HB.newWinBuilder().headless(true).makeUndetectable(true)...`**
+ - **Easy access to Node.js from within Java: `new NodeContext().executeJavaScript("console.log('Hello!');");`**
+ - **HTML handling via Jsoup and JSON with Gson.**
 
-<details>
-<summary>View Code</summary>
+### How good is the headless detection evasion?
+
+<div center>
     
+    ![image](https://github.com/Osiris-Team/HBrowser/assets/59899645/ae17cfa6-2227-4c38-9785-3fbab26824a0)
+</div>
+
 ```java
 try (PlaywrightWindow w = HB.newWinBuilder()
      .headless(true).makeUndetectable(true).buildPlaywrightWindow())
@@ -33,10 +39,6 @@ try (PlaywrightWindow w = HB.newWinBuilder()
 } 
 catch (Exception e) {e.printStackTrace();}
  ```
-</details>
-
- - **Easy access to Node.js from within Java: `new NodeContext().executeJavaScript("console.log('Hello!');");`**
- - **HTML handling via Jsoup and JSON with Gson.**
 
 ### Drivers
 Playwright is the default and recommended browser driver to use, since it supports downloads
