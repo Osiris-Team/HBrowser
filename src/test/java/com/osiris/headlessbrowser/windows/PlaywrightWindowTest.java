@@ -5,6 +5,7 @@ import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.IOException;
 
 class PlaywrightWindowTest {
 
@@ -15,6 +16,17 @@ class PlaywrightWindowTest {
             for (int i = 0; i < 30; i++) {
                 window.newTab();
             }
+        }
+    }
+
+    @Test
+    void testEvasions() throws NodeJsCodeException {
+        HBrowser hBrowser = new HBrowser();
+        try (PlaywrightWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).headless(true).makeUndetectable(true).buildPlaywrightWindow()) {
+            window.load("https://infosimples.github.io/detect-headless/");
+            window.makeScreenshot(new File("evasions-screenshot.png"), true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
