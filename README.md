@@ -37,6 +37,7 @@ try (PlaywrightWindow w = HB.newWinBuilder()
 } 
 catch (Exception e) {e.printStackTrace();}
  ```
+Last checked 18.06.2024.
 
 ### Drivers
 Playwright is the default and recommended browser driver to use, since it supports downloads
