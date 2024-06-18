@@ -20,7 +20,11 @@ Note that the first run may take a bit because Node.js and its modules get insta
    - retrieving HTML.
    - simulating real user input. 
  - **Integrated evasions for headless detection:**
- ```java
+
+<details>
+<summary>View Code</summary>
+    
+```java
 try (PlaywrightWindow w = HB.newWinBuilder()
      .headless(true).makeUndetectable(true).buildPlaywrightWindow())
 {
@@ -29,10 +33,9 @@ try (PlaywrightWindow w = HB.newWinBuilder()
 } 
 catch (Exception e) {e.printStackTrace();}
  ```
- - **Easy access to Node.js from within Java:**
- ```java
- new NodeContext().executeJavaScript("console.log('Hello!');");
- ```
+</details>
+
+ - **Easy access to Node.js from within Java: `new NodeContext().executeJavaScript("console.log('Hello!');");`**
  - **HTML handling via Jsoup and JSON with Gson.**
 
 ### Drivers
