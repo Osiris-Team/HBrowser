@@ -45,7 +45,8 @@ Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser c
 | [Playwright](https://github.com/microsoft/playwright)|   Node.js/V8    | Yes | No |
 | [Puppeteer](https://github.com/puppeteer/puppeteer) |   Node.js/V8    | No | No |
 
-You can find their versions in [this class](), which also allows you to set custom versions.
+You can find their versions in [this class](https://github.com/Osiris-Team/HBrowser/blob/main/src/main/java/com/osiris/headlessbrowser/Versions.java),
+which also allows you to set custom versions.
 (JS = JavaScript; Downloads = If the browser is able to download files other than html/xml/pdf;)
 
 ### Contribute/Build
