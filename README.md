@@ -25,10 +25,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
 
 ### How good is the headless detection evasion?
 
-<div center>
-    
-    ![image](https://github.com/Osiris-Team/HBrowser/assets/59899645/ae17cfa6-2227-4c38-9785-3fbab26824a0)
-</div>
+![image](https://github.com/Osiris-Team/HBrowser/assets/59899645/ae17cfa6-2227-4c38-9785-3fbab26824a0)
 
 ```java
 try (PlaywrightWindow w = HB.newWinBuilder()
