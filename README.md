@@ -5,8 +5,7 @@ Add this to your project with [Maven/Gradle/Sbt/Leinigen](https://jitpack.io/#Os
 (Java 8 or higher required).
 
 ```java
-HBrowser browser = new HBrowser();
-try(PlaywrightWindow window = browser.openWindow()){
+try(PlaywrightWindow window = HB.newWin()){
     window.load("https://example.com");
    // ...   
 }
@@ -22,8 +21,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
    - simulating real user input. 
  - **Integrated evasions for headless detection:**
  ```java
-HBrowser b = new HBrowser();
-try (PlaywrightWindow w = b.openCustomWindow()
+try (PlaywrightWindow w = HB.newWinBuilder()
      .headless(true).makeUndetectable(true).buildPlaywrightWindow())
 {
     w.load("https://infosimples.github.io/detect-headless/");
@@ -42,11 +40,12 @@ Playwright is the default and recommended browser driver to use, since it suppor
 and more of its features were ported to Java.
 Checkout [JG-Browser](https://github.com/Osiris-Team/JG-Browser) for a browser completely written in Java.
 
-| Name | Version| JS-Engine | Downloads |
-| :-----: | :-----: | :-----: | :-----:
-| [Playwright](https://github.com/microsoft/playwright)| Latest | Node.js/V8 | Yes | No |
-| [Puppeteer](https://github.com/puppeteer/puppeteer) | Latest  | Node.js/V8 | No | No |
+| Name |    JS-Engine    | Downloads |
+| :-----: |:---------------:| :-----:
+| [Playwright](https://github.com/microsoft/playwright)|   Node.js/V8    | Yes | No |
+| [Puppeteer](https://github.com/puppeteer/puppeteer) |   Node.js/V8    | No | No |
 
+You can find their versions in [this class](), which also allows you to set custom versions.
 (JS = JavaScript; Downloads = If the browser is able to download files other than html/xml/pdf;)
 
 ### Contribute/Build

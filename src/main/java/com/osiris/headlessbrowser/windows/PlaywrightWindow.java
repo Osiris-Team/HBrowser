@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.osiris.headlessbrowser.HBrowser;
+import com.osiris.headlessbrowser.Versions;
 import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.js.contexts.NodeContext;
@@ -44,7 +45,7 @@ public class PlaywrightWindow implements HWindow {
      * Use the {@link WindowBuilder} instead. The {@link HBrowser} has a shortcut method for creating custom windows: {@link HBrowser#openCustomWindow()}.
      */
     public PlaywrightWindow(HBrowser parentBrowser, boolean enableJavaScript, OutputStream debugOutput, int jsTimeout,
-                            boolean isHeadless, File userDataDir, boolean isDevTools, boolean makeUndetectable, boolean temporaryUserDataDir) {
+                            boolean isHeadless, File userDataDir, boolean isDevTools, boolean makeUndetectable, boolean temporaryUserDataDir, String existingChromeBrowserUrl) {
         this.parentBrowser = parentBrowser;
         if (debugOutput == null)
             debugOutput = new TrashOutput();
@@ -55,14 +56,14 @@ public class PlaywrightWindow implements HWindow {
         this.temporaryUserDataDir = temporaryUserDataDir;
         this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
         try {
-            jsContext.npmInstall("playwright");
-            jsContext.executeNpxWithArgs("playwright", "install");
+            jsContext.npmInstall("playwright@"+Versions.PLAYWRIGHT);
+            jsContext.executeNpxWithArgs("playwright@"+Versions.PLAYWRIGHT, "install");
             // TODO this installs all browsers (firefox and webkit), but we only need chrome
 
             // Define global variables/constants
             if (makeUndetectable) {
-                jsContext.npmInstall("playwright-extra");
-                jsContext.npmInstall("puppeteer-extra-plugin-stealth");
+                jsContext.npmInstall("playwright-extra@"+ Versions.PLAYWRIGHT_EXTRA);
+                jsContext.npmInstall("puppeteer-extra-plugin-stealth@"+ Versions.PUPPETEER_EXTRA_STEALTH_PLUGIN);
             }
             jsContext.executeJavaScript(
                     "const { chromium } = require('" + (makeUndetectable ? "playwright-extra" : "playwright") + "');\n" +
@@ -88,20 +89,27 @@ public class PlaywrightWindow implements HWindow {
             downloadTempDir = new File(userDataDir + "/downloads-temp");
             if (!downloadTempDir.exists()) downloadTempDir.mkdirs();
 
-            jsContext.executeJavaScript(
-                    "browserCtx = await chromium.launchPersistentContext('" + userDataDir.getAbsolutePath().replace("\\", "/") + "', {\n" +
-                            "  acceptDownloads: true,\n" +
-                            "  headless : " + isHeadless + ",\n" +
-                            "  javaScriptEnabled: " + enableJavaScript + ",\n" +
-                            //"  downloadsPath: '" + downloadTempDir.getAbsolutePath().replace("\\", "/") + "',\n" + // Active issue at: https://github.com/microsoft/playwright/issues/9279
-                            "  devtools: " + isDevTools + ",\n" +
-                            //"  ignoreDefaultArgs: true,\n" +
-                            "  args: ['--disable-blink-features=AutomationControlled'],\n" + // '--enable-automation=false'
-                            "  extraHTTPHeaders: " + new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson()) + ",\n" +
-                            "  userAgent: '" + new ChromeHeaders().user_agent + "'\n" + // Just to make sure...
-                            "});\n" +
-                            "browser = browserCtx.browser();\n" +
-                            "page = await browserCtx.newPage();\n", 30, false);
+            if(existingChromeBrowserUrl != null){
+                jsContext.executeJavaScript(
+                        "browser = await chromium.connectOverCDP('"+existingChromeBrowserUrl+"');\n" +
+                        "browserCtx = browser.contexts()[0];\n" +
+                        "page = await browserCtx.newPage();\n", 30, false);
+            }else{
+                jsContext.executeJavaScript(
+                        "browserCtx = await chromium.launchPersistentContext('" + userDataDir.getAbsolutePath().replace("\\", "/") + "', {\n" +
+                                "  acceptDownloads: true,\n" +
+                                "  headless : " + isHeadless + ",\n" +
+                                "  javaScriptEnabled: " + enableJavaScript + ",\n" +
+                                //"  downloadsPath: '" + downloadTempDir.getAbsolutePath().replace("\\", "/") + "',\n" + // Active issue at: https://github.com/microsoft/playwright/issues/9279
+                                "  devtools: " + isDevTools + ",\n" +
+                                //"  ignoreDefaultArgs: true,\n" +
+                                "  args: ['--disable-blink-features=AutomationControlled'],\n" + // '--enable-automation=false'
+                                "  extraHTTPHeaders: " + new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson()) + ",\n" +
+                                "  userAgent: '" + new ChromeHeaders().user_agent + "'\n" + // Just to make sure...
+                                "});\n" +
+                                "browser = browserCtx.browser();\n" +
+                                "page = await browserCtx.newPage();\n", 30, false);
+            }
 
         } catch (Exception e) {
             throw new RuntimeException(e);

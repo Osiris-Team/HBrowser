@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.osiris.headlessbrowser.HBrowser;
+import com.osiris.headlessbrowser.Versions;
 import com.osiris.headlessbrowser.data.chrome.ChromeHeaders;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.js.contexts.NodeContext;
@@ -69,10 +70,10 @@ public class PuppeteerWindow implements HWindow {
             } else {
 
             }
-            jsContext.npmInstall("puppeteer");
+            jsContext.npmInstall("puppeteer@"+ Versions.PUPPETEER);
             if (makeUndetectable) {
-                jsContext.npmInstall("puppeteer-extra");
-                jsContext.npmInstall("puppeteer-extra-plugin-stealth");
+                jsContext.npmInstall("puppeteer-extra@"+Versions.PUPPETEER_EXTRA);
+                jsContext.npmInstall("puppeteer-extra-plugin-stealth@"+Versions.PUPPETEER_EXTRA_STEALTH_PLUGIN);
             }
             jsContext.executeJavaScript(
                     "const puppeteer = require('" + (makeUndetectable ? "puppeteer-extra" : "puppeteer") + "');\n" +

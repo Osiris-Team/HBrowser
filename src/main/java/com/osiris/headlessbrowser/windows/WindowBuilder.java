@@ -66,6 +66,13 @@ public class WindowBuilder {
      * The directory will get deleted on {@link HWindow#close()}. <br>
      */
     public boolean temporaryUserDataDir = false;
+    /**
+     * Instead of creating a new browser this will connect to an existing browser
+     * via the chrome dev tools protocol, if the url is provided. <br>
+     * CURRENTLY ONLY SUPPORTED BY PLAYWRIGHT! <br>
+     * const browser = await chromium.connectOverCDP('http://localhost:9222');
+     */
+    public String existingChromeBrowserUrl = null;
 
     public WindowBuilder(HBrowser parentBrowser) {
         this.parentBrowser = parentBrowser;
@@ -79,7 +86,8 @@ public class WindowBuilder {
 
     public PlaywrightWindow buildPlaywrightWindow() {
         return new PlaywrightWindow(this.parentBrowser, this.enableJavaScript, this.debugOutputStream, this.jsTimeout,
-                this.isHeadless, this.userDataDir, this.isDevTools, this.makeUndetectable, this.temporaryUserDataDir);
+                this.isHeadless, this.userDataDir, this.isDevTools, this.makeUndetectable, this.temporaryUserDataDir,
+                this.existingChromeBrowserUrl);
     }
 
     public LightWindow buildLightWindow() {
@@ -172,6 +180,14 @@ public class WindowBuilder {
      */
     public WindowBuilder temporaryUserDataDir(boolean val) {
         this.temporaryUserDataDir = val;
+        return this;
+    }
+
+    /**
+     * For details see {@link #existingChromeBrowserUrl}.
+     */
+    public WindowBuilder existingChromeBrowserUrl(String val){
+        this.existingChromeBrowserUrl = val;
         return this;
     }
 

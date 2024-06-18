@@ -2,11 +2,13 @@ package com.osiris.headlessbrowser.js.contexts;
 
 import com.osiris.autoplug.core.UtilsFiles;
 import com.osiris.betterthread.BThreadManager;
+import com.osiris.headlessbrowser.Versions;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.utils.*;
 import net.lingala.zip4j.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.jline.utils.OSUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -78,7 +80,7 @@ public class NodeContext implements AutoCloseable {
 
         try {
             // Download and install NodeJS into current working directory if no installation found
-            install(false);
+            install(Versions.NODEJS, false);
 
             File nodeExeFile, npmExeFile, npxExeFile;
             if (TYPE.equals(OS.Type.WINDOWS)) {
@@ -183,7 +185,7 @@ public class NodeContext implements AutoCloseable {
      *
      * @param force if true force-installs the latest release.
      */
-    public void install(boolean force) throws Exception {
+    public void install(@Nullable String version, boolean force) throws Exception {
         if (!force) {
             // Don't install if already done.
             if (installationDir.listFiles() != null && installationDir.listFiles().length != 0) {
@@ -194,14 +196,20 @@ public class NodeContext implements AutoCloseable {
         close(); // If this node context is still running
         if(installationDir.exists()) FileUtils.deleteDirectory(installationDir);
         installationDir.mkdirs();
-        String url = "https://nodejs.org/dist/latest/";
-        debugOutput.println("Installing latest NodeJS release from '" + url + "'...");
+
+        String url;
+        if(version != null){
+            url = "https://nodejs.org/dist/v"+version+"/";
+        } else{
+            url = "https://nodejs.org/dist/latest/";
+        }
+        debugOutput.println("Installing NodeJS release from '" + url + "'...");
         debugOutput.println("This devices' details: "+TYPE.name+" "+ ARCH.name()+" ("+ Utils.toString(ARCH.altNames)+")");
-        Document docLatest = Jsoup.connect(url).get();
+        Document doc = Jsoup.connect(url).get();
 
         String downloadUrl = null;
         for (Element e :
-                docLatest.getElementsByTag("a")) {
+                doc.getElementsByTag("a")) {
             String attr = e.attr("href");
             if (isCorrectFileForOs(attr.replace(url, ""))) {
                 downloadUrl = url + attr;
