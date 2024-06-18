@@ -110,7 +110,6 @@ public class PuppeteerWindow implements HWindow {
             jsInitCode.append("console.log(puppeteer.defaultArgs(defaultArgs));\n");
             jsInitCode.append("browser = await puppeteer.launch(defaultArgs);\n");
             jsInitCode.append("page = await browser.newPage();\n");
-            jsInitCode.append("await page.setExtraHTTPHeaders(" + new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson()) + ");\n");
             jsContext.executeJavaScript(jsInitCode.toString(), 30, false);
             setEnableJavaScript(enableJavaScript);
 

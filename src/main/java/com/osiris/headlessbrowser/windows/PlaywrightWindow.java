@@ -103,9 +103,7 @@ public class PlaywrightWindow implements HWindow {
                                 //"  downloadsPath: '" + downloadTempDir.getAbsolutePath().replace("\\", "/") + "',\n" + // Active issue at: https://github.com/microsoft/playwright/issues/9279
                                 "  devtools: " + isDevTools + ",\n" +
                                 //"  ignoreDefaultArgs: true,\n" +
-                                "  args: ['--disable-blink-features=AutomationControlled'],\n" + // '--enable-automation=false'
-                                "  extraHTTPHeaders: " + new GsonBuilder().setPrettyPrinting().create().toJson(new ChromeHeaders().getJson()) + ",\n" +
-                                "  userAgent: '" + new ChromeHeaders().user_agent + "'\n" + // Just to make sure...
+                                "  args: ['--disable-blink-features=AutomationControlled']\n" + // '--enable-automation=false'
                                 "});\n" +
                                 "browser = browserCtx.browser();\n" +
                                 "page = await browserCtx.newPage();\n", 30, false);
