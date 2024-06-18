@@ -23,7 +23,7 @@ Note that the first run may take a bit because Node.js and its modules get insta
  - **Easy access to Node.js from within Java: `new NodeContext().executeJavaScript("console.log('Hello!');");`**
  - **HTML handling via Jsoup and JSON with Gson.**
 
-### How good is the headless detection evasion?
+### How good are the evasions?
 
 ![image](https://github.com/Osiris-Team/HBrowser/assets/59899645/06009620-52f0-496d-9d4b-f06fe0d4bec4)
 
