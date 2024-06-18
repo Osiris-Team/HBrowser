@@ -20,14 +20,14 @@ public class HB {
     /**
      * @see HBrowser#openWindowAndLoad(String)
      */
-    public PlaywrightWindow newWin(String url) throws IOException, NodeJsCodeException {
+    public static PlaywrightWindow newWin(String url) throws NodeJsCodeException {
         return globalHBrowserInstace.openWindow().load(url);
     }
 
     /**
      * @see HBrowser#openCustomWindow()
      */
-    public WindowBuilder newWinBuilder() {
+    public static WindowBuilder newWinBuilder() {
         return new WindowBuilder(globalHBrowserInstace);
     }
 }
