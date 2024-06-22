@@ -6,7 +6,7 @@
 
     <groupId>com.osiris.headlessbrowser</groupId>
     <artifactId>Headless-Browser</artifactId>
-    <version>3.0.5</version>
+    <version>3.0.7</version>
     <repositories>
         <repository>
             <id>jitpack</id>
