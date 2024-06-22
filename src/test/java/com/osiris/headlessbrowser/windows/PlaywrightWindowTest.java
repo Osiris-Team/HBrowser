@@ -11,6 +11,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PlaywrightWindowTest {
 
@@ -28,23 +31,23 @@ class PlaywrightWindowTest {
     @Test
     void testConcurrentWindows() throws Exception {
         HBrowser hBrowser = new HBrowser();
-
         List<Thread> threads = new ArrayList<>();
-        File tmp = new File(System.getProperty("user.dir")+"test-temp");
+        List<Exception> errors = new CopyOnWriteArrayList<>();
+        File tmp = new File(System.getProperty("user.dir")+"/test-temp");
         tmp.mkdirs();
         for (int i = 0; i < 10; i++) {
+            int finalI = i;
             Thread t1 = new Thread(() -> {
-                try (PlaywrightWindow window = hBrowser.openCustomWindow().temporaryUserDataDir(true).debugOutputStream(System.out).headless(true).makeUndetectable(true).buildPlaywrightWindow()) {
+                try (PlaywrightWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).headless(true).makeUndetectable(true).buildPlaywrightWindow()) {
                     window.load("https://infosimples.github.io/detect-headless/");
                     window.leftClick("body");
-                    window.makeScreenshot(new File("tmp/evasions-screenshot-1.png"), true);
+                    window.makeScreenshot(new File(tmp+ "/evasions-screenshot-"+ finalI +".png"), true);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    errors.add(e);
                 }
             });
             threads.add(t1);
         }
-        FileUtils.deleteDirectory(tmp);
         for (Thread thread : threads) {
             thread.start();
         }
@@ -52,6 +55,8 @@ class PlaywrightWindowTest {
             System.out.println("Waiting for: "+thread);
             thread.join();
         }
+        FileUtils.deleteDirectory(tmp);
+        assertEquals(0, errors.size());
     }
 
     @Test
