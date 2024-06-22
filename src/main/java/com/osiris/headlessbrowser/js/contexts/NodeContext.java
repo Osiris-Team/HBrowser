@@ -1,6 +1,5 @@
 package com.osiris.headlessbrowser.js.contexts;
 
-import com.osiris.autoplug.core.UtilsFiles;
 import com.osiris.betterthread.BThreadManager;
 import com.osiris.headlessbrowser.Versions;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
@@ -18,12 +17,14 @@ import org.rauschig.jarchivelib.ArchiverFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -48,6 +49,53 @@ public class NodeContext implements AutoCloseable {
     public final File npxExe;
     public File installationDir;
 
+    /**
+     * Npm and npx commands are executed synchronously one after another to prevent
+     * concurrency issues that arise. <br>
+     * The result of a command is cached for 60 seconds.
+     */
+    public static final CopyOnWriteArrayList<CachedResult> cachedResults = new CopyOnWriteArrayList<>();
+    public static final Executor exec = Executors.newCachedThreadPool();
+    public static class CachedResult{
+        public List<String> command;
+        public Process process;
+
+        public CachedResult(List<String> command, Process process) {
+            this.command = command;
+            this.process = process;
+            synchronized (cachedResults){
+                cachedResults.add(this);
+            }
+            exec.execute(() -> {
+                try{
+                    Thread.sleep(60000);
+                    synchronized (cachedResults){
+                        cachedResults.remove(this);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+    }
+    public static CachedResult getCachedResultForCommand(List<String> command){
+        synchronized (cachedResults){
+            for (CachedResult cachedResult : cachedResults) {
+                if(cachedResult.command.size() == command.size()){
+                    boolean allEquals = true;
+                    List<String> strings = cachedResult.command;
+                    for (int i = 0; i < strings.size(); i++) {
+                        if(!strings.get(i).equals(command.get(i))){
+                            allEquals = false;
+                            break;
+                        }
+                    }
+                    if(allEquals) return cachedResult;
+                }
+            }
+            return null;
+        }
+    }
 
     public NodeContext() {
         this(null, null, 30);
@@ -164,6 +212,10 @@ public class NodeContext implements AutoCloseable {
             throw new RuntimeException(e);
         }
     }
+    
+    public void printLnToDebug(String ln){
+        debugOutput.println(ln+" "+ getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()));
+    }
 
     private void updatePath(ProcessBuilder processBuilder, File exeFile) {
         if (exeFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
@@ -203,8 +255,8 @@ public class NodeContext implements AutoCloseable {
         } else{
             url = "https://nodejs.org/dist/latest/";
         }
-        debugOutput.println("Installing NodeJS release from '" + url + "'...");
-        debugOutput.println("This devices' details: "+TYPE.name+" "+ ARCH.name()+" ("+ Utils.toString(ARCH.altNames)+")");
+        printLnToDebug("Installing NodeJS release from '" + url + "'...");
+        printLnToDebug("This devices' details: "+TYPE.name+" "+ ARCH.name()+" ("+ Utils.toString(ARCH.altNames)+")");
         Document doc = Jsoup.connect(url).get();
 
         String downloadUrl = null;
@@ -228,17 +280,17 @@ public class NodeContext implements AutoCloseable {
             DownloadTask downloadTask = new DownloadTask("Download", new BThreadManager(), downloadUrl, downloadZip, "zip");
             downloadTask.start();
             while (!downloadTask.isFinished()) {
-                debugOutput.println("Download-Task > " + downloadTask.getStatus());
+                printLnToDebug("Download-Task > " + downloadTask.getStatus());
                 Thread.sleep(1000);
             }
-            debugOutput.println("Download-Task > " + downloadTask.getStatus());
+            printLnToDebug("Download-Task > " + downloadTask.getStatus());
 
             debugOutput.print("Extracting Node.js files...");
             debugOutput.flush();
             ZipFile zipFile = new ZipFile(downloadZip);
             zipFile.extractFile(zipFile.getFileHeaders().get(0).getFileName(), installationDir.getPath());
             downloadZip.delete();
-            debugOutput.println(" SUCCESS!");
+            printLnToDebug(" SUCCESS!");
         } else {
             File downloadFile = new File(installationDir + "/download.tar.gz");
             if (downloadFile.exists()) downloadFile.delete();
@@ -246,16 +298,16 @@ public class NodeContext implements AutoCloseable {
             DownloadTask downloadTask = new DownloadTask("Download", new BThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
             downloadTask.start();
             while (!downloadTask.isFinished()) {
-                debugOutput.println("Download-Task > " + downloadTask.getStatus());
+                printLnToDebug("Download-Task > " + downloadTask.getStatus());
                 Thread.sleep(1000);
             }
-            debugOutput.println("Download-Task > " + downloadTask.getStatus());
+            printLnToDebug("Download-Task > " + downloadTask.getStatus());
             debugOutput.print("Extracting Node.js files...");
             debugOutput.flush();
             ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
             // Result should be .../headless-browser/node-js/node<version>/...
             downloadFile.delete();
-            debugOutput.println(" SUCCESS!");
+            printLnToDebug(" SUCCESS!");
         }
 
         if(installationDir.listFiles().length == 1){
@@ -308,22 +360,22 @@ public class NodeContext implements AutoCloseable {
     @Override
     public void close() throws Exception {
         if(process == null) return;
-        debugOutput.println("CLOSING... " + this);
+        printLnToDebug("CLOSING... " + this);
         process.destroy();
         process.waitFor();
         process.destroyForcibly();
-        debugOutput.println("CLOSED " + this);
+        printLnToDebug("CLOSED " + this);
     }
 
     public synchronized NodeContext writeLine(String line) throws IOException {
         if (line.contains("\n")) {
-            debugOutput.println("Writing multiple lines to NodeJS context:");
-            debugOutput.println("START >>>>>>>>>");
+            printLnToDebug("Writing multiple lines to NodeJS context:");
+            printLnToDebug("START >>>>>>>>>");
             int lineNumber = 1;
             String singleLine = null;
             try (BufferedReader br = new BufferedReader(new StringReader(line))) {
                 while ((singleLine = br.readLine()) != null) {
-                    debugOutput.println(lineNumber + "| " + singleLine);
+                    printLnToDebug(lineNumber + "| " + singleLine);
                     lineNumber++;
                     processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
                     processOutput.flush();
@@ -336,9 +388,9 @@ public class NodeContext implements AutoCloseable {
 
                 }
             }
-            debugOutput.println("END <<<<<<<<<<<");
+            printLnToDebug("END <<<<<<<<<<<");
         } else {
-            debugOutput.println("Writing line to NodeJS context: " + line);
+            printLnToDebug("Writing line to NodeJS context: " + line);
             processOutput.write("\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
             processOutput.flush();
             processOutput.write(".break\n".getBytes(StandardCharsets.UTF_8)); // To ensure that multi-lined code from before doesn't affect the next lines
@@ -391,17 +443,17 @@ public class NodeContext implements AutoCloseable {
             }
 
             if (jsCode.contains("\n")) {
-                debugOutput.println("Executing following JS-Code(" + jsId + "): ");
-                debugOutput.println("JS-CODE START >");
+                printLnToDebug("Executing following JS-Code(" + jsId + "): ");
+                printLnToDebug("JS-CODE START >");
                 String singleLine = null;
                 try (BufferedReader br = new BufferedReader(new StringReader(jsCode))) {
                     while ((singleLine = br.readLine()) != null) {
-                        debugOutput.println(singleLine);
+                        printLnToDebug(singleLine);
                     }
                 }
-                debugOutput.println("JS-CODE END <");
+                printLnToDebug("JS-CODE END <");
             } else {
-                debugOutput.println("Executing following JS-Code(" + jsId + "): " + jsCode);
+                printLnToDebug("Executing following JS-Code(" + jsId + "): " + jsCode);
             }
 
             AtomicBoolean wasExecuted = new AtomicBoolean();
@@ -416,7 +468,7 @@ public class NodeContext implements AutoCloseable {
 
             Files.write(tmpJs.toPath(), jsCode.getBytes(StandardCharsets.UTF_8));
             executeJavaScriptFromFile(tmpJs);
-            debugOutput.println("Waiting for JavaScript result...");
+            printLnToDebug("Waiting for JavaScript result...");
             // Wait until we receive a response, like undefined
 
             for (int i = 0; i < timeout * 10; i++) { // Example timeout = 30s * 10 = 300loops * 100ms = 30000ms = 30s
@@ -432,7 +484,7 @@ public class NodeContext implements AutoCloseable {
                 }
             }
 
-            debugOutput.println("Took " + (System.currentTimeMillis() - msStart) + "ms.");
+            printLnToDebug("Took " + (System.currentTimeMillis() - msStart) + "ms.");
 
             if (!errors.isEmpty()) {
                 throw new NodeJsCodeException("Error during JavaScript code execution! Details: ", errors);
@@ -540,7 +592,7 @@ public class NodeContext implements AutoCloseable {
     }
 
     public NodeContext npmInstall(String packageName) throws IOException, InterruptedException {
-        debugOutput.println("[NPM-INSTALL] Installing '" + packageName + "'...");
+        printLnToDebug("[NPM-INSTALL] Installing '" + packageName + "'...");
         Process result;
         if (packageName != null)
             result = executeNpmWithArgs("install", packageName);
@@ -548,8 +600,8 @@ public class NodeContext implements AutoCloseable {
             result = executeNpmWithArgs("install");
         if (result.exitValue() != 0)
             throw new IOException("Failed to install/download " + packageName + "!" +
-                    " Npm finished with exit code '" + process.exitValue() + "'.");
-        debugOutput.println("[NPM-INSTALL] Installed '" + packageName + "' successfully!");
+                    " Npm finished with exit code '" + result.exitValue() + "'.");
+        printLnToDebug("[NPM-INSTALL] Installed '" + packageName + "' successfully!");
         return this;
     }
 
@@ -564,33 +616,46 @@ public class NodeContext implements AutoCloseable {
      * @throws InterruptedException
      */
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
-        List<String> commands = new ArrayList<>();
-        commands.add("" + npmExe);
-        if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
-        debugOutput.println("Execute: " + commands);
-        ProcessBuilder builder = new ProcessBuilder(commands);
-        updatePath(builder, npmExe);
-        Process process = builder.directory(workingDir).start();
-        new AsyncReader(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPM] " + line));
-        new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
-        while (process.isAlive())
-            Thread.sleep(500);
-        return process;
+        synchronized (cachedResults){
+            List<String> commands = new ArrayList<>();
+            commands.add("" + npmExe);
+            if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
+            printLnToDebug("Execute: " + commands);
+            CachedResult cachedResult = getCachedResultForCommand(commands);
+            if(cachedResult != null) {
+                printLnToDebug("Found cached result for this command!");
+                return cachedResult.process;
+            }
+            ProcessBuilder builder = new ProcessBuilder(commands);
+            updatePath(builder, npmExe);
+            Process process = builder.directory(workingDir).start();
+            new AsyncReader(process.getInputStream()).listeners.add(line -> printLnToDebug("[NPM] " + line));
+            new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPM-ERROR] " + line));
+            while (process.isAlive())
+                Thread.sleep(500);
+            new CachedResult(commands, process);
+            return process;
+        }
     }
 
     public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
-        List<String> commands = new ArrayList<>();
-        commands.add("" + npxExe);
-        if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
-        debugOutput.println("Execute: " + commands);
-        ProcessBuilder builder = new ProcessBuilder(commands);
-        updatePath(builder, npxExe);
-        Process process = builder.directory(workingDir).start();
-        new AsyncReader(process.getInputStream()).listeners.add(line -> debugOutput.println("[NPX] " + line));
-        new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));
-        while (process.isAlive())
-            Thread.sleep(500);
-        return process;
+        synchronized (cachedResults){
+            List<String> commands = new ArrayList<>();
+            commands.add("" + npxExe);
+            if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
+            printLnToDebug("Execute: " + commands);
+            CachedResult cachedResult = getCachedResultForCommand(commands);
+            if(cachedResult != null) return cachedResult.process;
+            ProcessBuilder builder = new ProcessBuilder(commands);
+            updatePath(builder, npxExe);
+            Process process = builder.directory(workingDir).start();
+            new AsyncReader(process.getInputStream()).listeners.add(line -> printLnToDebug("[NPX] " + line));
+            new AsyncReader(process.getErrorStream()).listeners.add(line -> System.err.println("[NPX-ERROR] " + line));
+            while (process.isAlive())
+                Thread.sleep(500);
+            new CachedResult(commands, process);
+            return process;
+        }
     }
 
     public Process executeInNewTerminal(File workingDir, Consumer<String> onLineReceived,

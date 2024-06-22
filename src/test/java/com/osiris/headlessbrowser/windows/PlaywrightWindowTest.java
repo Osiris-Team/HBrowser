@@ -2,10 +2,14 @@ package com.osiris.headlessbrowser.windows;
 
 import com.osiris.headlessbrowser.HBrowser;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 class PlaywrightWindowTest {
@@ -18,12 +22,42 @@ class PlaywrightWindowTest {
                 window.newTab();
             }
         }
+        // TODO give each window its own node context folder
+    }
+
+    @Test
+    void testConcurrentWindows() throws Exception {
+        HBrowser hBrowser = new HBrowser();
+
+        List<Thread> threads = new ArrayList<>();
+        File tmp = new File(System.getProperty("user.dir")+"test-temp");
+        tmp.mkdirs();
+        for (int i = 0; i < 10; i++) {
+            Thread t1 = new Thread(() -> {
+                try (PlaywrightWindow window = hBrowser.openCustomWindow().temporaryUserDataDir(true).debugOutputStream(System.out).headless(true).makeUndetectable(true).buildPlaywrightWindow()) {
+                    window.load("https://infosimples.github.io/detect-headless/");
+                    window.leftClick("body");
+                    window.makeScreenshot(new File("tmp/evasions-screenshot-1.png"), true);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            threads.add(t1);
+        }
+        FileUtils.deleteDirectory(tmp);
+        for (Thread thread : threads) {
+            thread.start();
+        }
+        for (Thread thread : threads) {
+            System.out.println("Waiting for: "+thread);
+            thread.join();
+        }
     }
 
     @Test
     void testEvasions() throws NodeJsCodeException {
         HBrowser hBrowser = new HBrowser();
-        try (PlaywrightWindow window = hBrowser.openCustomWindow().debugOutputStream(System.out).headless(true).makeUndetectable(true).buildPlaywrightWindow()) {
+        try (PlaywrightWindow window = hBrowser.openCustomWindow().temporaryUserDataDir(true).debugOutputStream(System.out).headless(true).makeUndetectable(true).buildPlaywrightWindow()) {
             window.load("https://infosimples.github.io/detect-headless/");
             window.makeScreenshot(new File("evasions-screenshot.png"), true);
         } catch (IOException e) {
