@@ -600,7 +600,7 @@ public class NodeContext implements AutoCloseable {
             result = executeNpmWithArgs("install");
         if (result.exitValue() != 0)
             throw new IOException("Failed to install/download " + packageName + "!" +
-                    " Npm finished with exit code '" + result.exitValue() + "'.");
+                    " Npm finished with exit code '" + result.exitValue() + "', npmExe="+npmExe);
         printLnToDebug("[NPM-INSTALL] Installed '" + packageName + "' successfully!");
         return this;
     }
@@ -618,7 +618,7 @@ public class NodeContext implements AutoCloseable {
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
         synchronized (cachedResults){
             List<String> commands = new ArrayList<>();
-            commands.add("" + npmExe);
+            commands.add("\"" + npmExe+"\""); // encapsulate in backticks to prevent special chars like ( causing issues
             if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
             printLnToDebug("Execute: " + commands);
             CachedResult cachedResult = getCachedResultForCommand(commands);
@@ -641,7 +641,7 @@ public class NodeContext implements AutoCloseable {
     public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
         synchronized (cachedResults){
             List<String> commands = new ArrayList<>();
-            commands.add("" + npxExe);
+            commands.add("\"" + npxExe+"\""); // encapsulate in backticks to prevent special chars like ( causing issues
             if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
             printLnToDebug("Execute: " + commands);
             CachedResult cachedResult = getCachedResultForCommand(commands);

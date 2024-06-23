@@ -86,8 +86,9 @@ public class OS {
         PPC64("ppc64"),
         PPC64LE("ppc64le"),
         S390X("s390x"),
-        AARCH64("aarch64"),
+        AARCH64("aarch64", "arm64"),
         ARM("arm"),
+        ARM64( "arm64", "aarch64"),
         SPARCV9("sparcv9"),
         RISCV64("riscv64"),
         // x64 with alternative names:

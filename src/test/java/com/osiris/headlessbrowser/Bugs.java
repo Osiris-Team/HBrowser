@@ -1,11 +1,25 @@
-package com.osiris.headlessbrowser.issues;
+package com.osiris.headlessbrowser;
 
-import com.osiris.headlessbrowser.HBrowser;
 import com.osiris.headlessbrowser.exceptions.NodeJsCodeException;
 import com.osiris.headlessbrowser.windows.PlaywrightWindow;
+import org.junit.jupiter.api.Test;
 
-public class Issue9 {
-    public static void main(String[] args) {
+import java.io.File;
+
+public class Bugs {
+    @Test
+    void weirdPathSupported() throws NodeJsCodeException {
+        File dir = new File(System.getProperty("user.dir") + "/headless-browser(1)");
+        try(PlaywrightWindow win = new HBrowser().setMainDirectory(dir)
+                .openCustomWindow().debugOutputStream(System.out)
+                .buildPlaywrightWindow()){
+            win.load(TestConst.htmlTestFile);
+            win.leftClick("body");
+        }
+    }
+
+    @Test
+    void issue9(){
         HBrowser hBrowser = new HBrowser();
         try (PlaywrightWindow window = hBrowser.openCustomWindow().headless(false).buildPlaywrightWindow()) {
             for (int i = 0; i < 20; i++) {
