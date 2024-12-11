@@ -240,7 +240,7 @@ public class NodeContext implements AutoCloseable {
     public void install(@Nullable String version, boolean force) throws Exception {
         if (!force) {
             // Don't install if already done.
-            if (installationDir.listFiles() != null && installationDir.listFiles().length != 0) {
+            if (installationDir.listFiles() != null && installationDir.listFiles().length > 1) { // must contain more than one file
                 return;
             }
         }
@@ -262,9 +262,9 @@ public class NodeContext implements AutoCloseable {
         String downloadUrl = null;
         for (Element e :
                 doc.getElementsByTag("a")) {
-            String attr = e.attr("href");
-            if (isCorrectFileForOs(attr.replace(url, ""))) {
-                downloadUrl = url + attr;
+            String fileName = new File(e.attr("href")).getName();
+            if (isCorrectFileForOs(fileName)) {
+                downloadUrl = url + fileName;
                 break;
             }
         }
