@@ -23,7 +23,10 @@ Note that the first run may take a bit because Node.js and its modules get insta
  - **Easy access to Node.js from within Java: `new NodeContext().executeJavaScript("console.log('Hello!');");`**
  - **HTML handling via Jsoup and JSON with Gson.**
 
-### How good are the evasions?
+### 
+
+<details>
+<summary>How good are the evasions?</summary>
 
 ![image](https://github.com/Osiris-Team/HBrowser/assets/59899645/06009620-52f0-496d-9d4b-f06fe0d4bec4)
 
@@ -38,6 +41,7 @@ try (PlaywrightWindow w = HB.newWinBuilder()
 catch (Exception e) {e.printStackTrace();}
  ```
 Last checked 18.06.2024.
+</details>
 
 ### Drivers
 Playwright is the default and recommended browser driver to use, since it supports downloads
