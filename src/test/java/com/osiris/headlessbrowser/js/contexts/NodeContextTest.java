@@ -14,9 +14,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class NodeContextTest {
 
     @Test
+    void testPath() throws IOException, InterruptedException {
+        File parent = new File(System.getProperty("user.dir")+"/headless-browser/test-node");
+        NodeContext ctx = new NodeContext(parent, System.out, 30); // Installs and starts Node.js if not exists
+        ctx.npmInstall("test");
+    }
+
+    @Test
     void install() throws Exception {
         //OS.TYPE = OS.Type.LINUX; // Try for a custom OS if needed
-        File parent = Paths.get("./headless-browser/test-node").toFile();
+        File parent = new File(System.getProperty("user.dir")+"/headless-browser/test-node-temp");
         FileUtils.deleteDirectory(parent);
         parent.mkdirs();
         try{

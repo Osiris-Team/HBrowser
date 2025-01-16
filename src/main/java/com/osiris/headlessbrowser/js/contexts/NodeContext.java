@@ -217,22 +217,13 @@ public class NodeContext implements AutoCloseable {
     }
 
     private void updatePath(ProcessBuilder processBuilder, File exeFile) {
-        if (exeFile.getParentFile() != null)
-            appendToPath(processBuilder, exeFile.getParentFile()); // Support linux
-        appendToPath(processBuilder, exeFile);
-    }
-
-    private static void appendToPath(ProcessBuilder processBuilder, File exeFile) {
         String pathSeparator = OSUtils.IS_WINDOWS ? ";" : ":";
         if (processBuilder.environment().get("PATH") != null) {
-            processBuilder.environment().put("PATH",
-                    exeFile.getParent() + pathSeparator + processBuilder.environment().get("PATH"));
+            processBuilder.environment().put("PATH", exeFile.getParent() + pathSeparator + processBuilder.environment().get("PATH"));
         } else if (processBuilder.environment().get("Path") != null) {
-            processBuilder.environment().put("Path",
-                    exeFile.getParent() + pathSeparator + processBuilder.environment().get("Path"));
+            processBuilder.environment().put("Path", exeFile.getParent() + pathSeparator + processBuilder.environment().get("Path"));
         } else {
-            processBuilder.environment().put("PATH",
-                    exeFile.getParent() + pathSeparator);
+            processBuilder.environment().put("PATH", exeFile.getParent() + pathSeparator);
         }
     }
 
@@ -646,7 +637,18 @@ public class NodeContext implements AutoCloseable {
     public Process executeNpmWithArgs(String... args) throws IOException, InterruptedException {
         synchronized (cachedResults){
             List<String> commands = new ArrayList<>();
-            commands.add("\"" + npmExe+"\""); // encapsulate in backticks to prevent special chars like ( causing issues
+            if(!OS.isWindows()){
+                // Node uses a little trick to execute npm, see the content of the npm file:
+                // #!/usr/bin/env node
+                // require('../lib/cli.js')(process)
+                // It assumes we are in a terminal and thus the shebang resolves to launch the npm file via node got from env PATH.
+                // However since we are in a process builder and not actually a terminal I think the resolve of node fails
+                // even if we updated / mentioned node in the PATH of process builder env before, thus as a workaround we skip the resolve and execute
+                // the file directly via our node.exe
+                commands.add("\"" + nodeExe + "\" \"" + npmExe + "\"");
+            } else{
+                commands.add("\"" + npmExe + "\""); // encapsulate in backticks to prevent special chars like ( causing issues
+            }
             if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
             printLnToDebug("Execute: " + commands);
             CachedResult cachedResult = getCachedResultForCommand(commands);
@@ -655,7 +657,6 @@ public class NodeContext implements AutoCloseable {
                 return cachedResult.process;
             }
             ProcessBuilder builder = new ProcessBuilder(commands);
-            updatePath(builder, nodeExe); // Required by npm
             updatePath(builder, npmExe);
             Process process = builder.directory(workingDir).start();
             new AsyncReader(process.getInputStream()).listeners.add(line -> printLnToDebug("[NPM] " + line));
@@ -670,13 +671,15 @@ public class NodeContext implements AutoCloseable {
     public Process executeNpxWithArgs(String... args) throws IOException, InterruptedException {
         synchronized (cachedResults){
             List<String> commands = new ArrayList<>();
-            commands.add("\"" + npxExe+"\""); // encapsulate in backticks to prevent special chars like ( causing issues
+            if(!OS.isWindows()) {
+                commands.add("\"" + nodeExe + "\" \"" + npxExe + "\"");
+            } else
+                commands.add("\"" + npxExe + "\""); // encapsulate in backticks to prevent special chars like ( causing issues
             if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
             printLnToDebug("Execute: " + commands);
             CachedResult cachedResult = getCachedResultForCommand(commands);
             if(cachedResult != null) return cachedResult.process;
             ProcessBuilder builder = new ProcessBuilder(commands);
-            updatePath(builder, nodeExe); // Required by npx
             updatePath(builder, npxExe);
             Process process = builder.directory(workingDir).start();
             new AsyncReader(process.getInputStream()).listeners.add(line -> printLnToDebug("[NPX] " + line));
@@ -699,8 +702,6 @@ public class NodeContext implements AutoCloseable {
             public NodeProcessB(String s){
                 this.pb = new java.lang.ProcessBuilder(s);
                 updatePath(pb, nodeExe);
-                updatePath(pb, npmExe);
-                updatePath(pb, npxExe);
             }
         }
 
