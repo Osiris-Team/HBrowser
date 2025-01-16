@@ -57,6 +57,8 @@ public class PlaywrightWindow implements HWindow {
         this.jsContext = new NodeContext(new File(userDataDir.getParentFile() + "/node-js"), debugOutput, jsTimeout);
         try {
             jsContext.npmInstall("playwright@"+Versions.PLAYWRIGHT);
+            // User must do this manually since it asks for password even if all packages are up-to-date and existing
+            //jsContext.executeNpxWithArgs("playwright@"+Versions.PLAYWRIGHT, "install-deps");
             jsContext.executeNpxWithArgs("playwright@"+Versions.PLAYWRIGHT, "install");
             // TODO this installs all browsers (firefox and webkit), but we only need chrome
 

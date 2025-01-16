@@ -93,7 +93,7 @@
     <build>
         <finalName>${project.name}
         </finalName> <!-- If you'd like to have version information on your output jar, remove this. -->
-        <defaultGoal>clean package</defaultGoal>
+        <defaultGoal>package</defaultGoal>
         <plugins>
 
             <!-- Responsible for running all tests before building. -->

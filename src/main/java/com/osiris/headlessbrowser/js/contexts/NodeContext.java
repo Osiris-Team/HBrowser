@@ -638,15 +638,7 @@ public class NodeContext implements AutoCloseable {
         synchronized (cachedResults){
             List<String> commands = new ArrayList<>();
             if(!OS.isWindows()){
-                // Node uses a little trick to execute npm, see the content of the npm file:
-                // #!/usr/bin/env node
-                // require('../lib/cli.js')(process)
-                // It assumes we are in a terminal and thus the shebang resolves to launch the npm file via node got from env PATH.
-                // However since we are in a process builder and not actually a terminal I think the resolve of node fails
-                // even if we updated / mentioned node in the PATH of process builder env before, thus as a workaround we skip the resolve and execute
-                // the file directly via our node.exe
-                commands.add("\"" + nodeExe + "\"");
-                commands.add("\"" + npmExe + "\"");
+                commands.add(""+npmExe); // encapsulate in backticks doesnt work on linux
             } else{
                 commands.add("\"" + npmExe + "\""); // encapsulate in backticks to prevent special chars like ( causing issues
             }
@@ -674,8 +666,7 @@ public class NodeContext implements AutoCloseable {
         synchronized (cachedResults){
             List<String> commands = new ArrayList<>();
             if(!OS.isWindows()) {
-                commands.add("\"" + nodeExe + "\"");
-                commands.add("\"" + npxExe + "\"");
+                commands.add("" + npxExe); // encapsulate in backticks doesnt work on linux
             } else
                 commands.add("\"" + npxExe + "\""); // encapsulate in backticks to prevent special chars like ( causing issues
             if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
