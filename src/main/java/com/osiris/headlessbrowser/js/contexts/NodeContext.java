@@ -12,7 +12,6 @@ import org.jline.utils.OSUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.rauschig.jarchivelib.ArchiverFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -260,9 +259,10 @@ public class NodeContext implements AutoCloseable {
         Document doc = Jsoup.connect(url).get();
 
         String downloadUrl = null;
+        String fileName = null;
         for (Element e :
                 doc.getElementsByTag("a")) {
-            String fileName = new File(e.attr("href")).getName();
+            fileName = new File(e.attr("href")).getName();
             if (isCorrectFileForOs(fileName)) {
                 downloadUrl = url + fileName;
                 break;
@@ -274,7 +274,7 @@ public class NodeContext implements AutoCloseable {
 
         // Download the zip file and extract its contents
         if (TYPE.equals(OS.Type.WINDOWS)) {
-            File downloadZip = new File(installationDir + "/download.zip");
+            File downloadZip = new File(installationDir + "/"+fileName);
             if (downloadZip.exists()) downloadZip.delete();
             downloadZip.createNewFile();
             DownloadTask downloadTask = new DownloadTask("Download", new BThreadManager(), downloadUrl, downloadZip, "zip");
@@ -292,7 +292,8 @@ public class NodeContext implements AutoCloseable {
             downloadZip.delete();
             printLnToDebug(" SUCCESS!");
         } else {
-            File downloadFile = new File(installationDir + "/download.tar.gz");
+            // Download .tar.gz file
+            File downloadFile = new File(installationDir + "/" + fileName);
             if (downloadFile.exists()) downloadFile.delete();
             downloadFile.createNewFile();
             DownloadTask downloadTask = new DownloadTask("Download", new BThreadManager(), downloadUrl, downloadFile, "gzip", "tar.gz", "tar", "tar+gzip", "x-gtar", "x-gzip", "x-tgz");
@@ -302,10 +303,32 @@ public class NodeContext implements AutoCloseable {
                 Thread.sleep(1000);
             }
             printLnToDebug("Download-Task > " + downloadTask.getStatus());
+
             debugOutput.print("Extracting Node.js files...");
             debugOutput.flush();
-            ArchiverFactory.createArchiver(downloadFile).extract(downloadFile, installationDir);
-            // Result should be .../headless-browser/node-js/node<version>/...
+
+            // Use the preinstalled tar binary to extract .tar.gz file to ensure correct symlink extraction
+            String[] command = {"tar", "-xzvf", downloadFile.getAbsolutePath(), "-C", installationDir.getAbsolutePath()};
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
+
+            // Capture the output of the tar command
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String l = line.toLowerCase();
+                    if (l.contains("error") || l.contains("warning")) {
+                        printLnToDebug("[TAR] " + line);
+                    }
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new IOException("Tar extraction failed with exit code " + exitCode);
+            }
+
             downloadFile.delete();
             printLnToDebug(" SUCCESS!");
         }
