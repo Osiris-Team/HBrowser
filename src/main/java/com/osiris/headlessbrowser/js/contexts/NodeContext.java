@@ -650,6 +650,7 @@ public class NodeContext implements AutoCloseable {
                 return cachedResult.process;
             }
             ProcessBuilder builder = new ProcessBuilder(commands);
+            updatePath(builder, nodeExe); // Required by npm
             updatePath(builder, npmExe);
             Process process = builder.directory(workingDir).start();
             new AsyncReader(process.getInputStream()).listeners.add(line -> printLnToDebug("[NPM] " + line));
@@ -670,6 +671,7 @@ public class NodeContext implements AutoCloseable {
             CachedResult cachedResult = getCachedResultForCommand(commands);
             if(cachedResult != null) return cachedResult.process;
             ProcessBuilder builder = new ProcessBuilder(commands);
+            updatePath(builder, nodeExe); // Required by npx
             updatePath(builder, npxExe);
             Process process = builder.directory(workingDir).start();
             new AsyncReader(process.getInputStream()).listeners.add(line -> printLnToDebug("[NPX] " + line));
@@ -681,22 +683,36 @@ public class NodeContext implements AutoCloseable {
         }
     }
 
+    /**
+     * Executes in a new terminal with the current node binaries set in PATH.
+     */
     public Process executeInNewTerminal(File workingDir, Consumer<String> onLineReceived,
                                         Consumer<String> onErrorLineReceived, String... commands) throws IOException {
+        class NodeProcessB {
+
+            public final java.lang.ProcessBuilder pb;
+            public NodeProcessB(String s){
+                this.pb = new java.lang.ProcessBuilder(s);
+                updatePath(pb, nodeExe);
+                updatePath(pb, npmExe);
+                updatePath(pb, npxExe);
+            }
+        }
+
         Process p;
         if (OS.isWindows()) {
             try {  // Try powershell first, use cmd as fallback
-                p = new ProcessBuilder("powershell").directory(workingDir).start();
+                p = new NodeProcessB("powershell").pb.directory(workingDir).start();
                 if (!p.isAlive()) throw new Exception();
             } catch (Exception e) {
-                p = new ProcessBuilder("cmd").directory(workingDir).start();
+                p = new NodeProcessB("cmd").pb.directory(workingDir).start();
             }
         } else { // Unix based system, like Linux, Mac etc...
             try {  // Try bash first, use sh as fallback
-                p = new ProcessBuilder("/bin/bash").directory(workingDir).start();
+                p = new NodeProcessB("/bin/bash").pb.directory(workingDir).start();
                 if (!p.isAlive()) throw new Exception();
             } catch (Exception e) {
-                p = new ProcessBuilder("/bin/sh").directory(workingDir).start();
+                p = new NodeProcessB("/bin/sh").pb.directory(workingDir).start();
             }
         }
         Process process = p;
