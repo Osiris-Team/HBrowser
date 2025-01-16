@@ -217,7 +217,12 @@ public class NodeContext implements AutoCloseable {
     }
 
     private void updatePath(ProcessBuilder processBuilder, File exeFile) {
-        if (exeFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
+        if (exeFile.getParentFile() != null)
+            appendToPath(processBuilder, exeFile.getParentFile()); // Support linux
+        appendToPath(processBuilder, exeFile);
+    }
+
+    private static void appendToPath(ProcessBuilder processBuilder, File exeFile) {
         String pathSeparator = OSUtils.IS_WINDOWS ? ";" : ":";
         if (processBuilder.environment().get("PATH") != null) {
             processBuilder.environment().put("PATH",
