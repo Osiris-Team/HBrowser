@@ -645,10 +645,12 @@ public class NodeContext implements AutoCloseable {
                 // However since we are in a process builder and not actually a terminal I think the resolve of node fails
                 // even if we updated / mentioned node in the PATH of process builder env before, thus as a workaround we skip the resolve and execute
                 // the file directly via our node.exe
-                commands.add("\"" + nodeExe + "\" \"" + npmExe + "\"");
+                commands.add("\"" + nodeExe + "\"");
+                commands.add("\"" + npmExe + "\"");
             } else{
                 commands.add("\"" + npmExe + "\""); // encapsulate in backticks to prevent special chars like ( causing issues
             }
+
             if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));
             printLnToDebug("Execute: " + commands);
             CachedResult cachedResult = getCachedResultForCommand(commands);
@@ -672,7 +674,8 @@ public class NodeContext implements AutoCloseable {
         synchronized (cachedResults){
             List<String> commands = new ArrayList<>();
             if(!OS.isWindows()) {
-                commands.add("\"" + nodeExe + "\" \"" + npxExe + "\"");
+                commands.add("\"" + nodeExe + "\"");
+                commands.add("\"" + npxExe + "\"");
             } else
                 commands.add("\"" + npxExe + "\""); // encapsulate in backticks to prevent special chars like ( causing issues
             if (args != null && args.length != 0) commands.addAll(Arrays.asList(args));

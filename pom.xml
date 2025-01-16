@@ -114,12 +114,30 @@
             </plugin>
 
             <!--
+Make this jar executable.
+Remember to check the the jars entry point (main.class property above).
+-->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-jar-plugin</artifactId>
+    <version>3.2.0</version>
+    <configuration>
+        <archive>
+            <manifest>
+                <mainClass>com.osiris.headlessbrowser.Main</mainClass>
+            </manifest>
+        </archive>
+    </configuration>
+</plugin>
+
+
+            <!--
             Puts your dependencies into the output jar file.
             Normally when developing an API, that is only used by other devs
             you won't need to do this.
             But if you are developing an application for regular people,
             you should uncomment this section.
-
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -131,12 +149,13 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <finalName>Headless-Browser-runnable-shaded</finalName>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-            -->
+
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
