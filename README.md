@@ -13,6 +13,13 @@ try(PlaywrightWindow window = HB.newWin()){
 All examples [here](src/test/java/examples).
 Note that the first run may take a bit because Node.js and its modules get installed into your current working dir under `./headless-browser`.
 
+### Important
+On newer playwright versions you might need to install additional dependencies manually on your machine, this requires root permissions.
+Normally those dependencies are pre-installed though. You will notice if there is an exception. For details print debug to System.out.
+```shell
+cd ./headless-browser/node-js/node-js-working-dir && ./headless-browser/node-js/node-js-installation/bin/npx playwright install-deps
+```
+
 ### Features
  - **High-Level methods for...**
    - downloading files.
